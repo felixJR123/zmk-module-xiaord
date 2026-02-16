@@ -1,0 +1,16 @@
+# Copyright (c) 2024 Custom CHSC6X driver
+# SPDX-License-Identifier: Apache-2.0
+
+description: ChipSemi CHSC6X touchpad controller (custom version)
+
+compatible: "chipsemi,chsc6x-custom"
+
+include: [i2c-device.yaml]
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      Interrupt GPIO pin connected to the CHSC6X controller.
+      This pin is used to signal touch events.
