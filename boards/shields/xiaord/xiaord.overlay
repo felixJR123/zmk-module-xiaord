@@ -1,4 +1,7 @@
-#include <dt-bindings/zmk/matrix_transform.h>
+// Override the touchpad controller to use custom driver
+&chsc6x_xiao_round_display {
+    compatible = "chipsemi,chsc6x-custom";
+};
 
 / {
     chosen {
@@ -15,9 +18,9 @@
 
     default_transform: keymap_transform_0 {
         compatible = "zmk,matrix-transform";
-        columns = <1>;
-        rows = <1>;
-        map = < RC(0,0) >;
+        columns = <0>;
+        rows = <0>;
+        map = < >;
     };
 
     physical_layout0: physical_layout_0 {
@@ -31,10 +34,5 @@
         device = <&chsc6x_xiao_round_display>;
     };
 
-};
-
-// Override the touchpad controller to use custom driver
-&chsc6x_xiao_round_display {
-    compatible = "chipsemi,chsc6x-custom";
 };
 
