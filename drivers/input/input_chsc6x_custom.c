@@ -16,17 +16,17 @@
 #define CHSC6X_OUTPUT_COL            2
 #define CHSC6X_OUTPUT_ROW            4
 
-/* --- パラメータ再設定 --- */
-/* --- 調整パラメータ --- */
-#define SENSITIVITY            2.0f  // 移動感度
-#define MIN_BTN_INTERVAL_MS    20    // ボタンの最小パルス幅 (ms)
-#define LONG_PRESS_TIME_MS     600   // 右クリック判定時間
-#define SWIPE_THRESHOLD        10    // 移動と判定する閾値 (px)
+#define SENSITIVITY            ((float)CONFIG_INPUT_CHSC6X_CUSTOM_SENSITIVITY_X10 / 10.0f)
+#define MIN_BTN_INTERVAL_MS    CONFIG_INPUT_CHSC6X_CUSTOM_MIN_BTN_INTERVAL
+#define LONG_PRESS_TIME_MS     CONFIG_INPUT_CHSC6X_CUSTOM_LONG_PRESS_TIME
+#define SWIPE_THRESHOLD        CONFIG_INPUT_CHSC6X_CUSTOM_SWIPE_THRESHOLD
 
 /* --- 慣性パラメータ --- */
-#define INERTIA_INTERVAL_MS    20    
-#define VELOCITY_THRESHOLD     0.8f  
-#define VELOCITY_DECAY         0.95f 
+#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
+#define INERTIA_INTERVAL_MS    CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA_INTERVAL
+#define VELOCITY_THRESHOLD     ((float)CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA_THRESHOLD_X100 / 100.0f)
+#define VELOCITY_DECAY         ((float)CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA_DECAY_X100 / 100.0f)
+#endif
 
 LOG_MODULE_REGISTER(chsc6x_custom, CONFIG_INPUT_LOG_LEVEL);
 
@@ -52,16 +52,18 @@ struct chsc6x_custom_data {
     struct k_work work;
     struct k_work_delayable task_processor;
     struct k_work_delayable eval_timer;
-    struct k_work_delayable inertial_work;
     struct k_msgq task_msgq;
     struct btn_task task_buf[8];
     enum gesture_state state;
     bool has_moved;
     uint8_t start_col, start_row, last_col, last_row;
     bool last_pressed;
-    float v_delta_x, v_delta_y;
     uint32_t last_sample_time, delta_time;
     struct gpio_callback int_gpio_cb;
+#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
+    struct k_work_delayable inertial_work;
+    float v_delta_x, v_delta_y;
+#endif
 };
 
 static void push_task(struct chsc6x_custom_data *data, uint16_t code, int value, uint32_t delay)
@@ -90,21 +92,22 @@ static void task_processor_handler(struct k_work *work)
     }
 }
 
+#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
 static void chsc6x_inertial_handler(struct k_work *work) {
     struct k_work_delayable *dwork = k_work_delayable_from_work(work);
     struct chsc6x_custom_data *data = CONTAINER_OF(dwork, struct chsc6x_custom_data, inertial_work);
 
-    // 減衰計算
     data->v_delta_x *= VELOCITY_DECAY;
     data->v_delta_y *= VELOCITY_DECAY;
 
-    // 一定速度以下になるまで移動レポートを継続
     if (fabsf(data->v_delta_x) >= 1.0f || fabsf(data->v_delta_y) >= 1.0f) {
         input_report_rel(data->dev, INPUT_REL_X, (int16_t)data->v_delta_x, false, K_FOREVER);
         input_report_rel(data->dev, INPUT_REL_Y, (int16_t)data->v_delta_y, true, K_FOREVER);
         k_work_reschedule(&data->inertial_work, K_MSEC(INERTIA_INTERVAL_MS));
     }
 }
+#endif
+
 
 static void handle_gesture(const struct device *dev, enum gesture_event event) {
     struct chsc6x_custom_data *data = dev->data;
@@ -142,11 +145,14 @@ static void handle_gesture(const struct device *dev, enum gesture_event event) {
         LOG_INF("%s -> %s", state_names[old_state], state_names[data->state]);
     }
 
-    /* 慣性開始判定 */
+#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
     if (event == EV_UP && data->has_moved && data->delta_time > 0) {
-        float v = sqrtf(data->v_delta_x * data->v_delta_x + data->v_delta_y * data->v_delta_y) / (float)data->delta_time;
-        if (v > 0.8f) k_work_reschedule(&data->inertial_work, K_MSEC(20));
+        float velocity = sqrtf(data->v_delta_x * data->v_delta_x + data->v_delta_y * data->v_delta_y) / (float)data->delta_time;
+        if (velocity > VELOCITY_THRESHOLD) {
+            k_work_reschedule(&data->inertial_work, K_MSEC(INERTIA_INTERVAL_MS));
+        }
     }
+#endif
 }
 
 static void eval_timer_handler(struct k_work *work)
@@ -168,9 +174,11 @@ static int chsc6x_custom_process(const struct device *dev) {
 
     if (pr) {
         if (!data->last_pressed) {
+#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
             k_work_cancel_delayable(&data->inertial_work);
-            data->start_col = c; data->start_row = r;
             data->v_delta_x = 0; data->v_delta_y = 0;
+#endif
+            data->start_col = c; data->start_row = r;
             handle_gesture(dev, EV_DOWN);
         } else {
             int dist = abs(c - data->start_col) + abs(r - data->start_row);
@@ -182,9 +190,11 @@ static int chsc6x_custom_process(const struct device *dev) {
 
             if (dx != 0 || dy != 0) {
                 input_report_rel(dev, INPUT_REL_X, (int16_t)dx, false, K_FOREVER);
-                input_report_rel(dev, INPUT_REL_Y, (int16_t)dy, true, K_FOREVER);
+				input_report_rel(dev, INPUT_REL_Y, (int16_t)dy, true, K_FOREVER);
+#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
                 data->v_delta_x = dx;
                 data->v_delta_y = dy;
+#endif
             }
         }
         data->last_col = c; data->last_row = r;
@@ -221,8 +231,10 @@ static int chsc6x_custom_init(const struct device *dev)
     k_work_init(&data->work, chsc6x_custom_work_handler);
     k_work_init_delayable(&data->task_processor, task_processor_handler);
     k_work_init_delayable(&data->eval_timer, eval_timer_handler);
-    k_work_init_delayable(&data->inertial_work, chsc6x_inertial_handler);
     k_msgq_init(&data->task_msgq, (char *)data->task_buf, sizeof(struct btn_task), 8);
+#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
+    k_work_init_delayable(&data->inertial_work, chsc6x_inertial_handler);
+#endif
 
     if (!i2c_is_ready_dt(&config->i2c)) {
         LOG_ERR("I2C bus not ready");

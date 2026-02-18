@@ -8,3 +8,57 @@ config INPUT_CHSC6X_CUSTOM
 	help
 	  Enable custom driver for CHSC6X touchpad controller.
 	  This is a customized version for the xiaord round display.
+
+if INPUT_CHSC6X_CUSTOM
+
+config INPUT_CHSC6X_CUSTOM_SENSITIVITY_X10
+	int "Cursor sensitivity (x10)"
+	default 20
+	help
+	  Cursor sensitivity multiplied by 10. Default 20 means 2.0f.
+
+config INPUT_CHSC6X_CUSTOM_MIN_BTN_INTERVAL
+	int "Minimum button interval (ms)"
+	default 20
+	help
+	  Minimum interval between button press and release.
+
+config INPUT_CHSC6X_CUSTOM_LONG_PRESS_TIME
+	int "Long press time for right click (ms)"
+	default 600
+
+config INPUT_CHSC6X_CUSTOM_SWIPE_THRESHOLD
+	int "Swipe movement threshold (pixels)"
+	default 10
+	help
+	  Movement pixels to distinguish between a tap and a swipe.
+
+config INPUT_CHSC6X_CUSTOM_INERTIA
+	bool "Enable inertial cursor"
+	default y
+	help
+	  Continue cursor movement after flicking.
+
+
+if INPUT_CHSC6X_CUSTOM_INERTIA
+
+config INPUT_CHSC6X_CUSTOM_INERTIA_INTERVAL
+	int "Inertia update interval (ms)"
+	default 20
+	help
+	  How often to update cursor position during inertia.
+
+config INPUT_CHSC6X_CUSTOM_INERTIA_THRESHOLD_X100
+	int "Inertia start velocity threshold (x100)"
+	default 80
+	help
+	  Threshold to start inertia. Default 80 means 0.8f.
+
+config INPUT_CHSC6X_CUSTOM_INERTIA_DECAY_X100
+	int "Inertia decay rate (x100)"
+	default 95
+	help
+	  Velocity decay per interval. Default 95 means 0.95 (5% slow down).
+
+endif # INPUT_CHSC6X_CUSTOM_INERTIA
+endif # INPUT_CHSC6X_CUSTOM
