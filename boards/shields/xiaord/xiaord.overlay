@@ -1,12 +1,11 @@
-// Override the touchpad controller to use custom driver
-&chsc6x_xiao_round_display {
-    compatible = "chipsemi,chsc6x-custom";
-};
+#include <../boards/shields/seeed_xiao_round_display/seeed_xiao_round_display.overlay>
 
 / {
     chosen {
         zmk,kscan = &mock_kscan;
         zmk,physical-layout = &physical_layout0;
+        zephyr,display = &gc9a01_xiao_round_display;
+        zmk,display-led = &display_backlight;
     };
 
     mock_kscan: mock_kscan_0 {
@@ -34,5 +33,17 @@
         device = <&chsc6x_xiao_round_display>;
     };
 
+    backlight: node_led {
+        compatible = "gpio-leds";
+        display_backlight: led_0 {
+            gpios = <&xiao_d 6 GPIO_ACTIVE_LOW>;
+            label = "Backlight LED";
+        };
+    };
+
 };
 
+// Override the touchpad controller to use custom driver
+&chsc6x_xiao_round_display {
+    compatible = "chipsemi,chsc6x-custom";
+};
