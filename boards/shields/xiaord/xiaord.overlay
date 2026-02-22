@@ -36,7 +36,7 @@
     backlight: node_led {
         compatible = "gpio-leds";
         display_backlight: led_0 {
-            gpios = <&xiao_d 6 GPIO_ACTIVE_LOW>;
+            gpios = <&xiao_d 6 GPIO_ACTIVE_HIGH>;
             label = "Backlight LED";
         };
     };
