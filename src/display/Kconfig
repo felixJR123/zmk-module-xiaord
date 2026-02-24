@@ -1,0 +1,7 @@
+config XIAORD_VIRTUAL_BUTTONS
+	bool "Virtual touch buttons on xiaord display"
+	depends on ZMK_DISPLAY
+	depends on INPUT
+	help
+	  Adds a second LVGL screen with media-control touch buttons.
+	  Tap the status screen to open it; tap "Back" to return.

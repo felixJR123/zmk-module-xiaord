@@ -9,7 +9,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-/* --- 定数定義 --- */
 #define CHSC6X_READ_ADDR             0
 #define CHSC6X_READ_LENGTH           5
 #define CHSC6X_OUTPUT_POINTS_PRESSED 0
@@ -21,16 +20,12 @@
 #define LONG_PRESS_TIME_MS     CONFIG_INPUT_CHSC6X_CUSTOM_LONG_PRESS_TIME
 #define SWIPE_THRESHOLD        CONFIG_INPUT_CHSC6X_CUSTOM_SWIPE_THRESHOLD
 
-/* --- 慣性パラメータ --- */
-#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
 #define INERTIA_INTERVAL_MS    CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA_INTERVAL
 #define VELOCITY_THRESHOLD     ((float)CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA_THRESHOLD_X100 / 100.0f)
 #define VELOCITY_DECAY         ((float)CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA_DECAY_X100 / 100.0f)
-#endif
 
 LOG_MODULE_REGISTER(chsc6x_custom, CONFIG_INPUT_LOG_LEVEL);
 
-/* --- 型定義とログ用文字列 --- */
 enum gesture_state { ST_IDLE, ST_TOUCH };
 static const char *state_names[] = { "IDLE", "TOUCH" };
 enum gesture_event { EV_DOWN, EV_UP, EV_TIMEOUT };
@@ -60,10 +55,8 @@ struct chsc6x_custom_data {
     bool last_pressed;
     uint32_t last_sample_time, delta_time;
     struct gpio_callback int_gpio_cb;
-#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
     struct k_work_delayable inertial_work;
     float v_delta_x, v_delta_y;
-#endif
 };
 
 static void push_task(struct chsc6x_custom_data *data, uint16_t code, int value, uint32_t delay)
@@ -92,7 +85,6 @@ static void task_processor_handler(struct k_work *work)
     }
 }
 
-#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
 static void chsc6x_inertial_handler(struct k_work *work) {
     struct k_work_delayable *dwork = k_work_delayable_from_work(work);
     struct chsc6x_custom_data *data = CONTAINER_OF(dwork, struct chsc6x_custom_data, inertial_work);
@@ -106,25 +98,21 @@ static void chsc6x_inertial_handler(struct k_work *work) {
         k_work_reschedule(&data->inertial_work, K_MSEC(INERTIA_INTERVAL_MS));
     }
 }
-#endif
 
 
-static void handle_gesture(const struct device *dev, enum gesture_event event) {
-    struct chsc6x_custom_data *data = dev->data;
+static void handle_gesture(struct chsc6x_custom_data *data, enum gesture_event event, bool has_moved) {
     enum gesture_state old_state = data->state;
 
     switch (data->state) {
     case ST_IDLE:
         if (event == EV_DOWN) {
-            data->has_moved = false;
             data->state = ST_TOUCH;
             k_work_reschedule(&data->eval_timer, K_MSEC(LONG_PRESS_TIME_MS));
         }
         break;
 
     case ST_TOUCH:
-        if (data->has_moved) {
-            /* 移動検知によりクリックをキャンセル */
+        if (has_moved) {
             LOG_WRN("Tap canceled: Move detected");
             data->state = ST_IDLE;
             k_work_cancel_delayable(&data->eval_timer);
@@ -144,66 +132,103 @@ static void handle_gesture(const struct device *dev, enum gesture_event event) {
     if (old_state != data->state) {
         LOG_INF("%s -> %s", state_names[old_state], state_names[data->state]);
     }
-
-#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
-    if (event == EV_UP && data->has_moved && data->delta_time > 0) {
-        float velocity = sqrtf(data->v_delta_x * data->v_delta_x + data->v_delta_y * data->v_delta_y) / (float)data->delta_time;
-        if (velocity > VELOCITY_THRESHOLD) {
-            k_work_reschedule(&data->inertial_work, K_MSEC(INERTIA_INTERVAL_MS));
-        }
-    }
-#endif
 }
 
 static void eval_timer_handler(struct k_work *work)
 {
     struct k_work_delayable *dwork = k_work_delayable_from_work(work);
     struct chsc6x_custom_data *data = CONTAINER_OF(dwork, struct chsc6x_custom_data, eval_timer);
-    handle_gesture(data->dev, EV_TIMEOUT);
+    handle_gesture(data, EV_TIMEOUT, data->has_moved);
+}
+
+static inline bool is_swipe_threshold_exceeded(const struct chsc6x_custom_data *data, uint8_t current_col, uint8_t current_row) {
+    int manhattan_dist = abs(current_col - data->start_col) + abs(current_row - data->start_row);
+    return manhattan_dist > SWIPE_THRESHOLD;
+}
+
+static inline float calculate_scaled_delta(uint8_t current_pos, uint8_t last_pos) {
+    return (float)((int16_t)current_pos - (int16_t)last_pos) * SENSITIVITY;
+}
+
+static inline void report_relative_movement(const struct device *dev, float dx, float dy) {
+    input_report_rel(dev, INPUT_REL_X, (int16_t)dx, false, K_FOREVER);
+    input_report_rel(dev, INPUT_REL_Y, (int16_t)dy, true, K_FOREVER);
+}
+
+static inline void update_inertia_velocity(struct chsc6x_custom_data *data, float dx, float dy) {
+    data->v_delta_x = dx;
+    data->v_delta_y = dy;
 }
 
 static int chsc6x_custom_process(const struct device *dev) {
     struct chsc6x_custom_data *data = dev->data;
     const struct chsc6x_custom_config *cfg = dev->config;
-    uint8_t out[5];
+    const bool inertial_cursor = IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA);
+    uint8_t out[CHSC6X_READ_LENGTH];
     uint32_t now = k_uptime_get_32();
 
-    if (i2c_burst_read_dt(&cfg->i2c, 0, out, 5) < 0) return -EIO;
+    if (i2c_burst_read_dt(&cfg->i2c, CHSC6X_READ_ADDR, out, CHSC6X_READ_LENGTH) < 0) return -EIO;
 
-    bool pr = out[0]; uint8_t c = out[2], r = out[4];
+    bool is_pressed = out[CHSC6X_OUTPUT_POINTS_PRESSED];
+    bool was_pressed = data->last_pressed;
+    bool is_just_pressed  = !was_pressed && is_pressed;
+    bool is_dragging      = was_pressed && is_pressed;
+    bool is_just_released = was_pressed && !is_pressed;
 
-    if (pr) {
-        if (!data->last_pressed) {
-#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
+    uint8_t col = out[CHSC6X_OUTPUT_COL];
+    uint8_t row = out[CHSC6X_OUTPUT_ROW];
+
+
+    if(is_just_pressed) {
+        if (inertial_cursor) {
             k_work_cancel_delayable(&data->inertial_work);
-            data->v_delta_x = 0; data->v_delta_y = 0;
-#endif
-            data->start_col = c; data->start_row = r;
-            handle_gesture(dev, EV_DOWN);
-        } else {
-            int dist = abs(c - data->start_col) + abs(r - data->start_row);
-            if (dist > SWIPE_THRESHOLD) data->has_moved = true;
+            update_inertia_velocity(data, 0.0f, 0.0f);
+        }
+        data->start_col = col; 
+        data->start_row = row;
+        data->has_moved = false;
+        handle_gesture(data, EV_DOWN, data->has_moved);
 
-            float dx = (float)((int16_t)c - (int16_t)data->last_col) * SENSITIVITY;
-            float dy = (float)((int16_t)r - (int16_t)data->last_row) * SENSITIVITY;
-            data->delta_time = now - data->last_sample_time;
+    } else if(is_dragging) {
+        if (!data->has_moved && is_swipe_threshold_exceeded(data, col, row)) {
+            data->has_moved = true;
+        }
+        float dx = calculate_scaled_delta(col, data->last_col);
+        float dy = calculate_scaled_delta(row, data->last_row);
+        data->delta_time = now - data->last_sample_time;
+        if (dx != 0.0f || dy != 0.0f) {
+            report_relative_movement(dev, dx, dy);
+            update_inertia_velocity(data, dx, dy);
+        }
 
-            if (dx != 0 || dy != 0) {
-                input_report_rel(dev, INPUT_REL_X, (int16_t)dx, false, K_FOREVER);
-				input_report_rel(dev, INPUT_REL_Y, (int16_t)dy, true, K_FOREVER);
-#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
-                data->v_delta_x = dx;
-                data->v_delta_y = dy;
-#endif
+    } else if(is_just_released){
+        handle_gesture(data, EV_UP, data->has_moved);
+        if (inertial_cursor) {
+            if (data->has_moved && data->delta_time > 0) {
+                float velocity = sqrtf(data->v_delta_x * data->v_delta_x + data->v_delta_y * data->v_delta_y) / (float)data->delta_time;
+                if (velocity > VELOCITY_THRESHOLD) {
+                    k_work_reschedule(&data->inertial_work, K_MSEC(INERTIA_INTERVAL_MS));
+                }
             }
         }
-        data->last_col = c; data->last_row = r;
-        data->last_sample_time = now;
-    } else if (data->last_pressed) {
-        handle_gesture(dev, EV_UP);
     }
-    data->last_pressed = pr;
-	return 0;
+
+    if(is_just_pressed || is_dragging){
+        input_report_abs(dev, INPUT_ABS_X, col, false, K_FOREVER);
+        input_report_abs(dev, INPUT_ABS_Y, row, false, K_FOREVER);
+        input_report_key(dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
+    }else if (is_just_released){
+        input_report_key(dev, INPUT_BTN_TOUCH, 0, true, K_FOREVER);
+    }
+
+    if(is_pressed){
+        data->last_col = col; 
+        data->last_row = row;
+        data->last_sample_time = now;
+    }
+
+    data->last_pressed = is_pressed;
+    return 0;
 }
 
 static void chsc6x_custom_work_handler(struct k_work *work)
@@ -232,9 +257,7 @@ static int chsc6x_custom_init(const struct device *dev)
     k_work_init_delayable(&data->task_processor, task_processor_handler);
     k_work_init_delayable(&data->eval_timer, eval_timer_handler);
     k_msgq_init(&data->task_msgq, (char *)data->task_buf, sizeof(struct btn_task), 8);
-#if IS_ENABLED(CONFIG_INPUT_CHSC6X_CUSTOM_INERTIA)
     k_work_init_delayable(&data->inertial_work, chsc6x_inertial_handler);
-#endif
 
     if (!i2c_is_ready_dt(&config->i2c)) {
         LOG_ERR("I2C bus not ready");

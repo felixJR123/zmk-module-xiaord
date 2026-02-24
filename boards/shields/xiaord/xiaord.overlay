@@ -33,6 +33,7 @@
         device = <&chsc6x_xiao_round_display>;
     };
 
+
     backlight: node_led {
         compatible = "gpio-leds";
         display_backlight: led_0 {
@@ -43,7 +44,7 @@
 
 };
 
-// Override the touchpad controller to use custom driver
+// ToDo : Refactor custom logic into input processors; use default driver.
 &chsc6x_xiao_round_display {
     compatible = "chipsemi,chsc6x-custom";
 };

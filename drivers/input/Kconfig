@@ -62,3 +62,11 @@ config INPUT_CHSC6X_CUSTOM_INERTIA_DECAY_X100
 
 endif # INPUT_CHSC6X_CUSTOM_INERTIA
 endif # INPUT_CHSC6X_CUSTOM
+
+config ZMK_INPUT_PROCESSOR_CODE_CANCELLER
+	bool "Code Canceller Input Processor"
+	default y
+	depends on DT_HAS_ZMK_INPUT_PROCESSOR_CODE_CANCELLER_ENABLED
+	help
+	  Suppress (cancel) specific input event codes, preventing them from
+	  being processed further down the input processor chain.
