@@ -1,14 +1,17 @@
 /*
  * SPDX-License-Identifier: MIT
  *
- * Macropad screen: two large touch buttons that emit INPUT_KEY events,
+ * Macropad screen: five touch buttons that emit INPUT_EV_ZMK_BEHAVIOR events,
  * plus a back button to return to the home screen.
  *
- * Layout (circle r=120, safe area x∈[36,204] y∈[36,204]):
+ * Layout (circle r=120, safe area x∈[36,204] y∈[34,206]):
  *
- *   y=50  [      Button 1  x=36 w=168 h=50     ]
- *   y=110 [      Button 2  x=36 w=168 h=50     ]
- *   y=175 [    ◁ Back  x=72 w=96  h=36   ]
+ *   y=34  [ Key 0  x=36 w=168 h=26 ]
+ *   y=64  [ Key 1  x=36 w=168 h=26 ]
+ *   y=94  [ Key 2  x=36 w=168 h=26 ]
+ *   y=124 [ Key 3  x=36 w=168 h=26 ]
+ *   y=154 [ Key 4  x=36 w=168 h=26 ]
+ *   y=188 [  ◁ Back  x=72 w=96 h=26 ]
  */
 
 #include <lvgl.h>
@@ -45,7 +48,7 @@ static void cb_key_btn(lv_event_t *e)
 {
 	lv_obj_t *btn = lv_event_get_target(e);
 	lv_event_code_t ev = lv_event_get_code(e);
-	enum ss_key_code key = (enum ss_key_code)(uintptr_t)lv_event_get_user_data(e);
+	ss_key_code key = (ss_key_code)(uintptr_t)lv_event_get_user_data(e);
 
 	if (ev == LV_EVENT_PRESSED) {
 		ss_send_key(key, true);
@@ -67,7 +70,7 @@ static void cb_back_btn(lv_event_t *e)
 
 static lv_obj_t *make_btn(lv_obj_t *parent, const char *text,
 			   int x, int y, int w, int h,
-			   enum ss_key_code key)
+			   ss_key_code key)
 {
 	lv_obj_t *btn = lv_obj_create(parent);
 	lv_obj_set_size(btn, w, h);
@@ -106,16 +109,18 @@ static int page_macropad_create(lv_obj_t *screen)
 {
 	init_styles();
 
-	make_btn(screen,      "Button 1", 36,  50, 168, 50, SS_KEY_1);
-	make_btn(screen,      "Button 2", 36, 110, 168, 50, SS_KEY_2);
-	make_back_btn(screen,             72, 175,  96, 36);
+	make_btn(screen, "Key 0", 36,  34, 168, 26, SS_KEY_0);
+	make_btn(screen, "Key 1", 36,  64, 168, 26, SS_KEY_1);
+	make_btn(screen, "Key 2", 36,  94, 168, 26, SS_KEY_2);
+	make_btn(screen, "Key 3", 36, 124, 168, 26, SS_KEY_3);
+	make_btn(screen, "Key 4", 36, 154, 168, 26, SS_KEY_4);
+	make_back_btn(screen,     72, 188,  96, 26);
 
 	return 0;
 }
 
 const struct page_ops page_macropad_ops = {
 	.name         = "macropad",
-	.mouse_active = false,
 	.create       = page_macropad_create,
 	.on_enter     = NULL,
 	.on_leave     = NULL,

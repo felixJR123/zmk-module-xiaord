@@ -63,55 +63,22 @@ config INPUT_CHSC6X_CUSTOM_INERTIA_DECAY_X100
 endif # INPUT_CHSC6X_CUSTOM_INERTIA
 endif # INPUT_CHSC6X_CUSTOM
 
-config ZMK_VIRTUAL_POINTER
-	bool "Virtual touch-to-pointer input converter"
+config ZMK_VIRTUAL_KEY_SOURCE
+	bool "Virtual key source input device"
 	default y
-	depends on DT_HAS_ZMK_VIRTUAL_POINTER_ENABLED
+	depends on DT_HAS_ZMK_VIRTUAL_KEY_SOURCE_ENABLED
 
-if ZMK_VIRTUAL_POINTER
-
-config ZMK_VIRTUAL_POINTER_SENSITIVITY_X10
-	int "Cursor sensitivity (x10)"
-	default 20
-	help
-	  Cursor sensitivity multiplied by 10. Default 20 means 2.0x.
-
-config ZMK_VIRTUAL_POINTER_MIN_BTN_INTERVAL
-	int "Minimum button press/release interval (ms)"
-	default 20
-
-config ZMK_VIRTUAL_POINTER_LONG_PRESS_TIME
-	int "Long press time for right click (ms)"
-	default 600
-
-config ZMK_VIRTUAL_POINTER_SWIPE_THRESHOLD
-	int "Manhattan distance threshold to distinguish tap from swipe"
-	default 10
-
-config ZMK_VIRTUAL_POINTER_INERTIA
-	bool "Enable inertial cursor after flick"
-	default y
-
-if ZMK_VIRTUAL_POINTER_INERTIA
-
-config ZMK_VIRTUAL_POINTER_INERTIA_INTERVAL
-	int "Inertia update interval (ms)"
-	default 20
-
-config ZMK_VIRTUAL_POINTER_INERTIA_THRESHOLD_X100
-	int "Inertia start velocity threshold (x100)"
-	default 80
-	help
-	  Minimum velocity to trigger inertia. Default 80 means 0.80.
-
-config ZMK_VIRTUAL_POINTER_INERTIA_DECAY_X100
-	int "Inertia velocity decay per interval (x100)"
-	default 95
-	help
-	  Fraction of velocity retained each interval. Default 95 means 0.95 (5% slowdown).
-
-endif # ZMK_VIRTUAL_POINTER_INERTIA
-endif # ZMK_VIRTUAL_POINTER
+# Cursor/gesture sub-options preserved for future use:
+# if ZMK_VIRTUAL_KEY_SOURCE
+# config ZMK_VIRTUAL_KEY_SOURCE_SENSITIVITY_X10
+# config ZMK_VIRTUAL_KEY_SOURCE_MIN_BTN_INTERVAL
+# config ZMK_VIRTUAL_KEY_SOURCE_LONG_PRESS_TIME
+# config ZMK_VIRTUAL_KEY_SOURCE_SWIPE_THRESHOLD
+# config ZMK_VIRTUAL_KEY_SOURCE_INERTIA
+# config ZMK_VIRTUAL_KEY_SOURCE_INERTIA_INTERVAL
+# config ZMK_VIRTUAL_KEY_SOURCE_INERTIA_THRESHOLD_X100
+# config ZMK_VIRTUAL_KEY_SOURCE_INERTIA_DECAY_X100
+# endif # ZMK_VIRTUAL_KEY_SOURCE
 
 config ZMK_INPUT_PROCESSOR_CODE_CANCELLER
 	bool "Code Canceller Input Processor"

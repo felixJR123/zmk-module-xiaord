@@ -101,8 +101,12 @@ static void update_clock(lv_timer_t *t)
 
 	snprintf(time_buf, sizeof(time_buf), "%02d:%02d",
 		 time.tm_hour, time.tm_min);
-	snprintf(date_buf, sizeof(date_buf), "%04d-%02d-%02d",
-		 time.tm_year + 1900, time.tm_mon + 1, time.tm_mday);
+	/* Clamp via % so GCC can prove each field fits its format width,
+	 * silencing -Wformat-truncation without enlarging the buffer. */
+	snprintf(date_buf, sizeof(date_buf), "%04u-%02u-%02u",
+		 (unsigned)(time.tm_year + 1900) % 10000u,
+		 (unsigned)(time.tm_mon + 1)     % 100u,
+		 (unsigned)time.tm_mday          % 100u);
 
 	lv_label_set_text(s_lbl_time, time_buf);
 	lv_label_set_text(s_lbl_date, date_buf);
@@ -384,7 +388,6 @@ static void page_clock_leave(void)
 
 const struct page_ops page_clock_ops = {
 	.name         = "clock",
-	.mouse_active = false,
 	.create       = page_clock_create,
 	.on_enter     = page_clock_enter,
 	.on_leave     = page_clock_leave,

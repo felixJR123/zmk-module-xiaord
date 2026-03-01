@@ -1,13 +1,14 @@
 /*
  * SPDX-License-Identifier: MIT
  *
- * Home screen: full-screen mouse surface with a menu button at the bottom.
- * Background touches are routed to the virtual pointer by the coordinator.
+ * Home screen: full-screen view with a menu button at the bottom.
  * Long-pressing the menu button navigates to the macropad screen.
  */
 
 #include <lvgl.h>
 #include "page_ops.h"
+
+extern const lv_image_dsc_t test;
 
 static void menu_btn_cb(lv_event_t *e)
 {
@@ -18,6 +19,11 @@ static void menu_btn_cb(lv_event_t *e)
 
 static int page_home_create(lv_obj_t *tile)
 {
+	/* Test image — full-screen background */
+	lv_obj_t *img = lv_img_create(tile);
+	lv_img_set_src(img, &test);
+	lv_obj_center(img);
+
 	/* Menu button — bottom-center, small enough to stay in the safe area */
 	lv_obj_t *btn = lv_obj_create(tile);
 	lv_obj_set_size(btn, 48, 48);
@@ -34,7 +40,6 @@ static int page_home_create(lv_obj_t *tile)
 
 const struct page_ops page_home_ops = {
 	.name         = "home",
-	.mouse_active = true,
 	.create       = page_home_create,
 	.on_enter     = NULL,
 	.on_leave     = NULL,

@@ -5,7 +5,6 @@
  *
  * Responsibilities:
  *  - Create independent LVGL screens, register all pages
- *  - Route touch events: mouse_active pages → virtual pointer, others → native LVGL
  *  - Manage page lifecycle (on_enter / on_leave) on transitions
  *  - Provide ss_navigate_to() and ss_send_key() APIs for pages to call
  */
@@ -17,11 +16,11 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
-#include <virtual_pointer.h>
 #include "page_ops.h"
+#include "xiaord_input_codes.h"
 
-BUILD_ASSERT(IS_ENABLED(CONFIG_ZMK_VIRTUAL_POINTER),
-	"xiaord status_screen requires CONFIG_ZMK_VIRTUAL_POINTER");
+BUILD_ASSERT(IS_ENABLED(CONFIG_ZMK_VIRTUAL_KEY_SOURCE),
+	"xiaord status_screen requires CONFIG_ZMK_VIRTUAL_KEY_SOURCE");
 BUILD_ASSERT(IS_ENABLED(CONFIG_LV_USE_THEME_DEFAULT),
 	"xiaord status_screen requires CONFIG_LV_USE_THEME_DEFAULT");
 
@@ -31,9 +30,9 @@ extern const struct page_ops page_home_ops;
 extern const struct page_ops page_clock_ops;
 extern const struct page_ops page_macropad_ops;
 
-/* ── Virtual pointer device ────────────────────────────────────────────── */
+/* ── Virtual key source device ─────────────────────────────────────────── */
 
-static const struct device *s_vpointer = DEVICE_DT_GET(DT_NODELABEL(vpointer));
+static const struct device *s_vkey = DEVICE_DT_GET(DT_NODELABEL(vkey));
 
 /* ── Page registration table ───────────────────────────────────────────── */
 
@@ -54,13 +53,6 @@ static struct page_entry s_pages[] = {
 
 static uint8_t s_active_page;
 
-/* ── Key map ────────────────────────────────────────────────────────────── */
-
-static const uint16_t s_key_map[SS_KEY_COUNT] = {
-	[SS_KEY_1] = INPUT_KEY_1,
-	[SS_KEY_2] = INPUT_KEY_2,
-};
-
 /* ── Public API ─────────────────────────────────────────────────────────── */
 
 void ss_navigate_to(uint8_t page_idx)
@@ -71,9 +63,6 @@ void ss_navigate_to(uint8_t page_idx)
 
 	/* Leave current page */
 	struct page_entry *old = &s_pages[s_active_page];
-	if (old->ops->mouse_active) {
-		zmk_virtual_pointer_feed(s_vpointer, 0, 0, false);
-	}
 	if (old->ops->on_leave) {
 		old->ops->on_leave();
 	}
@@ -86,27 +75,13 @@ void ss_navigate_to(uint8_t page_idx)
 	}
 }
 
-void ss_send_key(enum ss_key_code key, bool pressed)
+void ss_send_key(ss_key_code key, bool pressed)
 {
-	if (key <= 0 || key >= SS_KEY_COUNT) {
+	if ((unsigned)key >= SS_KEY_COUNT) {
 		LOG_WRN("ss_send_key: invalid key %d", key);
 		return;
 	}
-	input_report_key(s_vpointer, s_key_map[key], pressed ? 1 : 0, true, K_NO_WAIT);
-}
-
-/* ── Touch routing callback ─────────────────────────────────────────────── */
-
-static void tile_touch_cb(lv_event_t *e)
-{
-	lv_event_code_t code = lv_event_get_code(e);
-	lv_indev_t *indev = lv_indev_get_act();
-	lv_point_t pt;
-
-	lv_indev_get_point(indev, &pt);
-	bool pressed = (code != LV_EVENT_RELEASED && code != LV_EVENT_PRESS_LOST);
-
-	zmk_virtual_pointer_feed(s_vpointer, (int16_t)pt.x, (int16_t)pt.y, pressed);
+	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIOR, (uint16_t)key, pressed ? 1 : 0, true, K_NO_WAIT);
 }
 
 /* ── Color theme ─────────────────────────────────────────────────────────── */
@@ -141,14 +116,6 @@ lv_obj_t *zmk_display_status_screen(void)
 		/* Build page widgets */
 		if (s_pages[i].ops->create) {
 			s_pages[i].ops->create(screen);
-		}
-
-		/* mouse_active screens forward background touches to virtual pointer */
-		if (s_pages[i].ops->mouse_active) {
-			lv_obj_add_flag(screen, LV_OBJ_FLAG_CLICKABLE);
-			lv_obj_add_event_cb(screen, tile_touch_cb, LV_EVENT_PRESSING,   NULL);
-			lv_obj_add_event_cb(screen, tile_touch_cb, LV_EVENT_RELEASED,   NULL);
-			lv_obj_add_event_cb(screen, tile_touch_cb, LV_EVENT_PRESS_LOST, NULL);
 		}
 	}
 

@@ -1,0 +1,6 @@
+description: Virtual key source input device
+
+compatible: "zmk,virtual-key-source"
+
+# No hardware input phandle — key events are emitted via input_report_key()
+# from the display layer (status_screen.c → ss_send_key()).
