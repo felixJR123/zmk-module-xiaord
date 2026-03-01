@@ -28,9 +28,13 @@
         transform = <&default_transform>;
     };
 
+    vpointer: vpointer {
+        compatible = "zmk,virtual-pointer";
+    };
+
     touchpad_listener: touchpad_listener {
         compatible = "zmk,input-listener";
-        device = <&chsc6x_xiao_round_display>;
+        device = <&vpointer>;
     };
 
 
@@ -45,6 +49,6 @@
 };
 
 // ToDo : Refactor custom logic into input processors; use default driver.
-&chsc6x_xiao_round_display {
-    compatible = "chipsemi,chsc6x-custom";
-};
+//&chsc6x_xiao_round_display {
+//    compatible = "chipsemi,chsc6x-custom";
+//};
