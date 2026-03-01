@@ -28,6 +28,7 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_LV_USE_THEME_DEFAULT),
 /* ── Page declarations ─────────────────────────────────────────────────── */
 
 extern const struct page_ops page_home_ops;
+extern const struct page_ops page_clock_ops;
 extern const struct page_ops page_macropad_ops;
 
 /* ── Virtual pointer device ────────────────────────────────────────────── */
@@ -43,6 +44,7 @@ struct page_entry {
 
 static struct page_entry s_pages[] = {
 	[PAGE_HOME]     = { .ops = &page_home_ops },
+	[PAGE_CLOCK]    = { .ops = &page_clock_ops },
 	[PAGE_MACROPAD] = { .ops = &page_macropad_ops },
 };
 

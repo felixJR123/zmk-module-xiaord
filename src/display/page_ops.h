@@ -15,7 +15,8 @@
 /* ── Page indices ──────────────────────────────────────────────────────── */
 
 #define PAGE_HOME     0
-#define PAGE_MACROPAD 1
+#define PAGE_CLOCK    1
+#define PAGE_MACROPAD 2
 
 /* ── Key codes (mapped to INPUT_KEY_x by coordinator) ─────────────────── */
 

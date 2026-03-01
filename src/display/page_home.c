@@ -12,7 +12,7 @@
 static void menu_btn_cb(lv_event_t *e)
 {
 	if (lv_event_get_code(e) == LV_EVENT_LONG_PRESSED) {
-		ss_navigate_to(PAGE_MACROPAD);
+		ss_navigate_to(PAGE_CLOCK);
 	}
 }
 
