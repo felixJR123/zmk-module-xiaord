@@ -3,6 +3,7 @@
 #include <dt-bindings/zmk/keys.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 #include <dt-bindings/xiaord/input_codes.h>
+#include "zmk_behaviors.dtsi"
 
 / {
     chosen {
@@ -39,7 +40,7 @@
     macropad_behaviors: macropad_behaviors {
         compatible = "zmk,input-processor-behaviors";
         #input-processor-cells = <0>;
-        type = <INPUT_EV_ZMK_BEHAVIOR>;
+        type = <INPUT_EV_ZMK_BEHAVIORS>;
         codes = <SS_KEY_0 SS_KEY_1 SS_KEY_2 SS_KEY_3 SS_KEY_4>;
         bindings = <&kp KP_N0 &kp KP_N1 &kp KP_N2 &kp KP_N3 &kp KP_N4>;
     };
@@ -47,7 +48,7 @@
     touchpad_listener: touchpad_listener {
         compatible = "zmk,input-listener";
         device = <&vkey>;
-        input-processors = <&macropad_behaviors>;
+        input-processors = <&macropad_behaviors &zmk_behaviors>;
     };
 
 

@@ -18,13 +18,16 @@
 #define PAGE_CLOCK    1
 #define PAGE_MACROPAD 2
 
-/* ── Key codes (used directly as INPUT_EV_ZMK_BEHAVIOR event codes) ────── */
+/* ── Key codes (used directly as INPUT_EV_ZMK_BEHAVIORS event codes) ────── */
 
-/* SS_KEY_0..SS_KEY_4, SS_KEY_COUNT, INPUT_EV_ZMK_BEHAVIOR defined here: */
+/* SS_KEY_0..SS_KEY_4, SS_KEY_COUNT, ZMK_BEHAVIOR_*, INPUT_EV_ZMK_BEHAVIORS defined here: */
 #include "xiaord_input_codes.h"
 
 /* Type alias for key slot index — use SS_KEY_* constants for values. */
 typedef uint8_t ss_key_code;
+
+/* Type alias for ZMK behavior code — use ZMK_BEHAVIOR_* constants for values. */
+typedef uint16_t zmk_behavior_code;
 
 /* ── Per-page operations interface ────────────────────────────────────── */
 
@@ -50,3 +53,10 @@ void ss_navigate_to(uint8_t page_idx);
  * @param pressed true for key-down, false for key-up
  */
 void ss_send_key(ss_key_code key, bool pressed);
+
+/**
+ * Fire a ZMK system/BT behavior by sending a press+release pair.
+ * Use for one-shot actions like sys_reset, bootloader, bt BT_CLR, etc.
+ * @param code  ZMK_BEHAVIOR_* constant from input_codes.h
+ */
+void ss_fire_behavior(zmk_behavior_code code);

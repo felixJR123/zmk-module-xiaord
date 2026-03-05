@@ -8,8 +8,6 @@
 #include <lvgl.h>
 #include "page_ops.h"
 
-extern const lv_image_dsc_t test;
-
 static void menu_btn_cb(lv_event_t *e)
 {
 	if (lv_event_get_code(e) == LV_EVENT_LONG_PRESSED) {
@@ -19,11 +17,6 @@ static void menu_btn_cb(lv_event_t *e)
 
 static int page_home_create(lv_obj_t *tile)
 {
-	/* Test image — full-screen background */
-	lv_obj_t *img = lv_img_create(tile);
-	lv_img_set_src(img, &test);
-	lv_obj_center(img);
-
 	/* Menu button — bottom-center, small enough to stay in the safe area */
 	lv_obj_t *btn = lv_obj_create(tile);
 	lv_obj_set_size(btn, 48, 48);

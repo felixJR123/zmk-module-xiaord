@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: MIT
  *
- * Macropad screen: five touch buttons that emit INPUT_EV_ZMK_BEHAVIOR events,
+ * Macropad screen: five touch buttons that emit INPUT_EV_ZMK_BEHAVIORS events,
  * plus a back button to return to the home screen.
  *
  * Layout (circle r=120, safe area x∈[36,204] y∈[34,206]):

@@ -3,6 +3,5 @@
 zephyr_library()
 zephyr_library_sources(status_screen.c)
 zephyr_library_sources(page_home.c)
-zephyr_library_sources(test.c)
 zephyr_library_sources(page_clock.c)
 zephyr_library_sources(page_macropad.c)

@@ -81,7 +81,13 @@ void ss_send_key(ss_key_code key, bool pressed)
 		LOG_WRN("ss_send_key: invalid key %d", key);
 		return;
 	}
-	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIOR, (uint16_t)key, pressed ? 1 : 0, true, K_NO_WAIT);
+	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, (uint16_t)key, pressed ? 1 : 0, true, K_NO_WAIT);
+}
+
+void ss_fire_behavior(zmk_behavior_code code)
+{
+	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, code, 1, true, K_NO_WAIT);
+	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, code, 0, true, K_NO_WAIT);
 }
 
 /* ── Color theme ─────────────────────────────────────────────────────────── */
