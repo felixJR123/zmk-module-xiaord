@@ -31,6 +31,7 @@
             ZMK_BEHAVIOR_BT_DISC_0     ZMK_BEHAVIOR_BT_DISC_1
             ZMK_BEHAVIOR_BT_DISC_2     ZMK_BEHAVIOR_BT_DISC_3
             ZMK_BEHAVIOR_BT_DISC_4
+            SS_UPLOAD
         >;
         bindings = <
             &sys_reset     &bootloader
@@ -43,6 +44,7 @@
             &bt BT_DISC 0  &bt BT_DISC 1
             &bt BT_DISC 2  &bt BT_DISC 3
             &bt BT_DISC 4
+            &bootloader
         >;
     };
 };

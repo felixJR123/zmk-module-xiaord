@@ -57,27 +57,39 @@ static void update_datetime(lv_timer_t *t)
 			      time.tm_hour, time.tm_min);
 }
 
-/* ── Button callbacks ──────────────────────────────────────────────────── */
+/* ── Circle button descriptor ──────────────────────────────────────────── */
 
-static void bootloader_btn_cb(lv_event_t *e)
-{
-	if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
-		ss_fire_behavior(ZMK_BEHAVIOR_BOOTLOADER);
-	}
-}
+struct circle_btn_desc {
+	int16_t     x, y;       /* offset from center */
+	const char *symbol;
+	uint16_t    code;       /* SS_* code for ss_fire_behavior */
+	int8_t      nav_page;   /* >=0: also navigate; -1: no nav */
+};
 
-static void datetime_area_cb(lv_event_t *e)
-{
-	if (lv_event_get_code(e) == LV_EVENT_LONG_PRESSED) {
-		ss_navigate_to(PAGE_CLOCK);
-	}
-}
+static const struct circle_btn_desc s_circle_btns[12] = {
+	{   0, -105, LV_SYMBOL_UPLOAD,     SS_UPLOAD,     -1            },
+	{  53,  -91, LV_SYMBOL_POWER,      SS_POWER,      -1            },
+	{  91,  -53, LV_SYMBOL_VOLUME_MAX, SS_VOLUME_MAX, -1            },
+	{ 105,    0, LV_SYMBOL_MUTE,       SS_MUTE,       -1            },
+	{  91,   53, LV_SYMBOL_VOLUME_MID, SS_VOLUME_MID, -1            },
+	{  53,   91, LV_SYMBOL_PLUS,       SS_PLUS,       -1            },
+	{   0,  105, LV_SYMBOL_MINUS,      SS_MINUS,      -1            },
+	{ -53,   91, LV_SYMBOL_EYE_CLOSE,  SS_EYE_CLOSE,  -1            },
+	{ -91,   53, LV_SYMBOL_USB,        SS_USB,        -1            },
+	{-105,    0, LV_SYMBOL_BLUETOOTH,  SS_BLUETOOTH,  PAGE_MACROPAD },
+	{ -91,  -53, LV_SYMBOL_HOME,       SS_HOME,       -1            },
+	{ -53,  -91, LV_SYMBOL_SETTINGS,   SS_SETTINGS,   PAGE_CLOCK    },
+};
 
-static void lower_area_cb(lv_event_t *e)
+/* ── Circle button callback ────────────────────────────────────────────── */
+
+static void circle_btn_cb(lv_event_t *e)
 {
-	if (lv_event_get_code(e) == LV_EVENT_LONG_PRESSED) {
-		ss_navigate_to(PAGE_MACROPAD);
-	}
+	if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+	int idx = (int)(uintptr_t)lv_event_get_user_data(e);
+	ss_fire_behavior(s_circle_btns[idx].code);
+	if (s_circle_btns[idx].nav_page >= 0)
+		ss_navigate_to(s_circle_btns[idx].nav_page);
 }
 
 /* ── Page create ───────────────────────────────────────────────────────── */
@@ -150,36 +162,23 @@ static int page_home_create(lv_obj_t *tile)
 
 	home_status_init(output_lbl, periph_bat_arcs, periph_bat_lbls);
 
-	/* ── Bootloader button — above date ────────────────────────────── */
-	lv_obj_t *boot_btn = lv_obj_create(tile);
-	lv_obj_set_size(boot_btn, 48, 48);
-	lv_obj_align(boot_btn, LV_ALIGN_CENTER, 0, -102);
-	lv_obj_set_style_bg_opa(boot_btn, LV_OPA_TRANSP, 0);
-	lv_obj_set_style_border_width(boot_btn, 0, 0);
-	lv_obj_add_flag(boot_btn, LV_OBJ_FLAG_CLICKABLE);
-	lv_obj_add_event_cb(boot_btn, bootloader_btn_cb, LV_EVENT_ALL, NULL);
-
-	lv_obj_t *boot_lbl = lv_label_create(boot_btn);
-	lv_label_set_text(boot_lbl, LV_SYMBOL_UPLOAD);
-	lv_obj_center(boot_lbl);
-
-	/* ── DateTime overlay — long-press navigates to clock/RTC screen ── */
-	lv_obj_t *datetime_overlay = lv_obj_create(tile);
-	lv_obj_set_size(datetime_overlay, 200, 70);
-	lv_obj_align(datetime_overlay, LV_ALIGN_CENTER, 0, -47);
-	lv_obj_set_style_bg_opa(datetime_overlay, LV_OPA_TRANSP, 0);
-	lv_obj_set_style_border_width(datetime_overlay, 0, 0);
-	lv_obj_add_flag(datetime_overlay, LV_OBJ_FLAG_CLICKABLE);
-	lv_obj_add_event_cb(datetime_overlay, datetime_area_cb, LV_EVENT_ALL, NULL);
-
-	/* ── Lower overlay — long-press navigates to macropad screen ─────── */
-	lv_obj_t *lower_overlay = lv_obj_create(tile);
-	lv_obj_set_size(lower_overlay, 200, 100);
-	lv_obj_align(lower_overlay, LV_ALIGN_CENTER, 0, 45);
-	lv_obj_set_style_bg_opa(lower_overlay, LV_OPA_TRANSP, 0);
-	lv_obj_set_style_border_width(lower_overlay, 0, 0);
-	lv_obj_add_flag(lower_overlay, LV_OBJ_FLAG_CLICKABLE);
-	lv_obj_add_event_cb(lower_overlay, lower_area_cb, LV_EVENT_ALL, NULL);
+	/* ── Circle button ring — 12 buttons on r=105px circumference ──── */
+	for (int i = 0; i < 12; i++) {
+		const struct circle_btn_desc *d = &s_circle_btns[i];
+		lv_obj_t *btn = lv_obj_create(tile);
+		lv_obj_set_size(btn, 32, 32);
+		lv_obj_align(btn, LV_ALIGN_CENTER, d->x, d->y);
+		lv_obj_set_style_radius(btn, LV_RADIUS_CIRCLE, 0);
+		lv_obj_set_style_bg_color(btn, lv_color_white(), 0);
+		lv_obj_set_style_bg_opa(btn, LV_OPA_30, 0);
+		lv_obj_set_style_border_width(btn, 0, 0);
+		lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
+		lv_obj_set_scrollbar_mode(btn, LV_SCROLLBAR_MODE_OFF);
+		lv_obj_add_event_cb(btn, circle_btn_cb, LV_EVENT_ALL, (void *)(uintptr_t)i);
+		lv_obj_t *lbl = lv_label_create(btn);
+		lv_label_set_text(lbl, d->symbol);
+		lv_obj_center(lbl);
+	}
 
 	/* 1-second timer, created paused — resumed only while page is active */
 	s_timer = lv_timer_create(update_datetime, 1000, NULL);

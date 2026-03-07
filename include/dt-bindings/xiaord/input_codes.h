@@ -49,3 +49,18 @@
 #define ZMK_BEHAVIOR_BT_DISC_2      0x42
 #define ZMK_BEHAVIOR_BT_DISC_3      0x43
 #define ZMK_BEHAVIOR_BT_DISC_4      0x44
+
+/* Circle-button codes — used as event codes with INPUT_EV_ZMK_BEHAVIORS.
+ *   0x50-0x5F  home screen circle buttons */
+#define SS_UPLOAD      0x50
+#define SS_POWER       0x51
+#define SS_VOLUME_MAX  0x52
+#define SS_MUTE        0x53
+#define SS_VOLUME_MID  0x54
+#define SS_PLUS        0x55
+#define SS_MINUS       0x56
+#define SS_EYE_CLOSE   0x57
+#define SS_USB         0x58
+#define SS_BLUETOOTH   0x59
+#define SS_HOME        0x5A
+#define SS_SETTINGS    0x5B
