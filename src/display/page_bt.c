@@ -56,6 +56,7 @@ static void profile_btn_cb(lv_event_t *e)
 		}
 	}
 
+	ss_fire_behavior(INPUT_VIRTUAL_ZMK_OUT_BLE);
 	ss_fire_behavior(INPUT_VIRTUAL_ZMK_BT_SEL_0 + idx);
 }
 
