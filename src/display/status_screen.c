@@ -56,22 +56,6 @@ static struct page_entry s_pages[] = {
 
 static uint8_t s_active_page;
 
-/* ── Auto-return timer ──────────────────────────────────────────────────── */
-
-#define AUTORETURN_MS 10000
-
-static lv_timer_t *s_autoreturn_timer;
-
-static void autoreturn_cb(lv_timer_t *timer)
-{
-	ss_navigate_to(PAGE_HOME);
-}
-
-static void autoreturn_reset_cb(lv_event_t *e)
-{
-	lv_timer_reset(s_autoreturn_timer);
-}
-
 /* ── Public API ─────────────────────────────────────────────────────────── */
 
 void ss_navigate_to(uint8_t page_idx)
@@ -93,13 +77,7 @@ void ss_navigate_to(uint8_t page_idx)
 		s_pages[page_idx].ops->on_enter();
 	}
 
-	/* Auto-return timer: run on non-HOME pages, pause on HOME */
-	if (page_idx == PAGE_HOME) {
-		lv_timer_pause(s_autoreturn_timer);
-	} else {
-		lv_timer_reset(s_autoreturn_timer);
-		lv_timer_resume(s_autoreturn_timer);
-	}
+
 }
 
 void ss_send_key(input_virtual_code key, bool pressed)
@@ -164,15 +142,7 @@ lv_obj_t *zmk_display_status_screen(void)
 			s_pages[i].ops->create(screen);
 		}
 
-		/* Reset the auto-return timer on any touch on non-HOME pages */
-		if (i != PAGE_HOME) {
-			lv_obj_add_event_cb(screen, autoreturn_reset_cb, LV_EVENT_PRESSED, NULL);
-		}
 	}
-
-	/* Create the auto-return timer, initially paused (HOME is the start page) */
-	s_autoreturn_timer = lv_timer_create(autoreturn_cb, AUTORETURN_MS, NULL);
-	lv_timer_pause(s_autoreturn_timer);
 
 	/* Fire on_enter for the initial page */
 	if (s_pages[0].ops->on_enter) {
