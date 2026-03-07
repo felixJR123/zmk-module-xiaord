@@ -52,6 +52,29 @@
     };
 
 
+    home_buttons {
+        compatible = "xiaord,home-buttons";
+
+        btn_upload {
+            position = <0>;  /* 12 o'clock */
+            code = <INPUT_VIRTUAL_SYM_UPLOAD>;
+        };
+        btn_usb {
+            position = <8>;  /* 8 o'clock */
+            code = <INPUT_VIRTUAL_SYM_USB>;
+        };
+        btn_bt {
+            position = <9>;  /* 9 o'clock */
+            code = <INPUT_VIRTUAL_SYM_BLUETOOTH>;
+            nav-page = <XIAORD_PAGE_BT>;
+        };
+        btn_settings {
+            position = <11>; /* 11 o'clock */
+            code = <INPUT_VIRTUAL_SYM_SETTINGS>;
+            nav-page = <XIAORD_PAGE_CLOCK>;
+        };
+    };
+
     backlight: node_led {
         compatible = "gpio-leds";
         display_backlight: led_0 {

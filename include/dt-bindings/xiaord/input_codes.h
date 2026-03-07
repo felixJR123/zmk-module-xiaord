@@ -150,3 +150,9 @@
 #define INPUT_VIRTUAL_SYM_NEW_LINE      0x13B
 #define INPUT_VIRTUAL_SYM_DUMMY         0x13C
 #define INPUT_VIRTUAL_SYM_EDIT          0x13D
+
+/* ── Page indices for use in DTS overlays ───────────────────────────────── */
+
+#define XIAORD_PAGE_HOME   0
+#define XIAORD_PAGE_CLOCK  1
+#define XIAORD_PAGE_BT     2
