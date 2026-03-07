@@ -7,39 +7,39 @@
 
 / {
     chosen {
-        zmk,kscan = &mock_kscan;
-        zmk,physical-layout = &physical_layout0;
+        zmk,kscan = &xiaord_mock_kscan;
+        zmk,physical-layout = &xiaord_physical_layout0;
         zephyr,display = &gc9a01_xiao_round_display;
         zmk,display-led = &display_backlight;
     };
 
-    mock_kscan: mock_kscan_0 {
+    xiaord_mock_kscan: mock_kscan_0 {
         compatible = "zmk,kscan-mock";
         columns = <0>;
         rows = <0>;
         events = <0>;
     };
 
-    default_transform: keymap_transform_0 {
+    xiaord_default_transform: keymap_transform_0 {
         compatible = "zmk,matrix-transform";
         columns = <0>;
         rows = <0>;
         map = < >;
     };
 
-    physical_layout0: physical_layout_0 {
+    xiaord_physical_layout0: physical_layout_0 {
         compatible = "zmk,physical-layout";
         display-name = "Default Layout";
-        transform = <&default_transform>;
+        transform = <&xiaord_default_transform>;
     };
 
-    vkey: vkey {
+    virtual_key_source: vkey {
         compatible = "zmk,virtual-key-source";
     };
 
     touchpad_listener: touchpad_listener {
         compatible = "zmk,input-listener";
-        device = <&vkey>;
+        device = <&virtual_key_source>;
         input-processors = <&virtual_zmk_behavior &virtual_symbol_behavior>;
     };
 
@@ -107,8 +107,3 @@
     };
 
 };
-
-// ToDo : Refactor custom logic into input processors; use default driver.
-//&chsc6x_xiao_round_display {
-//    compatible = "chipsemi,chsc6x-custom";
-//};

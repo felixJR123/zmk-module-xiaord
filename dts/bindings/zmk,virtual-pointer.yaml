@@ -1,6 +1,0 @@
-description: Virtual touch-to-pointer input converter
-
-compatible: "zmk,virtual-pointer"
-
-# No hardware input phandle — touch frames are fed via
-# zmk_virtual_pointer_feed() from the display layer (status_screen.c).

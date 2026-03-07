@@ -35,7 +35,7 @@ extern const struct page_ops page_bt_ops;
 
 /* ── Virtual key source device ─────────────────────────────────────────── */
 
-static const struct device *s_vkey = DEVICE_DT_GET(DT_NODELABEL(vkey));
+static const struct device *s_vkey = DEVICE_DT_GET(DT_NODELABEL(virtual_key_source));
 
 /* ── Page registration table ───────────────────────────────────────────── */
 
