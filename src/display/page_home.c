@@ -59,13 +59,6 @@ static void update_datetime(lv_timer_t *t)
 
 /* ── Button callbacks ──────────────────────────────────────────────────── */
 
-static void menu_btn_cb(lv_event_t *e)
-{
-	if (lv_event_get_code(e) == LV_EVENT_LONG_PRESSED) {
-		ss_navigate_to(PAGE_CLOCK);
-	}
-}
-
 static void bootloader_btn_cb(lv_event_t *e)
 {
 	if (lv_event_get_code(e) == LV_EVENT_LONG_PRESSED) {
@@ -80,17 +73,18 @@ static int page_home_create(lv_obj_t *tile)
 	/* ── Date label — upper area ────────────────────────────────────── */
 	s_date_lbl = lv_label_create(tile);
 	lv_label_set_text(s_date_lbl, "--- -- ---");
-	lv_obj_align(s_date_lbl, LV_ALIGN_CENTER, 0, -65);
+	lv_obj_align(s_date_lbl, LV_ALIGN_CENTER, 0, -77);
 
 	/* ── Time label ─────────────────────────────────────────────────── */
 	s_time_lbl = lv_label_create(tile);
 	lv_label_set_text(s_time_lbl, "--:--");
-	lv_obj_align(s_time_lbl, LV_ALIGN_CENTER, 0, -40);
+	lv_obj_set_style_text_font(s_time_lbl, &lv_font_montserrat_48, 0);
+	lv_obj_align(s_time_lbl, LV_ALIGN_CENTER, 0, -37);
 
 	/* ── Output status label ────────────────────────────────────────── */
 	lv_obj_t *output_lbl = lv_label_create(tile);
 	lv_label_set_text(output_lbl, "");
-	lv_obj_align(output_lbl, LV_ALIGN_TOP_MID, 0, 55);
+	lv_obj_align(output_lbl, LV_ALIGN_BOTTOM_MID, 0, -20);
 
 	/* ── Peripheral battery arc gauges — lower half ─────────────────── */
 	lv_obj_t *periph_bat_arcs[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
@@ -98,8 +92,8 @@ static int page_home_create(lv_obj_t *tile)
 
 	const int n_periph     = ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT;
 	const int spacing      = 70;
-	const int arc_sz       = 40;
-	const int center_y_off = 50;
+	const int arc_sz       = 48;
+	const int center_y_off = 55;
 
 	for (int i = 0; i < n_periph; i++) {
 		/* X offset: centres the group symmetrically around x=0 */
@@ -142,23 +136,10 @@ static int page_home_create(lv_obj_t *tile)
 
 	home_status_init(output_lbl, periph_bat_arcs, periph_bat_lbls);
 
-	/* ── Settings button — bottom-center-left ───────────────────────── */
-	lv_obj_t *btn = lv_obj_create(tile);
-	lv_obj_set_size(btn, 48, 48);
-	lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, -30, -16);
-	lv_obj_set_style_bg_opa(btn, LV_OPA_TRANSP, 0);
-	lv_obj_set_style_border_width(btn, 0, 0);
-	lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
-	lv_obj_add_event_cb(btn, menu_btn_cb, LV_EVENT_ALL, NULL);
-
-	lv_obj_t *lbl = lv_label_create(btn);
-	lv_label_set_text(lbl, LV_SYMBOL_SETTINGS);
-	lv_obj_center(lbl);
-
-	/* ── Bootloader button — bottom-center-right ────────────────────── */
+	/* ── Bootloader button — above date ────────────────────────────── */
 	lv_obj_t *boot_btn = lv_obj_create(tile);
 	lv_obj_set_size(boot_btn, 48, 48);
-	lv_obj_align(boot_btn, LV_ALIGN_BOTTOM_MID, 30, -16);
+	lv_obj_align(boot_btn, LV_ALIGN_CENTER, 0, -102);
 	lv_obj_set_style_bg_opa(boot_btn, LV_OPA_TRANSP, 0);
 	lv_obj_set_style_border_width(boot_btn, 0, 0);
 	lv_obj_add_flag(boot_btn, LV_OBJ_FLAG_CLICKABLE);
