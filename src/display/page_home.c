@@ -12,6 +12,7 @@
 #include <dt-bindings/xiaord/input_codes.h>
 #include "page_ops.h"
 #include "home_status.h"
+#include "bt_status.h"
 
 /* ── RTC device ────────────────────────────────────────────────────────── */
 
@@ -84,7 +85,7 @@ static const struct circle_btn_desc s_circle_btns[12] = {
 	{   0,  105, LV_SYMBOL_MINUS,      SS_MINUS,      -1            },
 	{ -53,   91, LV_SYMBOL_EYE_CLOSE,  SS_EYE_CLOSE,  -1            },
 	{ -91,   53, LV_SYMBOL_USB,        SS_USB,        -1            },
-	{-105,    0, LV_SYMBOL_BLUETOOTH,  SS_BLUETOOTH,  PAGE_MACROPAD },
+	{-105,    0, LV_SYMBOL_BLUETOOTH,  SS_BLUETOOTH,  PAGE_BT       },
 	{ -91,  -53, LV_SYMBOL_HOME,       SS_HOME,       -1            },
 	{ -53,  -91, LV_SYMBOL_SETTINGS,   SS_SETTINGS,   PAGE_CLOCK    },
 };
@@ -191,8 +192,7 @@ static int page_home_create(lv_obj_t *tile)
 	lv_obj_align(s_time_lbl, LV_ALIGN_CENTER, 0, -27);
 
 	/* ── Output status label ────────────────────────────────────────── */
-	lv_obj_t *output_lbl = lv_label_create(tile);
-	lv_label_set_text(output_lbl, "");
+	lv_obj_t *output_lbl = create_output_status_label(tile, &lv_font_montserrat_24);
 	lv_obj_align(output_lbl, LV_ALIGN_BOTTOM_MID, 0, -35);
 
 	/* ── Peripheral battery arc gauges — lower half ─────────────────── */

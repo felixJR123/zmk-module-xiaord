@@ -14,9 +14,9 @@
 
 /* ── Page indices ──────────────────────────────────────────────────────── */
 
-#define PAGE_HOME     0
-#define PAGE_CLOCK    1
-#define PAGE_MACROPAD 2
+#define PAGE_HOME  0
+#define PAGE_CLOCK 1
+#define PAGE_BT    2
 
 /* ── Key codes (used directly as INPUT_EV_ZMK_BEHAVIORS event codes) ────── */
 
@@ -42,7 +42,7 @@ struct page_ops {
 
 /**
  * Programmatically navigate to a page by index.
- * @param page_idx  index in the page table (PAGE_HOME, PAGE_MACROPAD, ...)
+ * @param page_idx  index in the page table (PAGE_HOME, PAGE_BT, ...)
  */
 void ss_navigate_to(uint8_t page_idx);
 

@@ -64,3 +64,19 @@
 #define SS_BLUETOOTH   0x59
 #define SS_HOME        0x5A
 #define SS_SETTINGS    0x5B
+
+/* BT settings screen codes — 16-slot ranges for future expansion.
+ *   0x60-0x6F  BT CLR by profile index
+ *   0x70-0x7F  BT SEL by profile index
+ * Use SS_CLR_0 + index / SS_SEL_0 + index for dynamic offset arithmetic. */
+#define SS_CLR_0    0x60
+#define SS_CLR_1    0x61
+#define SS_CLR_2    0x62
+#define SS_CLR_3    0x63
+#define SS_CLR_4    0x64
+
+#define SS_SEL_0    0x70
+#define SS_SEL_1    0x71
+#define SS_SEL_2    0x72
+#define SS_SEL_3    0x73
+#define SS_SEL_4    0x74
