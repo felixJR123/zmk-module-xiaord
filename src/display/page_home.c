@@ -61,8 +61,22 @@ static void update_datetime(lv_timer_t *t)
 
 static void bootloader_btn_cb(lv_event_t *e)
 {
-	if (lv_event_get_code(e) == LV_EVENT_LONG_PRESSED) {
+	if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
 		ss_fire_behavior(ZMK_BEHAVIOR_BOOTLOADER);
+	}
+}
+
+static void datetime_area_cb(lv_event_t *e)
+{
+	if (lv_event_get_code(e) == LV_EVENT_LONG_PRESSED) {
+		ss_navigate_to(PAGE_CLOCK);
+	}
+}
+
+static void lower_area_cb(lv_event_t *e)
+{
+	if (lv_event_get_code(e) == LV_EVENT_LONG_PRESSED) {
+		ss_navigate_to(PAGE_MACROPAD);
 	}
 }
 
@@ -148,6 +162,24 @@ static int page_home_create(lv_obj_t *tile)
 	lv_obj_t *boot_lbl = lv_label_create(boot_btn);
 	lv_label_set_text(boot_lbl, LV_SYMBOL_UPLOAD);
 	lv_obj_center(boot_lbl);
+
+	/* ── DateTime overlay — long-press navigates to clock/RTC screen ── */
+	lv_obj_t *datetime_overlay = lv_obj_create(tile);
+	lv_obj_set_size(datetime_overlay, 200, 70);
+	lv_obj_align(datetime_overlay, LV_ALIGN_CENTER, 0, -57);
+	lv_obj_set_style_bg_opa(datetime_overlay, LV_OPA_TRANSP, 0);
+	lv_obj_set_style_border_width(datetime_overlay, 0, 0);
+	lv_obj_add_flag(datetime_overlay, LV_OBJ_FLAG_CLICKABLE);
+	lv_obj_add_event_cb(datetime_overlay, datetime_area_cb, LV_EVENT_ALL, NULL);
+
+	/* ── Lower overlay — long-press navigates to macropad screen ─────── */
+	lv_obj_t *lower_overlay = lv_obj_create(tile);
+	lv_obj_set_size(lower_overlay, 200, 100);
+	lv_obj_align(lower_overlay, LV_ALIGN_CENTER, 0, 60);
+	lv_obj_set_style_bg_opa(lower_overlay, LV_OPA_TRANSP, 0);
+	lv_obj_set_style_border_width(lower_overlay, 0, 0);
+	lv_obj_add_flag(lower_overlay, LV_OBJ_FLAG_CLICKABLE);
+	lv_obj_add_event_cb(lower_overlay, lower_area_cb, LV_EVENT_ALL, NULL);
 
 	/* 1-second timer, created paused — resumed only while page is active */
 	s_timer = lv_timer_create(update_datetime, 1000, NULL);
