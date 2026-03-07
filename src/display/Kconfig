@@ -1,0 +1,15 @@
+
+choice XIAORD_BG
+    prompt "Background image"
+    default XIAORD_BG_1
+
+config XIAORD_BG_1
+    bool "Background 1"
+
+config XIAORD_BG_2
+    bool "Background 2"
+
+config XIAORD_BG_3
+    bool "Background 3"
+
+endchoice
