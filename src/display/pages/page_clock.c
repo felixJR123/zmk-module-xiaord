@@ -22,7 +22,8 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
-#include "page_ops.h"
+#include "page_iface.h"
+#include "display_api.h"
 #include "ui_btn.h"
 
 /* ── RTC device ────────────────────────────────────────────────────────── */

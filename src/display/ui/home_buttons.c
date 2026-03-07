@@ -12,7 +12,8 @@
 #include <zephyr/kernel.h>
 #include <lvgl.h>
 #include <dt-bindings/xiaord/input_codes.h>
-#include "page_ops.h"
+#include "page_iface.h"
+#include "display_api.h"
 #include "ui_btn.h"
 #include "sym_lookup.h"
 #include "home_buttons.h"

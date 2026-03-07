@@ -9,9 +9,10 @@
 #include <zephyr/drivers/rtc.h>
 #include <lvgl.h>
 #include <zmk/split/central.h>
-#include "page_ops.h"
-#include "home_status.h"
-#include "bt_status.h"
+#include "page_iface.h"
+#include "display_api.h"
+#include "endpoint_status.h"
+#include "battery_status.h"
 #include "home_buttons.h"
 
 /* ── RTC device ────────────────────────────────────────────────────────── */
@@ -23,6 +24,14 @@ static const struct device *s_rtc = DEVICE_DT_GET(DT_ALIAS(rtc));
 static lv_obj_t   *s_date_lbl;
 static lv_obj_t   *s_time_lbl;
 static lv_timer_t *s_timer;
+static lv_obj_t   *s_output_lbl;
+
+/* ── Endpoint status callback ──────────────────────────────────────────── */
+
+static void home_endpoint_cb(struct endpoint_state state)
+{
+	endpoint_status_update_label(s_output_lbl, state);
+}
 
 /* ── Month / weekday name tables ───────────────────────────────────────── */
 
@@ -74,8 +83,8 @@ static int page_home_create(lv_obj_t *tile)
 	lv_obj_align(s_time_lbl, LV_ALIGN_CENTER, 0, -27);
 
 	/* ── Output status label ────────────────────────────────────────── */
-	lv_obj_t *output_lbl = create_output_status_label(tile, &lv_font_montserrat_16);
-	lv_obj_align(output_lbl, LV_ALIGN_BOTTOM_MID, 0, -37);
+	s_output_lbl = create_output_status_label(tile, &lv_font_montserrat_16);
+	lv_obj_align(s_output_lbl, LV_ALIGN_BOTTOM_MID, 0, -37);
 
 	/* ── Peripheral battery arc gauges — lower half ─────────────────── */
 	lv_obj_t *periph_bat_arcs[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
@@ -125,7 +134,8 @@ static int page_home_create(lv_obj_t *tile)
 		periph_bat_lbls[i] = lbl;
 	}
 
-	home_status_init(output_lbl, periph_bat_arcs, periph_bat_lbls);
+	endpoint_status_register_cb(home_endpoint_cb);
+	battery_status_init(periph_bat_arcs, periph_bat_lbls);
 
 	/* ── Button ring ─────────────────────────────────────────────────── */
 	home_buttons_create(tile);

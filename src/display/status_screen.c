@@ -17,8 +17,8 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
-#include "page_ops.h"
-#include "xiaord_input_codes.h"
+#include "page_iface.h"
+#include "display_api.h"
 
 extern const lv_image_dsc_t img_bg;
 

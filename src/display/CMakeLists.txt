@@ -6,14 +6,16 @@ zephyr_library()
 # zmk/display.h (ZMK_DISPLAY_WIDGET_LISTENER) and other ZMK headers.
 zephyr_include_directories(${APPLICATION_SOURCE_DIR}/include)
 
-zephyr_library_sources(ui_btn.c)
-zephyr_library_sources_ifdef(CONFIG_XIAORD_BG_1 bg/bg1.c)
-zephyr_library_sources_ifdef(CONFIG_XIAORD_BG_2 bg/bg2.c)
-zephyr_library_sources_ifdef(CONFIG_XIAORD_BG_3 bg/bg3.c)
+# Top-level headers (page_iface.h, display_api.h, xiaord_input_codes.h)
+# visible to all subdirectory compilation units.
+zephyr_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+# Subdirectory headers visible globally (no relative-path includes needed).
+zephyr_include_directories(${CMAKE_CURRENT_SOURCE_DIR}/listeners)
+zephyr_include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ui)
+
+add_subdirectory(listeners)
+add_subdirectory(ui)
+add_subdirectory(pages)
+
 zephyr_library_sources(status_screen.c)
-zephyr_library_sources(home_status.c)
-zephyr_library_sources(bt_status.c)
-zephyr_library_sources(home_buttons.c)
-zephyr_library_sources(page_home.c)
-zephyr_library_sources(page_clock.c)
-zephyr_library_sources(page_bt.c)

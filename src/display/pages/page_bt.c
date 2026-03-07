@@ -16,8 +16,9 @@
 
 #include <lvgl.h>
 #include <zephyr/sys/util.h>
-#include "page_ops.h"
-#include "bt_status.h"
+#include "page_iface.h"
+#include "display_api.h"
+#include "endpoint_status.h"
 #include "ui_btn.h"
 
 #if IS_ENABLED(CONFIG_ZMK_BLE)
@@ -37,6 +38,34 @@
 /* ── State ──────────────────────────────────────────────────────────────── */
 
 static lv_obj_t *s_profile_btns[5];
+static lv_obj_t *s_output_lbl;
+
+/* ── Endpoint status callback ────────────────────────────────────────────── */
+
+static void bt_endpoint_cb(struct endpoint_state state)
+{
+	endpoint_status_update_label(s_output_lbl, state);
+
+	/* Update profile button CHECKED states */
+	int active = -1;
+	enum zmk_transport transport = state.selected_endpoint.transport;
+
+	if (transport == ZMK_TRANSPORT_BLE) {
+		active = state.selected_endpoint.ble.profile_index;
+	}
+
+	for (int i = 0; i < BT_PROFILE_COUNT; i++) {
+		if (i == active) {
+			lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED);
+			/* Connection established — clear pending indicator */
+			for (int j = 0; j < BT_PROFILE_COUNT; j++) {
+				lv_obj_clear_state(s_profile_btns[j], LV_STATE_USER_1);
+			}
+		} else {
+			lv_obj_clear_state(s_profile_btns[i], LV_STATE_CHECKED);
+		}
+	}
+}
 
 /* ── Callbacks ──────────────────────────────────────────────────────────── */
 
@@ -101,12 +130,10 @@ static int page_bt_create(lv_obj_t *screen)
 			profile_btn_cb, (void *)(uintptr_t)i);
 		s_profile_btns[i] = btn;
 	}
-	bt_status_set_profile_btns(s_profile_btns, BT_PROFILE_COUNT);
-
 	/* Output status label — upper inner area, large font */
-	lv_obj_t *output_lbl = create_output_status_label(screen, &lv_font_montserrat_36);
-	lv_obj_align(output_lbl, LV_ALIGN_CENTER, 0, -40);
-	bt_status_init(output_lbl);
+	s_output_lbl = create_output_status_label(screen, &lv_font_montserrat_36);
+	lv_obj_align(s_output_lbl, LV_ALIGN_CENTER, 0, -40);
+	endpoint_status_register_cb(bt_endpoint_cb);
 
 	/* Row 1: USB / CLR */
 	ui_create_circle_btn(screen, LV_SYMBOL_USB,   -33, 15, usb_btn_cb,  NULL);
