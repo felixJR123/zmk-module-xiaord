@@ -87,18 +87,18 @@ static int page_home_create(lv_obj_t *tile)
 	/* ── Date label — upper area ────────────────────────────────────── */
 	s_date_lbl = lv_label_create(tile);
 	lv_label_set_text(s_date_lbl, "--- -- ---");
-	lv_obj_align(s_date_lbl, LV_ALIGN_CENTER, 0, -77);
+	lv_obj_align(s_date_lbl, LV_ALIGN_CENTER, 0, -67);
 
 	/* ── Time label ─────────────────────────────────────────────────── */
 	s_time_lbl = lv_label_create(tile);
 	lv_label_set_text(s_time_lbl, "--:--");
 	lv_obj_set_style_text_font(s_time_lbl, &lv_font_montserrat_48, 0);
-	lv_obj_align(s_time_lbl, LV_ALIGN_CENTER, 0, -37);
+	lv_obj_align(s_time_lbl, LV_ALIGN_CENTER, 0, -27);
 
 	/* ── Output status label ────────────────────────────────────────── */
 	lv_obj_t *output_lbl = lv_label_create(tile);
 	lv_label_set_text(output_lbl, "");
-	lv_obj_align(output_lbl, LV_ALIGN_BOTTOM_MID, 0, -20);
+	lv_obj_align(output_lbl, LV_ALIGN_BOTTOM_MID, 0, -35);
 
 	/* ── Peripheral battery arc gauges — lower half ─────────────────── */
 	lv_obj_t *periph_bat_arcs[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
@@ -107,7 +107,7 @@ static int page_home_create(lv_obj_t *tile)
 	const int n_periph     = ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT;
 	const int spacing      = 70;
 	const int arc_sz       = 48;
-	const int center_y_off = 55;
+	const int center_y_off = 40;
 
 	for (int i = 0; i < n_periph; i++) {
 		/* X offset: centres the group symmetrically around x=0 */
@@ -166,7 +166,7 @@ static int page_home_create(lv_obj_t *tile)
 	/* ── DateTime overlay — long-press navigates to clock/RTC screen ── */
 	lv_obj_t *datetime_overlay = lv_obj_create(tile);
 	lv_obj_set_size(datetime_overlay, 200, 70);
-	lv_obj_align(datetime_overlay, LV_ALIGN_CENTER, 0, -57);
+	lv_obj_align(datetime_overlay, LV_ALIGN_CENTER, 0, -47);
 	lv_obj_set_style_bg_opa(datetime_overlay, LV_OPA_TRANSP, 0);
 	lv_obj_set_style_border_width(datetime_overlay, 0, 0);
 	lv_obj_add_flag(datetime_overlay, LV_OBJ_FLAG_CLICKABLE);
@@ -175,7 +175,7 @@ static int page_home_create(lv_obj_t *tile)
 	/* ── Lower overlay — long-press navigates to macropad screen ─────── */
 	lv_obj_t *lower_overlay = lv_obj_create(tile);
 	lv_obj_set_size(lower_overlay, 200, 100);
-	lv_obj_align(lower_overlay, LV_ALIGN_CENTER, 0, 60);
+	lv_obj_align(lower_overlay, LV_ALIGN_CENTER, 0, 45);
 	lv_obj_set_style_bg_opa(lower_overlay, LV_OPA_TRANSP, 0);
 	lv_obj_set_style_border_width(lower_overlay, 0, 0);
 	lv_obj_add_flag(lower_overlay, LV_OBJ_FLAG_CLICKABLE);
