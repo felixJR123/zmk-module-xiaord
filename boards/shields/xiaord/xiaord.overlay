@@ -41,7 +41,7 @@
         compatible = "zmk,input-processor-behaviors";
         #input-processor-cells = <0>;
         type = <INPUT_EV_ZMK_BEHAVIORS>;
-        codes = <SS_KEY_0 SS_KEY_1 SS_KEY_2 SS_KEY_3 SS_KEY_4>;
+        codes = <INPUT_VIRTUAL_KEY_0 INPUT_VIRTUAL_KEY_1 INPUT_VIRTUAL_KEY_2 INPUT_VIRTUAL_KEY_3 INPUT_VIRTUAL_KEY_4>;
         bindings = <&kp KP_N0 &kp KP_N1 &kp KP_N2 &kp KP_N3 &kp KP_N4>;
     };
 

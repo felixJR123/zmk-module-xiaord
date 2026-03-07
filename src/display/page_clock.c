@@ -23,6 +23,7 @@
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #include "page_ops.h"
+#include "ui_btn.h"
 
 /* ── RTC device ────────────────────────────────────────────────────────── */
 
@@ -122,28 +123,6 @@ static void cb_time_ok(lv_event_t *e)
 	ss_navigate_to(PAGE_HOME);
 }
 
-/* ── Button factory ────────────────────────────────────────────────────── */
-
-static lv_obj_t *make_btn(lv_obj_t *parent, const char *text,
-			   int w, int h,
-			   lv_align_t align, int x_ofs, int y_ofs,
-			   lv_event_cb_t cb)
-{
-	lv_obj_t *btn = lv_obj_create(parent);
-
-	lv_obj_set_size(btn, w, h);
-	lv_obj_align(btn, align, x_ofs, y_ofs);
-	lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
-	lv_obj_add_event_cb(btn, cb, LV_EVENT_ALL, NULL);
-
-	lv_obj_t *lbl = lv_label_create(btn);
-
-	lv_label_set_text(lbl, text);
-	lv_obj_center(lbl);
-
-	return btn;
-}
-
 /* ── Transparent full-screen container ────────────────────────────────── */
 
 static lv_obj_t *make_cont(lv_obj_t *parent)
@@ -209,15 +188,13 @@ static int page_clock_create(lv_obj_t *screen)
 	lv_obj_align(s_roller_day, LV_ALIGN_TOP_MID, 53, 60);
 	lv_obj_set_style_bg_opa(s_roller_day, LV_OPA_50, 0);
 
-	lv_obj_t *btn;
+	ui_create_btn(s_cont_date, LV_SYMBOL_HOME,
+		      LV_ALIGN_BOTTOM_LEFT, 36, -30, 76, 32, LV_RADIUS_CIRCLE,
+		      cb_date_cancel, NULL);
 
-	btn = make_btn(s_cont_date, LV_SYMBOL_HOME,
-		       76, 32, LV_ALIGN_BOTTOM_LEFT, 36, -30, cb_date_cancel);
-	lv_obj_set_style_bg_opa(btn, LV_OPA_70, 0);
-
-	btn = make_btn(s_cont_date, LV_SYMBOL_OK,
-		       76, 32, LV_ALIGN_BOTTOM_RIGHT, -36, -30, cb_date_ok);
-	lv_obj_set_style_bg_opa(btn, LV_OPA_70, 0);
+	ui_create_btn(s_cont_date, LV_SYMBOL_OK,
+		      LV_ALIGN_BOTTOM_RIGHT, -36, -30, 76, 32, LV_RADIUS_CIRCLE,
+		      cb_date_ok, NULL);
 
 	/* ── Time container (HH:MM, initially hidden) ──────────────────── */
 	s_cont_time = make_cont(screen);
@@ -247,13 +224,13 @@ static int page_clock_create(lv_obj_t *screen)
 	lv_obj_align(s_roller_min, LV_ALIGN_TOP_MID, 38, 65);
 	lv_obj_set_style_bg_opa(s_roller_min, LV_OPA_50, 0);
 
-	btn = make_btn(s_cont_time, LV_SYMBOL_NEW_LINE,
-		       76, 32, LV_ALIGN_BOTTOM_LEFT, 36, -30, cb_time_cancel);
-	lv_obj_set_style_bg_opa(btn, LV_OPA_70, 0);
+	ui_create_btn(s_cont_time, LV_SYMBOL_NEW_LINE,
+		      LV_ALIGN_BOTTOM_LEFT, 36, -30, 76, 32, LV_RADIUS_CIRCLE,
+		      cb_time_cancel, NULL);
 
-	btn = make_btn(s_cont_time, LV_SYMBOL_OK,
-		       76, 32, LV_ALIGN_BOTTOM_RIGHT, -36, -30, cb_time_ok);
-	lv_obj_set_style_bg_opa(btn, LV_OPA_70, 0);
+	ui_create_btn(s_cont_time, LV_SYMBOL_OK,
+		      LV_ALIGN_BOTTOM_RIGHT, -36, -30, 76, 32, LV_RADIUS_CIRCLE,
+		      cb_time_ok, NULL);
 
 	return 0;
 }

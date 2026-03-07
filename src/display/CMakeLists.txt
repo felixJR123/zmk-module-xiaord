@@ -6,6 +6,7 @@ zephyr_library()
 # zmk/display.h (ZMK_DISPLAY_WIDGET_LISTENER) and other ZMK headers.
 zephyr_include_directories(${APPLICATION_SOURCE_DIR}/include)
 
+zephyr_library_sources(ui_btn.c)
 zephyr_library_sources(image-mesh-gradient.c)
 zephyr_library_sources(status_screen.c)
 zephyr_library_sources(home_status.c)

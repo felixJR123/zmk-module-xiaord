@@ -78,16 +78,16 @@ void ss_navigate_to(uint8_t page_idx)
 	}
 }
 
-void ss_send_key(ss_key_code key, bool pressed)
+void ss_send_key(input_virtual_code key, bool pressed)
 {
-	if ((unsigned)key >= SS_KEY_COUNT) {
+	if (key >= INPUT_VIRTUAL_KEY_COUNT) {
 		LOG_WRN("ss_send_key: invalid key %d", key);
 		return;
 	}
-	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, (uint16_t)key, pressed ? 1 : 0, true, K_NO_WAIT);
+	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, key, pressed ? 1 : 0, true, K_NO_WAIT);
 }
 
-void ss_fire_behavior(zmk_behavior_code code)
+void ss_fire_behavior(input_virtual_code code)
 {
 	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, code, 1, true, K_NO_WAIT);
 	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, code, 0, true, K_NO_WAIT);

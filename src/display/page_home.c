@@ -13,6 +13,7 @@
 #include "page_ops.h"
 #include "home_status.h"
 #include "bt_status.h"
+#include "ui_btn.h"
 
 /* ── RTC device ────────────────────────────────────────────────────────── */
 
@@ -76,18 +77,18 @@ struct circle_btn_desc {
 };
 
 static const struct circle_btn_desc s_circle_btns[12] = {
-	{   0, -105, LV_SYMBOL_UPLOAD,     SS_UPLOAD,     -1            },
-	{  53,  -91, LV_SYMBOL_POWER,      SS_POWER,      -1            },
-	{  91,  -53, LV_SYMBOL_VOLUME_MAX, SS_VOLUME_MAX, -1            },
-	{ 105,    0, LV_SYMBOL_MUTE,       SS_MUTE,       -1            },
-	{  91,   53, LV_SYMBOL_VOLUME_MID, SS_VOLUME_MID, -1            },
-	{  53,   91, LV_SYMBOL_PLUS,       SS_PLUS,       -1            },
-	{   0,  105, LV_SYMBOL_MINUS,      SS_MINUS,      -1            },
-	{ -53,   91, LV_SYMBOL_EYE_CLOSE,  SS_EYE_CLOSE,  -1            },
-	{ -91,   53, LV_SYMBOL_USB,        SS_USB,        -1            },
-	{-105,    0, LV_SYMBOL_BLUETOOTH,  SS_BLUETOOTH,  PAGE_BT       },
-	{ -91,  -53, LV_SYMBOL_HOME,       SS_HOME,       -1            },
-	{ -53,  -91, LV_SYMBOL_SETTINGS,   SS_SETTINGS,   PAGE_CLOCK    },
+	{   0, -105, LV_SYMBOL_UPLOAD,     INPUT_VIRTUAL_SYM_UPLOAD,     -1         },
+	{  53,  -91, LV_SYMBOL_POWER,      INPUT_VIRTUAL_SYM_POWER,      -1         },
+	{  91,  -53, LV_SYMBOL_VOLUME_MAX, INPUT_VIRTUAL_SYM_VOLUME_MAX, -1         },
+	{ 105,    0, LV_SYMBOL_MUTE,       INPUT_VIRTUAL_SYM_MUTE,       -1         },
+	{  91,   53, LV_SYMBOL_VOLUME_MID, INPUT_VIRTUAL_SYM_VOLUME_MID, -1         },
+	{  53,   91, LV_SYMBOL_PLUS,       INPUT_VIRTUAL_SYM_PLUS,       -1         },
+	{   0,  105, LV_SYMBOL_MINUS,      INPUT_VIRTUAL_SYM_MINUS,      -1         },
+	{ -53,   91, LV_SYMBOL_EYE_CLOSE,  INPUT_VIRTUAL_SYM_EYE_CLOSE,  -1         },
+	{ -91,   53, LV_SYMBOL_USB,        INPUT_VIRTUAL_SYM_USB,        -1         },
+	{-105,    0, LV_SYMBOL_BLUETOOTH,  INPUT_VIRTUAL_SYM_BLUETOOTH,  PAGE_BT    },
+	{ -91,  -53, LV_SYMBOL_HOME,       INPUT_VIRTUAL_SYM_HOME,       -1         },
+	{ -53,  -91, LV_SYMBOL_SETTINGS,   INPUT_VIRTUAL_SYM_SETTINGS,   PAGE_CLOCK },
 };
 
 /* ── Show/hide helper ──────────────────────────────────────────────────── */
@@ -170,7 +171,7 @@ static void circle_btn_cb(lv_event_t *e)
 			ss_fire_behavior(s_circle_btns[idx].code);
 			if (s_circle_btns[idx].nav_page >= 0)
 				ss_navigate_to(s_circle_btns[idx].nav_page);
-			if (s_circle_btns[idx].code == SS_HOME)
+			if (s_circle_btns[idx].code == INPUT_VIRTUAL_SYM_HOME)
 				set_btns_visible(false);
 		}
 	}
@@ -192,7 +193,7 @@ static int page_home_create(lv_obj_t *tile)
 	lv_obj_align(s_time_lbl, LV_ALIGN_CENTER, 0, -27);
 
 	/* ── Output status label ────────────────────────────────────────── */
-	lv_obj_t *output_lbl = create_output_status_label(tile, &lv_font_montserrat_24);
+	lv_obj_t *output_lbl = create_output_status_label(tile, &lv_font_montserrat_16);
 	lv_obj_align(output_lbl, LV_ALIGN_BOTTOM_MID, 0, -35);
 
 	/* ── Peripheral battery arc gauges — lower half ─────────────────── */
@@ -259,19 +260,8 @@ static int page_home_create(lv_obj_t *tile)
 	s_btns_visible = false;
 	for (int i = 0; i < 12; i++) {
 		const struct circle_btn_desc *d = &s_circle_btns[i];
-		lv_obj_t *btn = lv_obj_create(tile);
-		lv_obj_set_size(btn, 44, 44);
-		lv_obj_align(btn, LV_ALIGN_CENTER, d->x, d->y);
-		lv_obj_set_style_radius(btn, LV_RADIUS_CIRCLE, 0);
-		lv_obj_set_style_bg_color(btn, lv_color_white(), 0);
-		lv_obj_set_style_bg_opa(btn, LV_OPA_30, 0);
-		lv_obj_set_style_border_width(btn, 0, 0);
-		lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
-		lv_obj_clear_flag(btn, LV_OBJ_FLAG_SCROLLABLE);
-		lv_obj_add_event_cb(btn, circle_btn_cb, LV_EVENT_ALL, (void *)(uintptr_t)i);
-		lv_obj_t *lbl = lv_label_create(btn);
-		lv_label_set_text(lbl, d->symbol);
-		lv_obj_center(lbl);
+		lv_obj_t *btn = ui_create_circle_btn(tile, d->symbol, d->x, d->y,
+						      circle_btn_cb, (void *)(uintptr_t)i);
 		lv_obj_add_flag(btn, LV_OBJ_FLAG_HIDDEN);
 		s_circle_btn_objs[i] = btn;
 	}
