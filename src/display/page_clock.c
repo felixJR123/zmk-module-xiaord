@@ -211,11 +211,11 @@ static int page_clock_create(lv_obj_t *screen)
 
 	lv_obj_t *btn;
 
-	btn = make_btn(s_cont_date, LV_SYMBOL_CLOSE " Cancel",
+	btn = make_btn(s_cont_date, LV_SYMBOL_HOME,
 		       76, 32, LV_ALIGN_BOTTOM_LEFT, 36, -30, cb_date_cancel);
 	lv_obj_set_style_bg_opa(btn, LV_OPA_70, 0);
 
-	btn = make_btn(s_cont_date, LV_SYMBOL_OK " OK",
+	btn = make_btn(s_cont_date, LV_SYMBOL_OK,
 		       76, 32, LV_ALIGN_BOTTOM_RIGHT, -36, -30, cb_date_ok);
 	lv_obj_set_style_bg_opa(btn, LV_OPA_70, 0);
 
@@ -247,11 +247,11 @@ static int page_clock_create(lv_obj_t *screen)
 	lv_obj_align(s_roller_min, LV_ALIGN_TOP_MID, 38, 65);
 	lv_obj_set_style_bg_opa(s_roller_min, LV_OPA_50, 0);
 
-	btn = make_btn(s_cont_time, LV_SYMBOL_CLOSE " Cancel",
+	btn = make_btn(s_cont_time, LV_SYMBOL_NEW_LINE,
 		       76, 32, LV_ALIGN_BOTTOM_LEFT, 36, -30, cb_time_cancel);
 	lv_obj_set_style_bg_opa(btn, LV_OPA_70, 0);
 
-	btn = make_btn(s_cont_time, LV_SYMBOL_OK " OK",
+	btn = make_btn(s_cont_time, LV_SYMBOL_OK,
 		       76, 32, LV_ALIGN_BOTTOM_RIGHT, -36, -30, cb_time_ok);
 	lv_obj_set_style_bg_opa(btn, LV_OPA_70, 0);
 
