@@ -75,7 +75,7 @@ static int page_home_create(lv_obj_t *tile)
 
 	/* ── Output status label ────────────────────────────────────────── */
 	lv_obj_t *output_lbl = create_output_status_label(tile, &lv_font_montserrat_16);
-	lv_obj_align(output_lbl, LV_ALIGN_BOTTOM_MID, 0, -35);
+	lv_obj_align(output_lbl, LV_ALIGN_BOTTOM_MID, 0, -37);
 
 	/* ── Peripheral battery arc gauges — lower half ─────────────────── */
 	lv_obj_t *periph_bat_arcs[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
