@@ -3,7 +3,7 @@
  *
  * Home screen status listeners — output endpoint and peripheral batteries.
  *
- * Uses ZMK_DISPLAY_WIDGET_LISTENER with static label pointers instead of
+ * Uses ZMK_DISPLAY_WIDGET_LISTENER with static object pointers instead of
  * a sys_slist_t widget list, since there is exactly one home page.
  */
 
@@ -30,6 +30,7 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING),
 /* ── Static LVGL object references ─────────────────────────────────────── */
 
 static lv_obj_t *s_output_lbl;
+static lv_obj_t *s_periph_bat_arc[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
 static lv_obj_t *s_periph_bat_lbl[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
 
 /* ── Output status listener ─────────────────────────────────────────────── */
@@ -83,14 +84,14 @@ static void output_update_cb(struct output_status_state state)
 	case ZMK_TRANSPORT_BLE:
 		if (state.active_profile_bonded) {
 			if (state.active_profile_connected) {
-				snprintf(text, sizeof(text), LV_SYMBOL_WIFI " %i " LV_SYMBOL_OK,
+				snprintf(text, sizeof(text), LV_SYMBOL_BLUETOOTH " %i " LV_SYMBOL_OK,
 					 state.selected_endpoint.ble.profile_index + 1);
 			} else {
-				snprintf(text, sizeof(text), LV_SYMBOL_WIFI " %i " LV_SYMBOL_CLOSE,
+				snprintf(text, sizeof(text), LV_SYMBOL_BLUETOOTH " %i " LV_SYMBOL_CLOSE,
 					 state.selected_endpoint.ble.profile_index + 1);
 			}
 		} else {
-			snprintf(text, sizeof(text), LV_SYMBOL_WIFI " %i " LV_SYMBOL_SETTINGS,
+			snprintf(text, sizeof(text), LV_SYMBOL_BLUETOOTH " %i " LV_SYMBOL_SETTINGS,
 				 state.selected_endpoint.ble.profile_index + 1);
 		}
 		break;
@@ -131,16 +132,23 @@ static struct periph_bat_state periph_bat_get_state(const zmk_event_t *eh)
 static void periph_bat_update_cb(struct periph_bat_state state)
 {
 	for (int i = 0; i < ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT; i++) {
+		lv_obj_t *arc = s_periph_bat_arc[i];
 		lv_obj_t *lbl = s_periph_bat_lbl[i];
 
-		if (!lbl) {
-			continue;
-		}
-
 		if (state.valid[i]) {
-			lv_label_set_text_fmt(lbl, "P%d: %d%%", i, state.level[i]);
+			if (arc) {
+				lv_arc_set_value(arc, state.level[i]);
+			}
+			if (lbl) {
+				lv_label_set_text_fmt(lbl, "%d%%", state.level[i]);
+			}
 		} else {
-			lv_label_set_text_fmt(lbl, "P%d: --", i);
+			if (arc) {
+				lv_arc_set_value(arc, 0);
+			}
+			if (lbl) {
+				lv_label_set_text(lbl, "--");
+			}
 		}
 	}
 }
@@ -151,11 +159,14 @@ ZMK_SUBSCRIPTION(home_periph_battery, zmk_peripheral_battery_state_changed);
 
 /* ── Public init ─────────────────────────────────────────────────────────── */
 
-void home_status_init(lv_obj_t *output_lbl, lv_obj_t **periph_bat_lbls)
+void home_status_init(lv_obj_t *output_lbl,
+		      lv_obj_t **periph_bat_arcs,
+		      lv_obj_t **periph_bat_lbls)
 {
 	s_output_lbl = output_lbl;
 
 	for (int i = 0; i < ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT; i++) {
+		s_periph_bat_arc[i] = periph_bat_arcs[i];
 		s_periph_bat_lbl[i] = periph_bat_lbls[i];
 	}
 
