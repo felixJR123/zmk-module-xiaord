@@ -82,9 +82,9 @@ static int page_home_create(lv_obj_t *tile)
 	lv_obj_t *periph_bat_lbls[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
 
 	const int n_periph     = ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT;
-	const int spacing      = 70;
+	const int spacing      = 74;
 	const int arc_sz       = 48;
-	const int center_y_off = 40;
+	const int center_y_off = 34;
 
 	for (int i = 0; i < n_periph; i++) {
 		/* X offset: centres the group symmetrically around x=0 */

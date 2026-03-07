@@ -18,9 +18,9 @@
 #define PAGE_CLOCK 1
 #define PAGE_BT    2
 
-/* ── Key codes (used directly as INPUT_EV_ZMK_BEHAVIORS event codes) ────── */
+/* ── Input codes (used directly as INPUT_EV_ZMK_BEHAVIORS event codes) ───── */
 
-/* INPUT_VIRTUAL_KEY_*, INPUT_VIRTUAL_ZMK_*, INPUT_VIRTUAL_SYM_*, INPUT_EV_ZMK_BEHAVIORS: */
+/* INPUT_VIRTUAL_ZMK_*, INPUT_VIRTUAL_SYM_*, INPUT_EV_ZMK_BEHAVIORS: */
 #include "xiaord_input_codes.h"
 
 /* Unified type for all virtual input codes (KEY, ZMK, SYM categories). */
@@ -42,14 +42,6 @@ struct page_ops {
  * @param page_idx  index in the page table (PAGE_HOME, PAGE_BT, ...)
  */
 void ss_navigate_to(uint8_t page_idx);
-
-/**
- * Report a key event through the virtual pointer input device.
- * Call with pressed=true on button press, pressed=false on release.
- * @param key     INPUT_VIRTUAL_KEY_0 .. INPUT_VIRTUAL_KEY_4
- * @param pressed true for key-down, false for key-up
- */
-void ss_send_key(input_virtual_code key, bool pressed);
 
 /**
  * Fire a ZMK behavior by sending a press+release pair.

@@ -6,7 +6,7 @@
  * Responsibilities:
  *  - Create independent LVGL screens, register all pages
  *  - Manage page lifecycle (on_enter / on_leave) on transitions
- *  - Provide ss_navigate_to() and ss_send_key() APIs for pages to call
+ *  - Provide ss_navigate_to() and ss_fire_behavior() APIs for pages to call
  */
 
 #include <zephyr/kernel.h>
@@ -78,15 +78,6 @@ void ss_navigate_to(uint8_t page_idx)
 	}
 
 
-}
-
-void ss_send_key(input_virtual_code key, bool pressed)
-{
-	if (key >= INPUT_VIRTUAL_KEY_COUNT) {
-		LOG_WRN("ss_send_key: invalid key %d", key);
-		return;
-	}
-	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, key, pressed ? 1 : 0, true, K_NO_WAIT);
 }
 
 void ss_fire_behavior(input_virtual_code code)

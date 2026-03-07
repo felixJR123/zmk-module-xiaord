@@ -1,15 +1,14 @@
 /*
  * SPDX-License-Identifier: MIT
  *
- * Input processor mapping INPUT_EV_ZMK_BEHAVIORS codes to ZMK system/BT behaviors.
+ * Input processor mapping INPUT_EV_ZMK_BEHAVIORS codes to ZMK BT behaviors.
  * Include this file from your keyboard overlay and add &zmk_behaviors to
  * the input-processors list of the touchpad_listener (or any input-listener
  * connected to the xiaord virtual-key source).
  *
  * Required Kconfig:
- *   CONFIG_ZMK_BLE=y           — &bt * behaviors
- *   CONFIG_ZMK_PM_SOFT_OFF=y   — &soft_off
- *   CONFIG_ZMK_STUDIO=y        — &studio_unlock
+ *   CONFIG_ZMK_BLE=y                   — &bt * behaviors
+ *   CONFIG_ZMK_OUTPUT_SELECTION=y      — &out * behaviors
  *
  * Note: INPUT_VIRTUAL_ZMK_BT_CLR_0..11 codes are defined in input_codes.h
  * but have no bindings here. Per-profile CLR requires SEL+CLR (two actions),
@@ -18,18 +17,20 @@
  */
 
 #include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/outputs.h>
 #include <dt-bindings/xiaord/input_codes.h>
 
 / {
-    zmk_behaviors: zmk_behaviors {
+    virtual_zmk_behavior: virtual_zmk_behavior {
         compatible = "zmk,input-processor-behaviors";
         #input-processor-cells = <0>;
         type = <INPUT_EV_ZMK_BEHAVIORS>;
         codes = <
-            INPUT_VIRTUAL_ZMK_SYS_RESET     INPUT_VIRTUAL_ZMK_BOOTLOADER
-            INPUT_VIRTUAL_ZMK_SOFT_OFF       INPUT_VIRTUAL_ZMK_STUDIO_UNLOCK
             INPUT_VIRTUAL_ZMK_BT_CLR        INPUT_VIRTUAL_ZMK_BT_CLR_ALL
             INPUT_VIRTUAL_ZMK_BT_NXT        INPUT_VIRTUAL_ZMK_BT_PRV
+            INPUT_VIRTUAL_ZMK_OUT_USB       INPUT_VIRTUAL_ZMK_OUT_BLE
+            INPUT_VIRTUAL_ZMK_OUT_TOG
             INPUT_VIRTUAL_ZMK_BT_SEL_0      INPUT_VIRTUAL_ZMK_BT_SEL_1
             INPUT_VIRTUAL_ZMK_BT_SEL_2      INPUT_VIRTUAL_ZMK_BT_SEL_3
             INPUT_VIRTUAL_ZMK_BT_SEL_4      INPUT_VIRTUAL_ZMK_BT_SEL_5
@@ -42,14 +43,12 @@
             INPUT_VIRTUAL_ZMK_BT_DISC_6     INPUT_VIRTUAL_ZMK_BT_DISC_7
             INPUT_VIRTUAL_ZMK_BT_DISC_8     INPUT_VIRTUAL_ZMK_BT_DISC_9
             INPUT_VIRTUAL_ZMK_BT_DISC_10    INPUT_VIRTUAL_ZMK_BT_DISC_11
-            INPUT_VIRTUAL_SYM_UPLOAD
-            INPUT_VIRTUAL_SYM_MINUS
         >;
         bindings = <
-            &sys_reset     &bootloader
-            &soft_off      &studio_unlock
             &bt BT_CLR     &bt BT_CLR_ALL
             &bt BT_NXT     &bt BT_PRV
+            &out OUT_USB   &out OUT_BLE
+            &out OUT_TOG
             &bt BT_SEL 0   &bt BT_SEL 1
             &bt BT_SEL 2   &bt BT_SEL 3
             &bt BT_SEL 4   &bt BT_SEL 5
@@ -62,8 +61,34 @@
             &bt BT_DISC 6  &bt BT_DISC 7
             &bt BT_DISC 8  &bt BT_DISC 9
             &bt BT_DISC 10 &bt BT_DISC 11
+        >;
+    };
+
+    virtual_symbol_behavior: virtual_symbol_behavior {
+        compatible = "zmk,input-processor-behaviors";
+        #input-processor-cells = <0>;
+        type = <INPUT_EV_ZMK_BEHAVIORS>;
+        codes = <
+            INPUT_VIRTUAL_SYM_UPLOAD
+            INPUT_VIRTUAL_SYM_MUTE
+            INPUT_VIRTUAL_SYM_VOLUME_MID    INPUT_VIRTUAL_SYM_VOLUME_MAX
+            INPUT_VIRTUAL_SYM_IMAGE
+            INPUT_VIRTUAL_SYM_PREV          INPUT_VIRTUAL_SYM_PLAY
+            INPUT_VIRTUAL_SYM_PAUSE         INPUT_VIRTUAL_SYM_STOP
+            INPUT_VIRTUAL_SYM_NEXT
+            INPUT_VIRTUAL_SYM_WARNING
+            INPUT_VIRTUAL_SYM_USB           INPUT_VIRTUAL_SYM_BLUETOOTH
+        >;
+        bindings = <
             &bootloader
-            &kp N0
+            &kp C_MUTE
+            &kp C_VOL_DN                    &kp C_VOL_UP
+            &kp PRINTSCREEN
+            &kp C_PREV                      &kp C_PLAY
+            &kp C_PAUSE                     &kp C_STOP
+            &kp C_NEXT
+            &kp LC(LA(DEL))
+            &out OUT_USB                    &out OUT_BLE
         >;
     };
 };

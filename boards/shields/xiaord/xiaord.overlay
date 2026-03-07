@@ -37,20 +37,11 @@
         compatible = "zmk,virtual-key-source";
     };
 
-    macropad_behaviors: macropad_behaviors {
-        compatible = "zmk,input-processor-behaviors";
-        #input-processor-cells = <0>;
-        type = <INPUT_EV_ZMK_BEHAVIORS>;
-        codes = <INPUT_VIRTUAL_KEY_0 INPUT_VIRTUAL_KEY_1 INPUT_VIRTUAL_KEY_2 INPUT_VIRTUAL_KEY_3 INPUT_VIRTUAL_KEY_4>;
-        bindings = <&kp KP_N0 &kp KP_N1 &kp KP_N2 &kp KP_N3 &kp KP_N4>;
-    };
-
     touchpad_listener: touchpad_listener {
         compatible = "zmk,input-listener";
         device = <&vkey>;
-        input-processors = <&macropad_behaviors &zmk_behaviors>;
+        input-processors = <&virtual_zmk_behavior &virtual_symbol_behavior>;
     };
-
 
     home_buttons {
         compatible = "xiaord,home-buttons";
@@ -59,12 +50,44 @@
             position = <0>;  /* 12 o'clock */
             code = <INPUT_VIRTUAL_SYM_UPLOAD>;
         };
-        btn_usb {
+        btn_image {
+            position = <1>;  /* 1 o'clock */
+            code = <INPUT_VIRTUAL_SYM_IMAGE>;
+        };
+        btn_volume_max {
+            position = <2>;  /* 2 o'clock */
+            code = <INPUT_VIRTUAL_SYM_VOLUME_MAX>;
+        };
+        btn_mute {
+            position = <3>;  /* 3 o'clock */
+            code = <INPUT_VIRTUAL_SYM_MUTE>;
+        };
+        btn_volume_mid {
+            position = <4>;  /* 4 o'clock */
+            code = <INPUT_VIRTUAL_SYM_VOLUME_MID>;
+        };
+        btn_next {
+            position = <5>;  /* 5 o'clock */
+            code = <INPUT_VIRTUAL_SYM_NEXT>;
+        };
+        btn_play {
+            position = <6>;  /* 6 o'clock */
+            code = <INPUT_VIRTUAL_SYM_PLAY>;
+        };
+        btn_prev {
+            position = <7>;  /* 7 o'clock */
+            code = <INPUT_VIRTUAL_SYM_PREV>;
+        };
+        btn_warning {
             position = <8>;  /* 8 o'clock */
+            code = <INPUT_VIRTUAL_SYM_WARNING>;
+        };
+        btn_usb {
+            position = <9>;  /* 9 o'clock */
             code = <INPUT_VIRTUAL_SYM_USB>;
         };
         btn_bt {
-            position = <9>;  /* 9 o'clock */
+            position = <10>; /* 10 o'clock */
             code = <INPUT_VIRTUAL_SYM_BLUETOOTH>;
             nav-page = <XIAORD_PAGE_BT>;
         };
