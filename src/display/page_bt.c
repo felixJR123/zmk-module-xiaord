@@ -46,6 +46,16 @@ static void profile_btn_cb(lv_event_t *e)
 		return;
 	}
 	int idx = (int)(uintptr_t)lv_event_get_user_data(e);
+
+	/* Yellow pending: set USER_1 on tapped button, clear on others */
+	for (int i = 0; i < BT_PROFILE_COUNT; i++) {
+		if (i == idx) {
+			lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1);
+		} else {
+			lv_obj_clear_state(s_profile_btns[i], LV_STATE_USER_1);
+		}
+	}
+
 	ss_fire_behavior(INPUT_VIRTUAL_ZMK_BT_SEL_0 + idx);
 }
 

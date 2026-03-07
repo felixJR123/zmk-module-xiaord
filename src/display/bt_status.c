@@ -103,6 +103,10 @@ static void bt_output_update_cb(struct bt_output_status_state state)
 		for (int i = 0; i < s_profile_btn_count; i++) {
 			if (i == active) {
 				lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED);
+				/* Connection established — clear pending on all buttons */
+				for (int j = 0; j < s_profile_btn_count; j++) {
+					lv_obj_clear_state(s_profile_btns[j], LV_STATE_USER_1);
+				}
 			} else {
 				lv_obj_clear_state(s_profile_btns[i], LV_STATE_CHECKED);
 			}
