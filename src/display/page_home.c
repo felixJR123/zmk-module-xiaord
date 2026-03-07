@@ -26,6 +26,11 @@ static lv_timer_t *s_timer;
 static lv_obj_t   *s_circle_btn_objs[12];
 static bool        s_btns_visible;
 
+static lv_timer_t *s_repeat_timer;   /* long-press repeat timer */
+static int         s_repeat_idx;     /* index of button being held */
+static bool        s_repeat_fired;   /* true after first repeat fire */
+static lv_timer_t *s_autohide_timer; /* 10s inactivity auto-hide */
+
 /* ── Month / weekday name tables ───────────────────────────────────────── */
 
 static const char *month_names[] = {
@@ -88,6 +93,14 @@ static const struct circle_btn_desc s_circle_btns[12] = {
 
 #define CENTER_DISMISS_RADIUS 70  /* px — inner edge of buttons is at r=89 */
 
+static void set_btns_visible(bool visible); /* forward declaration */
+
+static void autohide_timer_cb(lv_timer_t *t)
+{
+	ARG_UNUSED(t);
+	set_btns_visible(false);
+}
+
 static void set_btns_visible(bool visible)
 {
 	s_btns_visible = visible;
@@ -96,6 +109,13 @@ static void set_btns_visible(bool visible)
 			lv_obj_clear_flag(s_circle_btn_objs[i], LV_OBJ_FLAG_HIDDEN);
 		else
 			lv_obj_add_flag(s_circle_btn_objs[i], LV_OBJ_FLAG_HIDDEN);
+	}
+	if (visible) {
+		lv_timer_reset(s_autohide_timer);
+		lv_timer_resume(s_autohide_timer);
+	} else {
+		lv_timer_pause(s_autohide_timer);
+		lv_timer_pause(s_repeat_timer);
 	}
 }
 
@@ -118,15 +138,41 @@ static void tap_overlay_cb(lv_event_t *e)
 
 /* ── Circle button callback ────────────────────────────────────────────── */
 
+static void repeat_timer_cb(lv_timer_t *t)
+{
+	ARG_UNUSED(t);
+	ss_fire_behavior(s_circle_btns[s_repeat_idx].code);
+	if (!s_repeat_fired) {
+		s_repeat_fired = true;
+		lv_timer_set_period(t, 60); /* switch from 1s initial to 60ms repeat */
+	}
+}
+
 static void circle_btn_cb(lv_event_t *e)
 {
-	if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+	lv_event_code_t code = lv_event_get_code(e);
 	int idx = (int)(uintptr_t)lv_event_get_user_data(e);
-	ss_fire_behavior(s_circle_btns[idx].code);
-	if (s_circle_btns[idx].nav_page >= 0)
-		ss_navigate_to(s_circle_btns[idx].nav_page);
-	if (s_circle_btns[idx].code == SS_HOME)
-		set_btns_visible(false);
+
+	if (code == LV_EVENT_PRESSED) {
+		s_repeat_idx = idx;
+		s_repeat_fired = false;
+		lv_timer_set_period(s_repeat_timer, 1000);
+		lv_timer_reset(s_repeat_timer);
+		lv_timer_resume(s_repeat_timer);
+		lv_timer_reset(s_autohide_timer);
+		return;
+	}
+	if (code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) {
+		lv_timer_pause(s_repeat_timer);
+		if (!s_repeat_fired) {
+			/* Tap — fire once */
+			ss_fire_behavior(s_circle_btns[idx].code);
+			if (s_circle_btns[idx].nav_page >= 0)
+				ss_navigate_to(s_circle_btns[idx].nav_page);
+			if (s_circle_btns[idx].code == SS_HOME)
+				set_btns_visible(false);
+		}
+	}
 }
 
 /* ── Page create ───────────────────────────────────────────────────────── */
@@ -214,14 +260,14 @@ static int page_home_create(lv_obj_t *tile)
 	for (int i = 0; i < 12; i++) {
 		const struct circle_btn_desc *d = &s_circle_btns[i];
 		lv_obj_t *btn = lv_obj_create(tile);
-		lv_obj_set_size(btn, 32, 32);
+		lv_obj_set_size(btn, 44, 44);
 		lv_obj_align(btn, LV_ALIGN_CENTER, d->x, d->y);
 		lv_obj_set_style_radius(btn, LV_RADIUS_CIRCLE, 0);
 		lv_obj_set_style_bg_color(btn, lv_color_white(), 0);
 		lv_obj_set_style_bg_opa(btn, LV_OPA_30, 0);
 		lv_obj_set_style_border_width(btn, 0, 0);
 		lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
-		lv_obj_set_scrollbar_mode(btn, LV_SCROLLBAR_MODE_OFF);
+		lv_obj_clear_flag(btn, LV_OBJ_FLAG_SCROLLABLE);
 		lv_obj_add_event_cb(btn, circle_btn_cb, LV_EVENT_ALL, (void *)(uintptr_t)i);
 		lv_obj_t *lbl = lv_label_create(btn);
 		lv_label_set_text(lbl, d->symbol);
@@ -233,6 +279,12 @@ static int page_home_create(lv_obj_t *tile)
 	/* 1-second timer, created paused — resumed only while page is active */
 	s_timer = lv_timer_create(update_datetime, 1000, NULL);
 	lv_timer_pause(s_timer);
+
+	s_repeat_timer = lv_timer_create(repeat_timer_cb, 1000, NULL);
+	lv_timer_pause(s_repeat_timer);
+
+	s_autohide_timer = lv_timer_create(autohide_timer_cb, 10000, NULL);
+	lv_timer_pause(s_autohide_timer);
 
 	return 0;
 }
@@ -249,6 +301,8 @@ static void page_home_enter(void)
 static void page_home_leave(void)
 {
 	lv_timer_pause(s_timer);
+	lv_timer_pause(s_repeat_timer);
+	lv_timer_pause(s_autohide_timer);
 }
 
 /* ── Page ops ──────────────────────────────────────────────────────────── */
