@@ -70,25 +70,24 @@ static void update_datetime(lv_timer_t *t)
 /* ── Circle button descriptor ──────────────────────────────────────────── */
 
 struct circle_btn_desc {
-	int16_t     x, y;       /* offset from center */
 	const char *symbol;
 	uint16_t    code;       /* SS_* code for ss_fire_behavior */
 	int8_t      nav_page;   /* >=0: also navigate; -1: no nav */
 };
 
 static const struct circle_btn_desc s_circle_btns[12] = {
-	{   0, -105, LV_SYMBOL_UPLOAD,     INPUT_VIRTUAL_SYM_UPLOAD,     -1         },
-	{  53,  -91, LV_SYMBOL_POWER,      INPUT_VIRTUAL_SYM_POWER,      -1         },
-	{  91,  -53, LV_SYMBOL_VOLUME_MAX, INPUT_VIRTUAL_SYM_VOLUME_MAX, -1         },
-	{ 105,    0, LV_SYMBOL_MUTE,       INPUT_VIRTUAL_SYM_MUTE,       -1         },
-	{  91,   53, LV_SYMBOL_VOLUME_MID, INPUT_VIRTUAL_SYM_VOLUME_MID, -1         },
-	{  53,   91, LV_SYMBOL_PLUS,       INPUT_VIRTUAL_SYM_PLUS,       -1         },
-	{   0,  105, LV_SYMBOL_MINUS,      INPUT_VIRTUAL_SYM_MINUS,      -1         },
-	{ -53,   91, LV_SYMBOL_EYE_CLOSE,  INPUT_VIRTUAL_SYM_EYE_CLOSE,  -1         },
-	{ -91,   53, LV_SYMBOL_USB,        INPUT_VIRTUAL_SYM_USB,        -1         },
-	{-105,    0, LV_SYMBOL_BLUETOOTH,  INPUT_VIRTUAL_SYM_BLUETOOTH,  PAGE_BT    },
-	{ -91,  -53, LV_SYMBOL_HOME,       INPUT_VIRTUAL_SYM_HOME,       -1         },
-	{ -53,  -91, LV_SYMBOL_SETTINGS,   INPUT_VIRTUAL_SYM_SETTINGS,   PAGE_CLOCK },
+	{ LV_SYMBOL_UPLOAD,     INPUT_VIRTUAL_SYM_UPLOAD,     -1         },
+	{ LV_SYMBOL_POWER,      INPUT_VIRTUAL_SYM_POWER,      -1         },
+	{ LV_SYMBOL_VOLUME_MAX, INPUT_VIRTUAL_SYM_VOLUME_MAX, -1         },
+	{ LV_SYMBOL_MUTE,       INPUT_VIRTUAL_SYM_MUTE,       -1         },
+	{ LV_SYMBOL_VOLUME_MID, INPUT_VIRTUAL_SYM_VOLUME_MID, -1         },
+	{ LV_SYMBOL_PLUS,       INPUT_VIRTUAL_SYM_PLUS,       -1         },
+	{ LV_SYMBOL_MINUS,      INPUT_VIRTUAL_SYM_MINUS,      -1         },
+	{ LV_SYMBOL_EYE_CLOSE,  INPUT_VIRTUAL_SYM_EYE_CLOSE,  -1         },
+	{ LV_SYMBOL_USB,        INPUT_VIRTUAL_SYM_USB,        -1         },
+	{ LV_SYMBOL_BLUETOOTH,  INPUT_VIRTUAL_SYM_BLUETOOTH,  PAGE_BT    },
+	{ LV_SYMBOL_HOME,       INPUT_VIRTUAL_SYM_HOME,       -1         },
+	{ LV_SYMBOL_SETTINGS,   INPUT_VIRTUAL_SYM_SETTINGS,   PAGE_CLOCK },
 };
 
 /* ── Show/hide helper ──────────────────────────────────────────────────── */
@@ -256,11 +255,14 @@ static int page_home_create(lv_obj_t *tile)
 	lv_obj_add_flag(overlay, LV_OBJ_FLAG_CLICKABLE);
 	lv_obj_add_event_cb(overlay, tap_overlay_cb, LV_EVENT_ALL, NULL);
 
-	/* ── Circle button ring — 12 buttons on r=105px circumference ──── */
+	/* ── Circle button ring — 12 buttons on circumference ──────────── */
+	int16_t pos[12][2];
+	ui_circle_12_positions(pos, UI_CIRCLE_LAYOUT_RADIUS);
 	s_btns_visible = false;
 	for (int i = 0; i < 12; i++) {
 		const struct circle_btn_desc *d = &s_circle_btns[i];
-		lv_obj_t *btn = ui_create_circle_btn(tile, d->symbol, d->x, d->y,
+		lv_obj_t *btn = ui_create_circle_btn(tile, d->symbol,
+						      pos[i][0], pos[i][1],
 						      circle_btn_cb, (void *)(uintptr_t)i);
 		lv_obj_add_flag(btn, LV_OBJ_FLAG_HIDDEN);
 		s_circle_btn_objs[i] = btn;

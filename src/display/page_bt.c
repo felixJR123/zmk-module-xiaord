@@ -5,17 +5,13 @@
  *
  * Layout (screen 240×240, center 120,120):
  *
- *   Profile radio buttons on circle perimeter (r=110, 32×32, up to 5):
- *     0  12 o'clock  offset (  0, -110)
- *     1  11 o'clock  offset (-55,  -95)
- *     2   1 o'clock  offset ( 55,  -95)
- *     3  10 o'clock  offset (-95,  -55)
- *     4   2 o'clock  offset ( 95,  -55)
+ *   Profile radio buttons on circle perimeter (r=UI_CIRCLE_LAYOUT_RADIUS, up to 5):
+ *     slots 10,11,0,1,2 → 10,11,12,1,2 o'clock
  *
  *   Inner area (r < ~80 from center):
- *     Center  : output status label
- *     Upper   : [SEL] [-45] and [CLR] [+45] rectangular buttons
- *     Lower   : [⌂] [-38] and [USB] [+38] circle buttons
+ *     Upper   : output status label (font 36, y=-40)
+ *     Row 1   : [OK] [-65,15]  [CLOSE] [0,15]  [TRASH] [+65,15]  action buttons
+ *     Row 2   : [⌂] [-33,58]                   [USB]   [+33,58]  default buttons
  */
 
 #include <lvgl.h>
@@ -38,16 +34,6 @@
 #define BT_PROFILE_COUNT 0
 #endif
 
-/* ── Profile button positions (x,y offset from screen center) ──────────── */
-
-static const int16_t s_profile_offsets[5][2] = {
-	{   0, -110 }, /* 0: 12 o'clock */
-	{ -55,  -95 }, /* 1: 11 o'clock */
-	{  55,  -95 }, /* 2:  1 o'clock */
-	{ -95,  -55 }, /* 3: 10 o'clock */
-	{  95,  -55 }, /* 4:  2 o'clock */
-};
-
 /* ── State ──────────────────────────────────────────────────────────────── */
 
 static int s_selected_profile;
@@ -59,8 +45,11 @@ static void set_selected_profile(int idx)
 {
 	s_selected_profile = idx;
 	for (int i = 0; i < BT_PROFILE_COUNT; i++) {
-		lv_obj_set_style_bg_opa(s_profile_btns[i],
-					(i == idx) ? LV_OPA_COVER : LV_OPA_50, 0);
+		if (i == idx) {
+			lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED);
+		} else {
+			lv_obj_clear_state(s_profile_btns[i], LV_STATE_CHECKED);
+		}
 	}
 }
 
@@ -99,6 +88,14 @@ static void home_btn_cb(lv_event_t *e)
 	ss_navigate_to(PAGE_HOME);
 }
 
+static void disc_btn_cb(lv_event_t *e)
+{
+	if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
+		return;
+	}
+	ss_fire_behavior(INPUT_VIRTUAL_ZMK_BT_DISC_0 + s_selected_profile);
+}
+
 static void usb_btn_cb(lv_event_t *e)
 {
 	if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
@@ -111,37 +108,36 @@ static void usb_btn_cb(lv_event_t *e)
 
 static int page_bt_create(lv_obj_t *screen)
 {
-	/* Profile radio buttons on perimeter */
+	/* Profile radio buttons — upper half slots: 10,11,0,1,2 (clockwise) */
+	static const int8_t s_upper_slots[5] = {10, 11, 0, 1, 2};
+	int16_t pos[12][2];
+	ui_circle_12_positions(pos, UI_CIRCLE_LAYOUT_RADIUS);
 	for (int i = 0; i < BT_PROFILE_COUNT; i++) {
 		char label[4];
 		snprintf(label, sizeof(label), "%d", i);
-
-		lv_obj_t *btn = ui_create_btn(screen, label,
-			LV_ALIGN_CENTER, s_profile_offsets[i][0], s_profile_offsets[i][1],
-			32, 32, LV_RADIUS_CIRCLE, profile_btn_cb, (void *)(uintptr_t)i);
-		lv_obj_set_style_bg_opa(btn, (i == 0) ? LV_OPA_COVER : LV_OPA_50, 0);
+		int slot = s_upper_slots[i];
+		lv_obj_t *btn = ui_create_circle_btn(screen, label,
+			pos[slot][0], pos[slot][1],
+			profile_btn_cb, (void *)(uintptr_t)i);
+		if (i == 0) {
+			lv_obj_add_state(btn, LV_STATE_CHECKED);
+		}
 		s_profile_btns[i] = btn;
 	}
 
-	/* Output status label — screen center */
-	lv_obj_t *output_lbl = create_output_status_label(screen, &lv_font_montserrat_24);
-	lv_obj_align(output_lbl, LV_ALIGN_CENTER, 0, 0);
+	/* Output status label — upper inner area, large font */
+	lv_obj_t *output_lbl = create_output_status_label(screen, &lv_font_montserrat_36);
+	lv_obj_align(output_lbl, LV_ALIGN_CENTER, 0, -40);
 	bt_status_init(output_lbl);
 
-	/* SEL / CLR rectangular buttons — upper inner area */
-	lv_obj_t *sel = ui_create_btn(screen, LV_SYMBOL_OK,
-		LV_ALIGN_CENTER, -38, -45, 60, 30, 8, sel_btn_cb, NULL);
-	lv_obj_set_style_border_color(sel, lv_color_white(), 0);
-	lv_obj_set_style_border_width(sel, 2, 0);
+	/* Row 1: OK / DISC / CLR circle buttons */
+	ui_create_circle_btn(screen, LV_SYMBOL_OK,    -65, 15, sel_btn_cb,  NULL);
+	ui_create_circle_btn(screen, LV_SYMBOL_CLOSE,   0, 15, disc_btn_cb, NULL);
+	ui_create_circle_btn(screen, LV_SYMBOL_TRASH,  65, 15, clr_btn_cb,  NULL);
 
-	lv_obj_t *clr = ui_create_btn(screen, LV_SYMBOL_TRASH,
-		LV_ALIGN_CENTER, 38, -45, 60, 30, 8, clr_btn_cb, NULL);
-	lv_obj_set_style_border_color(clr, lv_color_white(), 0);
-	lv_obj_set_style_border_width(clr, 2, 0);
-
-	/* HOME / USB circle buttons — lower inner area */
-	ui_create_circle_btn(screen, LV_SYMBOL_HOME, -38, 55, home_btn_cb, NULL);
-	ui_create_circle_btn(screen, LV_SYMBOL_USB,   38, 55, usb_btn_cb, NULL);
+	/* Row 2: HOME / USB circle buttons */
+	ui_create_circle_btn(screen, LV_SYMBOL_HOME, -33, 58, home_btn_cb, NULL);
+	ui_create_circle_btn(screen, LV_SYMBOL_USB,   33, 58, usb_btn_cb,  NULL);
 
 	return 0;
 }
