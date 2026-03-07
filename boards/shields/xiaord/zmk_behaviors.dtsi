@@ -37,12 +37,6 @@
             INPUT_VIRTUAL_ZMK_BT_SEL_6      INPUT_VIRTUAL_ZMK_BT_SEL_7
             INPUT_VIRTUAL_ZMK_BT_SEL_8      INPUT_VIRTUAL_ZMK_BT_SEL_9
             INPUT_VIRTUAL_ZMK_BT_SEL_10     INPUT_VIRTUAL_ZMK_BT_SEL_11
-            INPUT_VIRTUAL_ZMK_BT_DISC_0     INPUT_VIRTUAL_ZMK_BT_DISC_1
-            INPUT_VIRTUAL_ZMK_BT_DISC_2     INPUT_VIRTUAL_ZMK_BT_DISC_3
-            INPUT_VIRTUAL_ZMK_BT_DISC_4     INPUT_VIRTUAL_ZMK_BT_DISC_5
-            INPUT_VIRTUAL_ZMK_BT_DISC_6     INPUT_VIRTUAL_ZMK_BT_DISC_7
-            INPUT_VIRTUAL_ZMK_BT_DISC_8     INPUT_VIRTUAL_ZMK_BT_DISC_9
-            INPUT_VIRTUAL_ZMK_BT_DISC_10    INPUT_VIRTUAL_ZMK_BT_DISC_11
         >;
         bindings = <
             &bt BT_CLR     &bt BT_CLR_ALL
@@ -55,12 +49,6 @@
             &bt BT_SEL 6   &bt BT_SEL 7
             &bt BT_SEL 8   &bt BT_SEL 9
             &bt BT_SEL 10  &bt BT_SEL 11
-            &bt BT_DISC 0  &bt BT_DISC 1
-            &bt BT_DISC 2  &bt BT_DISC 3
-            &bt BT_DISC 4  &bt BT_DISC 5
-            &bt BT_DISC 6  &bt BT_DISC 7
-            &bt BT_DISC 8  &bt BT_DISC 9
-            &bt BT_DISC 10 &bt BT_DISC 11
         >;
     };
 

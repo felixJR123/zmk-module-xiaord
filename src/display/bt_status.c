@@ -22,9 +22,11 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/events/ble_active_profile_changed.h>
 #endif
 
-/* ── Static LVGL object reference ──────────────────────────────────────── */
+/* ── Static LVGL object references ─────────────────────────────────────── */
 
 static lv_obj_t *s_output_lbl;
+static lv_obj_t **s_profile_btns;
+static int s_profile_btn_count;
 
 /* ── Output status listener ─────────────────────────────────────────────── */
 
@@ -91,6 +93,21 @@ static void bt_output_update_cb(struct bt_output_status_state state)
 	}
 
 	lv_label_set_text(s_output_lbl, text);
+
+	/* Update profile button CHECKED states */
+	if (s_profile_btns) {
+		int active = -1;
+		if (transport == ZMK_TRANSPORT_BLE) {
+			active = state.selected_endpoint.ble.profile_index;
+		}
+		for (int i = 0; i < s_profile_btn_count; i++) {
+			if (i == active) {
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED);
+			} else {
+				lv_obj_clear_state(s_profile_btns[i], LV_STATE_CHECKED);
+			}
+		}
+	}
 }
 
 ZMK_DISPLAY_WIDGET_LISTENER(bt_output_status, struct bt_output_status_state, bt_output_update_cb,
@@ -116,4 +133,10 @@ void bt_status_init(lv_obj_t *output_lbl)
 {
 	s_output_lbl = output_lbl;
 	bt_output_status_init();
+}
+
+void bt_status_set_profile_btns(lv_obj_t **btns, int count)
+{
+	s_profile_btns = btns;
+	s_profile_btn_count = count;
 }

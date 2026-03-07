@@ -91,7 +91,6 @@
  * 0x40-0x43  BT management (requires: CONFIG_ZMK_BLE)
  * 0x50-0x5B  BT_SEL n    (requires: CONFIG_ZMK_BLE)
  * 0x60-0x6B  BT_CLR n    (per-profile; leave unmapped or define via keyboard overlay)
- * 0x70-0x7B  BT_DISC n   (requires: CONFIG_ZMK_BLE)
  */
 
 #define INPUT_VIRTUAL_ZMK_BT_CLR        0x40
@@ -128,19 +127,6 @@
 #define INPUT_VIRTUAL_ZMK_BT_CLR_9      0x69
 #define INPUT_VIRTUAL_ZMK_BT_CLR_10     0x6A
 #define INPUT_VIRTUAL_ZMK_BT_CLR_11     0x6B
-
-#define INPUT_VIRTUAL_ZMK_BT_DISC_0     0x70
-#define INPUT_VIRTUAL_ZMK_BT_DISC_1     0x71
-#define INPUT_VIRTUAL_ZMK_BT_DISC_2     0x72
-#define INPUT_VIRTUAL_ZMK_BT_DISC_3     0x73
-#define INPUT_VIRTUAL_ZMK_BT_DISC_4     0x74
-#define INPUT_VIRTUAL_ZMK_BT_DISC_5     0x75
-#define INPUT_VIRTUAL_ZMK_BT_DISC_6     0x76
-#define INPUT_VIRTUAL_ZMK_BT_DISC_7     0x77
-#define INPUT_VIRTUAL_ZMK_BT_DISC_8     0x78
-#define INPUT_VIRTUAL_ZMK_BT_DISC_9     0x79
-#define INPUT_VIRTUAL_ZMK_BT_DISC_10    0x7A
-#define INPUT_VIRTUAL_ZMK_BT_DISC_11    0x7B
 
 /* ── Page indices for use in DTS overlays ───────────────────────────────── */
 
