@@ -12,12 +12,15 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/input/input.h>
+#include <zephyr/drivers/display.h>
 #include <lvgl.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #include "page_ops.h"
 #include "xiaord_input_codes.h"
+
+extern const lv_image_dsc_t img_bg;
 
 BUILD_ASSERT(IS_ENABLED(CONFIG_ZMK_VIRTUAL_KEY_SOURCE),
 	"xiaord status_screen requires CONFIG_ZMK_VIRTUAL_KEY_SOURCE");
@@ -95,6 +98,18 @@ void ss_fire_behavior(zmk_behavior_code code)
 static void xiaord_initialize_color_theme(void)
 {
 	lv_display_t *disp = lv_display_get_default();
+
+	/* Hardware rotation: called here (after LVGL init) so disp_data->cap is
+	 * captured with NORMAL orientation, letting lv_display_set_rotation below
+	 * handle touch coordinate transformation without Zephyr driver interference. */
+	const struct device *display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+	if (device_is_ready(display_dev)) {
+		display_set_orientation(display_dev, DISPLAY_ORIENTATION_ROTATED_270);
+	}
+
+	/* Touch coordinate transformation via LVGL rotation. */
+	lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_270);
+
 	lv_theme_t *theme = lv_theme_default_init(
 		disp,
 		lv_palette_main(LV_PALETTE_BLUE),
@@ -117,6 +132,7 @@ lv_obj_t *zmk_display_status_screen(void)
 	for (size_t i = 0; i < PAGE_COUNT; i++) {
 		lv_obj_t *screen = lv_obj_create(NULL);
 		lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
+		lv_obj_set_style_bg_image_src(screen, &img_bg, LV_PART_MAIN);
 		s_pages[i].screen = screen;
 
 		/* Build page widgets */
