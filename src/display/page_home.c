@@ -23,6 +23,9 @@ static lv_obj_t   *s_date_lbl;
 static lv_obj_t   *s_time_lbl;
 static lv_timer_t *s_timer;
 
+static lv_obj_t   *s_circle_btn_objs[12];
+static bool        s_btns_visible;
+
 /* ── Month / weekday name tables ───────────────────────────────────────── */
 
 static const char *month_names[] = {
@@ -81,6 +84,38 @@ static const struct circle_btn_desc s_circle_btns[12] = {
 	{ -53,  -91, LV_SYMBOL_SETTINGS,   SS_SETTINGS,   PAGE_CLOCK    },
 };
 
+/* ── Show/hide helper ──────────────────────────────────────────────────── */
+
+#define CENTER_DISMISS_RADIUS 70  /* px — inner edge of buttons is at r=89 */
+
+static void set_btns_visible(bool visible)
+{
+	s_btns_visible = visible;
+	for (int i = 0; i < 12; i++) {
+		if (visible)
+			lv_obj_clear_flag(s_circle_btn_objs[i], LV_OBJ_FLAG_HIDDEN);
+		else
+			lv_obj_add_flag(s_circle_btn_objs[i], LV_OBJ_FLAG_HIDDEN);
+	}
+}
+
+/* ── Tap overlay callback ──────────────────────────────────────────────── */
+
+static void tap_overlay_cb(lv_event_t *e)
+{
+	if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+	if (!s_btns_visible) {
+		set_btns_visible(true);
+		return;
+	}
+	/* Buttons visible — dismiss if tap is near center */
+	lv_point_t p;
+	lv_indev_get_point(lv_indev_active(), &p);
+	int dx = p.x - 120, dy = p.y - 120;
+	if (dx * dx + dy * dy <= CENTER_DISMISS_RADIUS * CENTER_DISMISS_RADIUS)
+		set_btns_visible(false);
+}
+
 /* ── Circle button callback ────────────────────────────────────────────── */
 
 static void circle_btn_cb(lv_event_t *e)
@@ -90,6 +125,8 @@ static void circle_btn_cb(lv_event_t *e)
 	ss_fire_behavior(s_circle_btns[idx].code);
 	if (s_circle_btns[idx].nav_page >= 0)
 		ss_navigate_to(s_circle_btns[idx].nav_page);
+	if (s_circle_btns[idx].code == SS_HOME)
+		set_btns_visible(false);
 }
 
 /* ── Page create ───────────────────────────────────────────────────────── */
@@ -162,7 +199,18 @@ static int page_home_create(lv_obj_t *tile)
 
 	home_status_init(output_lbl, periph_bat_arcs, periph_bat_lbls);
 
+	/* ── Tap overlay — full-tile, behind buttons ────────────────────── */
+	lv_obj_t *overlay = lv_obj_create(tile);
+	lv_obj_set_size(overlay, LV_PCT(100), LV_PCT(100));
+	lv_obj_align(overlay, LV_ALIGN_CENTER, 0, 0);
+	lv_obj_set_style_bg_opa(overlay, LV_OPA_TRANSP, 0);
+	lv_obj_set_style_border_width(overlay, 0, 0);
+	lv_obj_set_scrollbar_mode(overlay, LV_SCROLLBAR_MODE_OFF);
+	lv_obj_add_flag(overlay, LV_OBJ_FLAG_CLICKABLE);
+	lv_obj_add_event_cb(overlay, tap_overlay_cb, LV_EVENT_ALL, NULL);
+
 	/* ── Circle button ring — 12 buttons on r=105px circumference ──── */
+	s_btns_visible = false;
 	for (int i = 0; i < 12; i++) {
 		const struct circle_btn_desc *d = &s_circle_btns[i];
 		lv_obj_t *btn = lv_obj_create(tile);
@@ -178,6 +226,8 @@ static int page_home_create(lv_obj_t *tile)
 		lv_obj_t *lbl = lv_label_create(btn);
 		lv_label_set_text(lbl, d->symbol);
 		lv_obj_center(lbl);
+		lv_obj_add_flag(btn, LV_OBJ_FLAG_HIDDEN);
+		s_circle_btn_objs[i] = btn;
 	}
 
 	/* 1-second timer, created paused — resumed only while page is active */
@@ -193,6 +243,7 @@ static void page_home_enter(void)
 {
 	update_datetime(NULL); /* show current time immediately on entry */
 	lv_timer_resume(s_timer);
+	set_btns_visible(false);
 }
 
 static void page_home_leave(void)
