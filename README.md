@@ -72,23 +72,82 @@ manifest:
 
 ### Adding to build.yaml
 
-Add `xiaord` to the shield list of the central/dongle target:
+Add `xiaord` to the shield list of the dongle target. The dongle acts as the BLE central, so **no other split half should set `CONFIG_ZMK_SPLIT_ROLE_CENTRAL=y`**:
 
 ```yaml
 include:
   - board: xiao_ble//zmk
     shield: xiaord your_keyboard_dongle
     artifact-name: your_keyboard_dongle
+  # All other halves (left, right, …) run as peripherals — do NOT set CENTRAL=y.
   - board: xiao_ble//zmk
     shield: your_keyboard_left
-    artifact-name: your_keyboard_left_peripheral
+    artifact-name: your_keyboard_left
   - board: xiao_ble//zmk
-    shield: your_keyboard_left
-    artifact-name: your_keyboard_left_central
-    cmake-args: -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y
+    shield: your_keyboard_right
+    artifact-name: your_keyboard_right
 ```
 
+> The `left`/`right` targets above are examples. The rule applies to every non-dongle half: because the dongle holds the central role, `CONFIG_ZMK_SPLIT_ROLE_CENTRAL=n` (the default) must be used for all keyboard halves when a dongle is present. Adding `CENTRAL=y` to any half would conflict with the dongle.
+
 ## Configuration
+
+### Dongle Overlay
+
+Your keyboard's dongle overlay (`your_keyboard_dongle.overlay`) must disable the physical key matrix and redirect ZMK to use the mock kscan provided by this module.
+
+#### Minimal overlay (no home button customization)
+
+```dts
+#include "your_keyboard.dtsi"
+
+// The dongle has no physical key matrix — disable it and use xiaord's mock kscan.
+&kscan0 { status = "disabled"; };
+/ { chosen { zmk,kscan = &xiaord_mock_kscan; }; };
+```
+
+| Element | Purpose |
+|---------|---------|
+| `#include "your_keyboard.dtsi"` | Shared hardware definitions (pinout, etc.) |
+| `&kscan0 { status = "disabled"; }` | Disables the GPIO key matrix (the dongle has no switches) |
+| `xiaord_mock_kscan` | Dummy kscan provided by xiaord; satisfies ZMK's requirement for a kscan device |
+
+#### Overlay with home button customization
+
+To reassign a home button icon and its behavior, add the following includes and override the relevant nodes:
+
+```dts
+#include "your_keyboard.dtsi"
+#include <dt-bindings/xiaord/input_codes.h>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/outputs.h>
+
+&kscan0 { status = "disabled"; };
+/ { chosen { zmk,kscan = &xiaord_mock_kscan; }; };
+
+// Change the icon at position 1 to show a keyboard symbol.
+&home_button_1 { code = <INPUT_VIRTUAL_SYM_KEYBOARD>; };
+
+// Update virtual_symbol_behavior to map the new icon to a behavior.
+// You must rewrite the entire codes/bindings table — DTS does not support
+// partial array overrides, so all entries must be listed.
+&virtual_symbol_behavior {
+    codes = <
+        INPUT_VIRTUAL_SYM_UPLOAD
+        INPUT_VIRTUAL_SYM_KEYBOARD      /* replaces IMAGE at position 1 */
+        INPUT_VIRTUAL_SYM_VOLUME_MAX
+        /* ... all other codes you want to handle ... */
+    >;
+    bindings = <
+        &bootloader
+        &kp CAPSLOCK                    /* new binding for KEYBOARD icon */
+        &kp C_VOL_UP
+        /* ... matching bindings for each code above ... */
+    >;
+};
+```
+
+> **Important:** `&virtual_symbol_behavior` stores `codes` and `bindings` as flat DTS arrays. Overriding the node replaces the arrays entirely — list all entries, not just the changed ones.
 
 ### Customizing Home Screen Buttons
 
@@ -133,6 +192,38 @@ Install a **CR927 coin cell** in the XIAO Round Display to retain the time acros
 ## License
 
 MIT. Free to use for any purpose. No warranty of any kind.
+
+## Symbol Reference
+
+Home button icons are selected using `INPUT_VIRTUAL_SYM_*` constants defined in `include/dt-bindings/xiaord/input_codes.h`. Each constant maps to an LVGL built-in symbol glyph. See the [LVGL font overview](https://docs.lvgl.io/9.0/overview/font.html) for visual previews of each symbol.
+
+| Range | Category |
+|-------|----------|
+| `0x00–0x3D` | LVGL symbol glyphs (`INPUT_VIRTUAL_SYM_*`) |
+| `0x40–0x7B` | ZMK BT/output behaviors (`INPUT_VIRTUAL_ZMK_*`) |
+
+## Behavior Conversion Flow
+
+When a home button is tapped, the following chain executes:
+
+```
+home button tap
+  → INPUT_VIRTUAL_SYM_* code emitted by virtual_key_source
+  → touchpad_listener (zmk,input-listener) receives the event
+  → input-processors consulted in order:
+      1. &virtual_zmk_behavior    — matches ZMK BT/output codes (0x40–0x7B)
+      2. &virtual_symbol_behavior — matches LVGL symbol codes (0x00–0x3D)
+  → matching binding (e.g. &kp CAPSLOCK) is executed
+```
+
+### Processor roles
+
+| Processor | Codes handled | Typical use |
+|-----------|--------------|-------------|
+| `virtual_zmk_behavior` | `INPUT_VIRTUAL_ZMK_*` (BT_SEL, BT_CLR, OUT_USB…) | Internal BT management pages |
+| `virtual_symbol_behavior` | `INPUT_VIRTUAL_SYM_*` (LVGL symbols) | Home screen buttons; customizable per keyboard |
+
+Both processors are defined in `boards/shields/xiaord/zmk_behaviors.dtsi`. `virtual_zmk_behavior` covers all standard BT/output operations and rarely needs changes. `virtual_symbol_behavior` provides defaults matching the built-in home button layout, but is intended to be overridden per keyboard via the dongle overlay when home buttons are reassigned.
 
 ## Architecture
 
