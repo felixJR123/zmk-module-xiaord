@@ -151,29 +151,15 @@ To reassign a home button icon and its behavior, add the following includes and 
 
 ### Customizing Home Screen Buttons
 
-Override the home buttons by adding a `home_buttons` node to your keyboard's `.overlay` file:
+All 12 home button nodes (`home_button_0` … `home_button_11`) are defined with labels, so you only need to reference the buttons you want to change:
 
 ```dts
 #include <dt-bindings/xiaord/input_codes.h>
 
-/ {
-    home_buttons {
-        compatible = "xiaord,home-buttons";
-
-        btn_copy {
-            position = <3>;  /* 3 o'clock */
-            code = <INPUT_VIRTUAL_SYM_COPY>;
-        };
-        btn_bt {
-            position = <9>;  /* 9 o'clock */
-            code = <INPUT_VIRTUAL_SYM_BLUETOOTH>;
-            nav-page = <XIAORD_PAGE_BT>;  /* navigate to BT screen on tap */
-        };
-    };
-};
+&home_button_1 { code = <INPUT_VIRTUAL_SYM_KEYBOARD>; };  /* 1 o'clock */
 ```
 
-`position` is a clockwise index from 0 (12 o'clock) to 11 (11 o'clock). See `include/dt-bindings/xiaord/input_codes.h` for available icon codes.
+See `include/dt-bindings/xiaord/input_codes.h` for available icon codes.
 
 ### Background Image
 
