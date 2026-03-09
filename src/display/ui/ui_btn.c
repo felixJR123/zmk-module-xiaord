@@ -19,6 +19,7 @@ static lv_style_t s_style_base;
 static lv_style_t s_style_pressed;
 static lv_style_t s_style_checked;
 static lv_style_t s_style_pending;
+static lv_style_t s_style_bonded;
 static bool       s_init;
 
 static void ensure_init(void)
@@ -44,6 +45,10 @@ static void ensure_init(void)
 	lv_style_init(&s_style_pending);
 	lv_style_set_bg_color(&s_style_pending, lv_palette_main(LV_PALETTE_YELLOW));
 	lv_style_set_bg_opa(&s_style_pending, LV_OPA_COVER);
+
+	lv_style_init(&s_style_bonded);
+	lv_style_set_bg_color(&s_style_bonded, lv_palette_main(LV_PALETTE_GREEN));
+	lv_style_set_bg_opa(&s_style_bonded, LV_OPA_COVER);
 }
 
 lv_obj_t *ui_create_btn(lv_obj_t *parent, const char *text,
@@ -62,6 +67,7 @@ lv_obj_t *ui_create_btn(lv_obj_t *parent, const char *text,
 	lv_obj_add_style(btn, &s_style_pressed, LV_PART_MAIN | LV_STATE_PRESSED);
 	lv_obj_add_style(btn, &s_style_checked, LV_PART_MAIN | LV_STATE_CHECKED);
 	lv_obj_add_style(btn, &s_style_pending, LV_PART_MAIN | LV_STATE_USER_1);
+	lv_obj_add_style(btn, &s_style_bonded,  LV_PART_MAIN | LV_STATE_USER_2);
 	lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
 	lv_obj_clear_flag(btn, LV_OBJ_FLAG_SCROLLABLE);
 	lv_obj_add_event_cb(btn, cb, LV_EVENT_ALL, user_data);

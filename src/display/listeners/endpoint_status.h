@@ -15,9 +15,11 @@
 
 struct endpoint_state {
 	struct zmk_endpoint_instance selected_endpoint;
-	enum zmk_transport preferred_transport;
+	struct zmk_endpoint_instance preferred_endpoint;
 	bool active_profile_connected;
 	bool active_profile_bonded;
+	bool profiles_connected[5];
+	bool profiles_bonded[5];
 };
 
 typedef void (*endpoint_status_cb_t)(struct endpoint_state state);

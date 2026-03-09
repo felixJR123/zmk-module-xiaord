@@ -46,24 +46,30 @@ static void bt_endpoint_cb(struct endpoint_state state)
 {
 	endpoint_status_update_label(s_output_lbl, state);
 
-	/* Update profile button CHECKED states */
 	int active = -1;
-	enum zmk_transport transport = state.selected_endpoint.transport;
 
-	if (transport == ZMK_TRANSPORT_BLE) {
+	if (state.selected_endpoint.transport == ZMK_TRANSPORT_BLE) {
 		active = state.selected_endpoint.ble.profile_index;
 	}
 
 	for (int i = 0; i < BT_PROFILE_COUNT; i++) {
+		/* Clear all custom states first */
+		lv_obj_clear_state(s_profile_btns[i],
+				   LV_STATE_CHECKED | LV_STATE_USER_1 | LV_STATE_USER_2);
+
 		if (i == active) {
-			lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED);
-			/* Connection established — clear pending indicator */
-			for (int j = 0; j < BT_PROFILE_COUNT; j++) {
-				lv_obj_clear_state(s_profile_btns[j], LV_STATE_USER_1);
+			if (state.active_profile_connected) {
+				/* Active + connected → blue */
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED);
+			} else {
+				/* Active + not connected → yellow */
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1);
 			}
-		} else {
-			lv_obj_clear_state(s_profile_btns[i], LV_STATE_CHECKED);
+		} else if (state.profiles_bonded[i]) {
+			/* Non-active + paired → green */
+			lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_2);
 		}
+		/* Non-active + unpaired → default (white) */
 	}
 }
 
@@ -75,15 +81,6 @@ static void profile_btn_cb(lv_event_t *e)
 		return;
 	}
 	int idx = (int)(uintptr_t)lv_event_get_user_data(e);
-
-	/* Yellow pending: set USER_1 on tapped button, clear on others */
-	for (int i = 0; i < BT_PROFILE_COUNT; i++) {
-		if (i == idx) {
-			lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1);
-		} else {
-			lv_obj_clear_state(s_profile_btns[i], LV_STATE_USER_1);
-		}
-	}
 
 	ss_fire_behavior(INPUT_VIRTUAL_ZMK_OUT_BLE);
 	ss_fire_behavior(INPUT_VIRTUAL_ZMK_BT_SEL_0 + idx);

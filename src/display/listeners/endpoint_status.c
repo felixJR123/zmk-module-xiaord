@@ -37,14 +37,21 @@ static int s_cb_count;
 
 static struct endpoint_state endpoint_get_state(const zmk_event_t *_eh)
 {
-	return (struct endpoint_state){
+	struct endpoint_state state = {
 		.selected_endpoint = zmk_endpoint_get_selected(),
-		.preferred_transport = zmk_endpoint_get_preferred_transport(),
+		.preferred_endpoint = zmk_endpoint_get_preferred(),
 #if IS_ENABLED(CONFIG_ZMK_BLE)
 		.active_profile_connected = zmk_ble_active_profile_is_connected(),
 		.active_profile_bonded = !zmk_ble_active_profile_is_open(),
 #endif
 	};
+#if IS_ENABLED(CONFIG_ZMK_BLE)
+	for (int i = 0; i < MIN(5, ZMK_BLE_PROFILE_COUNT); i++) {
+		state.profiles_connected[i] = zmk_ble_profile_is_connected(i);
+		state.profiles_bonded[i] = !zmk_ble_profile_is_open(i);
+	}
+#endif
+	return state;
 }
 
 static void endpoint_update_cb(struct endpoint_state state)
@@ -83,13 +90,13 @@ void endpoint_status_update_label(lv_obj_t *lbl, struct endpoint_state state)
 		return;
 	}
 
-	char text[20] = {};
+	char text[24] = {};
 
 	enum zmk_transport transport = state.selected_endpoint.transport;
 	bool connected = transport != ZMK_TRANSPORT_NONE;
 
 	if (!connected) {
-		transport = state.preferred_transport;
+		transport = state.preferred_endpoint.transport;
 	}
 
 	switch (transport) {
@@ -121,6 +128,10 @@ void endpoint_status_update_label(lv_obj_t *lbl, struct endpoint_state state)
 				 state.selected_endpoint.ble.profile_index + 1);
 		}
 		break;
+	}
+
+	if (!zmk_endpoint_instance_eq(state.preferred_endpoint, state.selected_endpoint)) {
+		strcat(text, " " LV_SYMBOL_WARNING);
 	}
 
 	lv_label_set_text(lbl, text);
