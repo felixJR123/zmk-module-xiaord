@@ -24,20 +24,20 @@ A ZMK module for the Seeed XIAO Round Display. Adds a touch-enabled circular dis
 
 Up to 12 buttons can be placed around the edge of the screen, indexed clockwise from 12 o'clock (position 0). Default assignments:
 
-| Position | Icon | Action |
-|----------|------|--------|
-| 0 (12 o'clock) | UPLOAD | Enter bootloader |
-| 1 (1 o'clock) | IMAGE | PrintScreen |
-| 2 (2 o'clock) | VOLUME MAX | Volume up |
-| 3 (3 o'clock) | MUTE | Mute |
-| 4 (4 o'clock) | VOLUME MID | Volume down |
-| 5 (5 o'clock) | NEXT | Next track |
-| 6 (6 o'clock) | PLAY | Play/Pause |
-| 7 (7 o'clock) | PREV | Previous track |
-| 8 (8 o'clock) | WARNING | Ctrl+Alt+Del |
-| 9 (9 o'clock) | USB | Switch to USB output |
-| 10 (10 o'clock) | BLUETOOTH | Go to BT management screen |
-| 11 (11 o'clock) | SETTINGS | Go to clock settings screen |
+| Position | Icon (`ICON_*`) | Action |
+|----------|-----------------|--------|
+| 0 (12 o'clock) | `ICON_UPLOAD` | Enter bootloader |
+| 1 (1 o'clock) | `ICON_IMAGE` | PrintScreen |
+| 2 (2 o'clock) | `ICON_VOLUME_MAX` | Volume up |
+| 3 (3 o'clock) | `ICON_MUTE` | Mute |
+| 4 (4 o'clock) | `ICON_VOLUME_MID` | Volume down |
+| 5 (5 o'clock) | `ICON_NEXT` | Next track |
+| 6 (6 o'clock) | `ICON_PLAY` | Play/Pause |
+| 7 (7 o'clock) | `ICON_PREV` | Previous track |
+| 8 (8 o'clock) | `ICON_WARNING` | Ctrl+Alt+Del |
+| 9 (9 o'clock) | `ICON_USB` | Switch to USB output |
+| 10 (10 o'clock) | `ICON_BLUETOOTH` | Go to BT management screen |
+| 11 (11 o'clock) | `ICON_SETTINGS` | Go to clock settings screen |
 
 ### Bluetooth Management Screen
 
@@ -119,6 +119,7 @@ To reassign a home button icon and its behavior, add the following includes and 
 ```dts
 #include "your_keyboard.dtsi"
 #include <dt-bindings/xiaord/input_codes.h>
+#include <dt-bindings/xiaord/icons.h>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/outputs.h>
 
@@ -126,40 +127,57 @@ To reassign a home button icon and its behavior, add the following includes and 
 / { chosen { zmk,kscan = &xiaord_mock_kscan; }; };
 
 // Change the icon at position 1 to show a keyboard symbol.
-&home_button_1 { code = <INPUT_VIRTUAL_SYM_KEYBOARD>; };
+&home_button_1 { symbol = <ICON_KEYBOARD>; };
 
-// Update virtual_symbol_behavior to map the new icon to a behavior.
+// Update virtual_symbol_behavior bindings.
+// codes are fixed position indices (INPUT_VIRTUAL_POS_0..11) — they do NOT
+// change when icons change. Only rewrite bindings when changing actions.
 // You must rewrite the entire codes/bindings table — DTS does not support
 // partial array overrides, so all entries must be listed.
 &virtual_symbol_behavior {
     codes = <
-        INPUT_VIRTUAL_SYM_UPLOAD
-        INPUT_VIRTUAL_SYM_KEYBOARD      /* replaces IMAGE at position 1 */
-        INPUT_VIRTUAL_SYM_VOLUME_MAX
-        /* ... all other codes you want to handle ... */
+        INPUT_VIRTUAL_POS_0    INPUT_VIRTUAL_POS_1
+        INPUT_VIRTUAL_POS_2    INPUT_VIRTUAL_POS_3
+        INPUT_VIRTUAL_POS_4    INPUT_VIRTUAL_POS_5
+        INPUT_VIRTUAL_POS_6    INPUT_VIRTUAL_POS_7
+        INPUT_VIRTUAL_POS_8    INPUT_VIRTUAL_POS_9
+        INPUT_VIRTUAL_POS_10   INPUT_VIRTUAL_POS_11
+        INPUT_VIRTUAL_SCROLL_CW   INPUT_VIRTUAL_SCROLL_CCW
     >;
     bindings = <
-        &bootloader
-        &kp CAPSLOCK                    /* new binding for KEYBOARD icon */
-        &kp C_VOL_UP
-        /* ... matching bindings for each code above ... */
+        &bootloader            &kp CAPSLOCK        /* pos 1 → CAPSLOCK */
+        &kp C_VOL_UP           &kp C_MUTE
+        &kp C_VOL_DN           &kp C_NEXT
+        &kp C_PLAY             &kp C_PREV
+        &kp LC(LA(DEL))        &out OUT_USB
+        &out OUT_BLE           &none
+        &msc MOVE_Y(-10)       &msc MOVE_Y(10)
     >;
 };
 ```
 
 > **Important:** `&virtual_symbol_behavior` stores `codes` and `bindings` as flat DTS arrays. Overriding the node replaces the arrays entirely — list all entries, not just the changed ones.
+>
+> **Key design point:** The fired code is always `INPUT_VIRTUAL_POS_<n>` (the button's slot index), independent of which icon is displayed. Changing a button's icon (`symbol`) does **not** require updating `codes` — only `bindings` needs to change if you also want a different action.
 
 ### Customizing Home Screen Buttons
 
 All 12 home button nodes (`home_button_0` … `home_button_11`) are defined with labels, so you only need to reference the buttons you want to change:
 
 ```dts
-#include <dt-bindings/xiaord/input_codes.h>
+#include <dt-bindings/xiaord/icons.h>
 
-&home_button_1 { code = <INPUT_VIRTUAL_SYM_KEYBOARD>; };  /* 1 o'clock */
+&home_button_1 { symbol = <ICON_KEYBOARD>; };  /* 1 o'clock */
 ```
 
-See `include/dt-bindings/xiaord/input_codes.h` for available icon codes.
+See `include/dt-bindings/xiaord/icons.h` for available `ICON_*` codepoints (FontAwesome 5).
+You can also specify a Unicode codepoint directly as an integer literal:
+
+```dts
+&home_button_1 { symbol = <0xF11C>; };  /* U+F11C = keyboard glyph */
+```
+
+Changing `symbol` only affects the displayed icon; the fired code remains `INPUT_VIRTUAL_POS_1`.
 
 ### Background Image
 
@@ -179,14 +197,17 @@ Install a **CR927 coin cell** in the XIAO Round Display to retain the time acros
 
 MIT. Free to use for any purpose. No warranty of any kind.
 
-## Symbol Reference
+## Icon & Code Reference
 
-Home button icons are selected using `INPUT_VIRTUAL_SYM_*` constants defined in `include/dt-bindings/xiaord/input_codes.h`. Each constant maps to an LVGL built-in symbol glyph. See the [LVGL font overview](https://docs.lvgl.io/9.0/overview/font.html) for visual previews of each symbol.
+Home button icons are specified using `ICON_*` constants defined in `include/dt-bindings/xiaord/icons.h`. Each constant is a FontAwesome 5 Unicode codepoint rendered via the bundled Montserrat LVGL font.
+
+The virtual event codes fired on button tap are defined in `include/dt-bindings/xiaord/input_codes.h`:
 
 | Range | Category |
 |-------|----------|
-| `0x00–0x3D` | LVGL symbol glyphs (`INPUT_VIRTUAL_SYM_*`) |
-| `0x40–0x7B` | ZMK BT/output behaviors (`INPUT_VIRTUAL_ZMK_*`) |
+| `0x00–0x0B` | Home button positions (`INPUT_VIRTUAL_POS_0` … `INPUT_VIRTUAL_POS_11`) |
+| `0x0C–0x0D` | UI scroll actions (`INPUT_VIRTUAL_SCROLL_CW`, `INPUT_VIRTUAL_SCROLL_CCW`) |
+| `0x40–0x6B` | ZMK BT/output behaviors (`INPUT_VIRTUAL_ZMK_*`) |
 
 ## Behavior Conversion Flow
 
@@ -194,22 +215,24 @@ When a home button is tapped, the following chain executes:
 
 ```
 home button tap
-  → INPUT_VIRTUAL_SYM_* code emitted by virtual_key_source
+  → INPUT_VIRTUAL_POS_<n> code emitted (n = clock-position index 0–11)
   → touchpad_listener (zmk,input-listener) receives the event
   → input-processors consulted in order:
-      1. &virtual_zmk_behavior    — matches ZMK BT/output codes (0x40–0x7B)
-      2. &virtual_symbol_behavior — matches LVGL symbol codes (0x00–0x3D)
+      1. &virtual_zmk_behavior    — matches ZMK BT/output codes (0x40–0x6B)
+      2. &virtual_symbol_behavior — matches position codes (0x00–0x0B)
   → matching binding (e.g. &kp CAPSLOCK) is executed
 ```
+
+The fired code encodes only **position**, not icon. The displayed icon (`ICON_*` codepoint) is a pure display concern stored separately in the button descriptor and rendered via UTF-8 conversion.
 
 ### Processor roles
 
 | Processor | Codes handled | Typical use |
 |-----------|--------------|-------------|
 | `virtual_zmk_behavior` | `INPUT_VIRTUAL_ZMK_*` (BT_SEL, BT_CLR, OUT_USB…) | Internal BT management pages |
-| `virtual_symbol_behavior` | `INPUT_VIRTUAL_SYM_*` (LVGL symbols) | Home screen buttons; customizable per keyboard |
+| `virtual_symbol_behavior` | `INPUT_VIRTUAL_POS_*` (positions 0–11) + `INPUT_VIRTUAL_SCROLL_*` | Home screen buttons; customizable per keyboard |
 
-Both processors are defined in `boards/shields/xiaord/zmk_behaviors.dtsi`. `virtual_zmk_behavior` covers all standard BT/output operations and rarely needs changes. `virtual_symbol_behavior` provides defaults matching the built-in home button layout, but is intended to be overridden per keyboard via the dongle overlay when home buttons are reassigned.
+Both processors are defined in `boards/shields/xiaord/zmk_behaviors.dtsi`. `virtual_zmk_behavior` covers all standard BT/output operations and rarely needs changes. `virtual_symbol_behavior` maps each position to a ZMK binding and is intended to be overridden per keyboard via the dongle overlay. Because codes are positional and fixed, overriding only requires updating `bindings` — `codes` stays the same regardless of which icons are displayed.
 
 ## Architecture
 
