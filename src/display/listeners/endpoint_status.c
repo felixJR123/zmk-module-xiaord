@@ -43,6 +43,7 @@ static struct endpoint_state endpoint_get_state(const zmk_event_t *_eh)
 #if IS_ENABLED(CONFIG_ZMK_BLE)
 		.active_profile_connected = zmk_ble_active_profile_is_connected(),
 		.active_profile_bonded = !zmk_ble_active_profile_is_open(),
+		.active_ble_profile = zmk_ble_active_profile_index(),
 #endif
 	};
 #if IS_ENABLED(CONFIG_ZMK_BLE)
@@ -129,6 +130,9 @@ void endpoint_status_update_label(lv_obj_t *lbl, struct endpoint_state state)
 		}
 		break;
 	}
+
+	LOG_DBG("preferred=%d selected=%d", state.preferred_endpoint.transport,
+		state.selected_endpoint.transport);
 
 	if (!zmk_endpoint_instance_eq(state.preferred_endpoint, state.selected_endpoint)) {
 		strcat(text, " " LV_SYMBOL_WARNING);

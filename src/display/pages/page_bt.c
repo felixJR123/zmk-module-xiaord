@@ -15,11 +15,14 @@
  */
 
 #include <lvgl.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 #include "page_iface.h"
 #include "display_api.h"
 #include "endpoint_status.h"
 #include "ui_btn.h"
+
+LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #if IS_ENABLED(CONFIG_ZMK_BLE)
 #include <zmk/ble.h>
@@ -46,30 +49,42 @@ static void bt_endpoint_cb(struct endpoint_state state)
 {
 	endpoint_status_update_label(s_output_lbl, state);
 
-	int active = -1;
+	int active = state.active_ble_profile;
+	enum zmk_transport transport = state.selected_endpoint.transport;
+	bool is_bt = (transport == ZMK_TRANSPORT_BLE);
 
-	if (state.selected_endpoint.transport == ZMK_TRANSPORT_BLE) {
-		active = state.selected_endpoint.ble.profile_index;
-	}
+	LOG_DBG("preferred=%d selected=%d active_profile=%d",
+		state.preferred_endpoint.transport, transport, active);
 
 	for (int i = 0; i < BT_PROFILE_COUNT; i++) {
-		/* Clear all custom states first */
 		lv_obj_clear_state(s_profile_btns[i],
-				   LV_STATE_CHECKED | LV_STATE_USER_1 | LV_STATE_USER_2);
+				   LV_STATE_CHECKED | LV_STATE_USER_1 |
+				   LV_STATE_USER_2 | LV_STATE_USER_3);
 
-		if (i == active) {
-			if (state.active_profile_connected) {
-				/* Active + connected → blue */
-				lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED);
+		bool selected  = (i == active);
+		bool bonded    = state.profiles_bonded[i];
+		bool connected = state.profiles_connected[i];
+
+		if (selected && is_bt) {
+			if (bonded && connected) {
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED); /* blue */
+			} else if (bonded) {
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_3); /* red */
 			} else {
-				/* Active + not connected → yellow */
-				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1);
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1); /* yellow */
 			}
-		} else if (state.profiles_bonded[i]) {
-			/* Non-active + paired → green */
-			lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_2);
+		} else if (selected && !is_bt) {
+			if (bonded) {
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_2); /* green */
+			} else {
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1); /* yellow */
+			}
+		} else {
+			if (bonded) {
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_2); /* green */
+			}
+			/* !bonded → default (white) */
 		}
-		/* Non-active + unpaired → default (white) */
 	}
 }
 

@@ -20,6 +20,7 @@ struct endpoint_state {
 	bool active_profile_bonded;
 	bool profiles_connected[5];
 	bool profiles_bonded[5];
+	int active_ble_profile;
 };
 
 typedef void (*endpoint_status_cb_t)(struct endpoint_state state);
