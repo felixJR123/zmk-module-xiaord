@@ -42,12 +42,20 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 static lv_obj_t *s_profile_btns[5];
 static lv_obj_t *s_output_lbl;
+static lv_obj_t *s_usb_btn;
 
 /* ── Endpoint status callback ────────────────────────────────────────────── */
 
 static void bt_endpoint_cb(struct endpoint_state state)
 {
 	endpoint_status_update_label(s_output_lbl, state);
+
+	bool prefer_usb = (state.preferred_endpoint.transport == ZMK_TRANSPORT_USB);
+	if (prefer_usb) {
+		lv_obj_add_state(s_usb_btn, LV_STATE_CHECKED);
+	} else {
+		lv_obj_clear_state(s_usb_btn, LV_STATE_CHECKED);
+	}
 
 	int active = state.active_ble_profile;
 	bool prefer_bt = (state.preferred_endpoint.transport == ZMK_TRANSPORT_BLE);
@@ -142,7 +150,7 @@ static void usb_btn_cb(lv_event_t *e)
 	if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
 		return;
 	}
-	ss_fire_behavior(INPUT_VIRTUAL_ZMK_OUT_USB);
+	ss_fire_behavior(INPUT_VIRTUAL_ZMK_OUT_TOG);
 	lv_timer_create(refresh_timer_cb, 100, NULL);
 }
 
@@ -169,7 +177,7 @@ static int page_bt_create(lv_obj_t *screen)
 	endpoint_status_register_cb(bt_endpoint_cb);
 
 	/* Row 1: USB / CLR */
-	ui_create_circle_btn(screen, LV_SYMBOL_USB,   -33, 15, usb_btn_cb,  NULL);
+	s_usb_btn = ui_create_circle_btn(screen, LV_SYMBOL_USB,   -33, 15, usb_btn_cb,  NULL);
 	ui_create_circle_btn(screen, LV_SYMBOL_TRASH,  33, 15, clr_btn_cb,  NULL);
 
 	/* Row 2: HOME */
