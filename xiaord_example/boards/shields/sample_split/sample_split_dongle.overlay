@@ -1,4 +1,7 @@
 #include "sample_split.dtsi"
+#include <dt-bindings/xiaord/icons.h>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/outputs.h>
 
 // Dongle has no physical matrix — disable the gpio kscan and use xiaord's mock kscan.
 &kscan0 {
@@ -12,77 +15,40 @@
 };
 
 // ============================================================
-// home_button overrides (samples — uncomment to override)
-//
-// INPUT_VIRTUAL_SYM_* enum definitions:
-//   zmk_modules/zmk-module-xiaord/include/dt-bindings/xiaord/input_codes.h
+// ICON_* constant definitions:
+//   zmk_modules/zmk-module-xiaord/include/dt-bindings/xiaord/icons.h
 //
 // Each symbol maps 1:1 to an LVGL LV_SYMBOL_* icon.
 // Icon reference: https://docs.lvgl.io/9.0/overview/font.html
 // ============================================================
-// &home_button_0 { code = <INPUT_VIRTUAL_SYM_UPLOAD>; };    /* 12 o'clock */
-&home_button_1 { code = <INPUT_VIRTUAL_SYM_KEYBOARD>; };     /*  1 o'clock — overridden: IMAGE → KEYBOARD */
-// &home_button_2 { code = <INPUT_VIRTUAL_SYM_VOLUME_MAX>; }; /*  2 o'clock */
-// &home_button_3 { code = <INPUT_VIRTUAL_SYM_MUTE>; };       /*  3 o'clock */
-// &home_button_4 { code = <INPUT_VIRTUAL_SYM_VOLUME_MID>; }; /*  4 o'clock */
-// &home_button_5 { code = <INPUT_VIRTUAL_SYM_NEXT>; };       /*  5 o'clock */
-// &home_button_6 { code = <INPUT_VIRTUAL_SYM_PLAY>; };       /*  6 o'clock */
-// &home_button_7 { code = <INPUT_VIRTUAL_SYM_PREV>; };       /*  7 o'clock */
-// &home_button_8 { code = <INPUT_VIRTUAL_SYM_WARNING>; };    /*  8 o'clock */
-// &home_button_9 { code = <INPUT_VIRTUAL_SYM_USB>; };        /*  9 o'clock */
-// &home_button_10 { code = <INPUT_VIRTUAL_SYM_BLUETOOTH>; nav-page = <XIAORD_PAGE_BT>; };    /* 10 o'clock */
-// &home_button_11 { code = <INPUT_VIRTUAL_SYM_SETTINGS>; nav-page = <XIAORD_PAGE_CLOCK>; }; /* 11 o'clock */
+// &home_button_0 { symbol = <ICON_UPLOAD>; };    /* 12 o'clock */
+&home_button_1 { symbol = <ICON_KEYBOARD>; };     /*  1 o'clock  */
+// &home_button_2 { symbol = <ICON_VOLUME_MAX>; }; /*  2 o'clock */
+// &home_button_3 { symbol = <ICON_MUTE>; };       /*  3 o'clock */
+// &home_button_4 { symbol = <ICON_VOLUME_MID>; }; /*  4 o'clock */
+// &home_button_5 { symbol = <ICON_NEXT>; };       /*  5 o'clock */
+// &home_button_6 { symbol = <ICON_PLAY>; };       /*  6 o'clock */
+// &home_button_7 { symbol = <ICON_PREV>; };       /*  7 o'clock */
+// &home_button_8 { symbol = <ICON_WARNING>; };    /*  8 o'clock */
+// &home_button_9 { symbol = <ICON_USB>; };        /*  9 o'clock */
+// &home_button_10 { symbol = <ICON_BLUETOOTH>; nav-page = <XIAORD_PAGE_BT>; };    /* 10 o'clock */
+// &home_button_11 { symbol = <ICON_SETTINGS>; nav-page = <XIAORD_PAGE_CLOCK>; }; /* 11 o'clock */
 
-// ============================================================
-// virtual_symbol_behavior override (full replacement)
-// Default (from zmk_behaviors.dtsi) is shown below for reference:
-//
-// &virtual_symbol_behavior {
-//     codes = <
-//         INPUT_VIRTUAL_SYM_UPLOAD
-//         INPUT_VIRTUAL_SYM_MUTE
-//         INPUT_VIRTUAL_SYM_VOLUME_MID    INPUT_VIRTUAL_SYM_VOLUME_MAX
-//         INPUT_VIRTUAL_SYM_IMAGE
-//         INPUT_VIRTUAL_SYM_PREV          INPUT_VIRTUAL_SYM_PLAY
-//         INPUT_VIRTUAL_SYM_PAUSE         INPUT_VIRTUAL_SYM_STOP
-//         INPUT_VIRTUAL_SYM_NEXT
-//         INPUT_VIRTUAL_SYM_WARNING
-//         INPUT_VIRTUAL_SYM_USB           INPUT_VIRTUAL_SYM_BLUETOOTH
-//     >;
-//     bindings = <
-//         &bootloader
-//         &kp C_MUTE
-//         &kp C_VOL_DN                    &kp C_VOL_UP
-//         &kp PRINTSCREEN
-//         &kp C_PREV                      &kp C_PLAY
-//         &kp C_PAUSE                     &kp C_STOP
-//         &kp C_NEXT
-//         &kp LC(LA(DEL))
-//         &out OUT_USB                    &out OUT_BLE
-//     >;
-// };
-// ============================================================
 &virtual_symbol_behavior {
     codes = <
-        INPUT_VIRTUAL_SYM_UPLOAD
-        INPUT_VIRTUAL_SYM_MUTE
-        INPUT_VIRTUAL_SYM_VOLUME_MID    INPUT_VIRTUAL_SYM_VOLUME_MAX
-        INPUT_VIRTUAL_SYM_KEYBOARD
-        INPUT_VIRTUAL_SYM_PREV          INPUT_VIRTUAL_SYM_PLAY
-        INPUT_VIRTUAL_SYM_PAUSE         INPUT_VIRTUAL_SYM_STOP
-        INPUT_VIRTUAL_SYM_NEXT
-        INPUT_VIRTUAL_SYM_WARNING
-        INPUT_VIRTUAL_SYM_USB           INPUT_VIRTUAL_SYM_BLUETOOTH
+        INPUT_VIRTUAL_POS_0    INPUT_VIRTUAL_POS_1
+        INPUT_VIRTUAL_POS_2    INPUT_VIRTUAL_POS_3
+        INPUT_VIRTUAL_POS_4    INPUT_VIRTUAL_POS_5
+        INPUT_VIRTUAL_POS_6    INPUT_VIRTUAL_POS_7
+        INPUT_VIRTUAL_POS_8    INPUT_VIRTUAL_POS_9
+        INPUT_VIRTUAL_POS_10   INPUT_VIRTUAL_POS_11
     >;
     bindings = <
-        &bootloader
-        &kp C_MUTE
-        &kp C_VOL_DN                    &kp C_VOL_UP
-        &kp CAPSLOCK
-        &kp C_PREV                      &kp C_PLAY
-        &kp C_PAUSE                     &kp C_STOP
-        &kp C_NEXT
-        &kp LC(LA(DEL))
-        &out OUT_USB                    &out OUT_BLE
+        &bootloader            &kp CAPSLOCK
+        &kp C_VOL_UP           &kp C_MUTE
+        &kp C_VOL_DN           &kp C_NEXT
+        &kp C_PLAY             &kp C_PREV
+        &kp LC(LA(DEL))        &out OUT_TOG
+        &none                  &none
     >;
 };
