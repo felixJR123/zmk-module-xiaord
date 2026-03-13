@@ -1,0 +1,11 @@
+# Copyright (c) 2021 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+config SHIELD_SAMPLE_SPLIT_LEFT
+    def_bool $(shields_list_contains,sample_split_left)
+
+config SHIELD_SAMPLE_SPLIT_RIGHT
+    def_bool $(shields_list_contains,sample_split_right)
+
+config SHIELD_SAMPLE_SPLIT_DONGLE
+    def_bool $(shields_list_contains,sample_split_dongle)

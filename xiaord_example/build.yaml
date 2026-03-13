@@ -1,0 +1,11 @@
+---
+include:
+  - board: xiao_ble//zmk
+    shield: xiaord sample_split_dongle
+    artifact-name: sample_split_dongle
+  - board: xiao_ble//zmk
+    shield: sample_split_left
+    artifact-name: sample_split_left
+  - board: xiao_ble//zmk
+    shield: sample_split_right
+    artifact-name: sample_split_right
