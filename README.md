@@ -92,6 +92,16 @@ include:
 
 ## Configuration
 
+> **Breaking change (v0.0 → v0.1):** The home button configuration API changed significantly.
+>
+> | | v0.0 | v0.1 |
+> |-|------|------|
+> | Button property | `code = <INPUT_VIRTUAL_SYM_*>` | `symbol = <ICON_*>` |
+> | Header | `<dt-bindings/xiaord/input_codes.h>` | `<dt-bindings/xiaord/icons.h>` |
+> | Fired code | icon code (`INPUT_VIRTUAL_SYM_*`) | position code (`INPUT_VIRTUAL_POS_*`) |
+>
+> v0.0 configs are not compatible with v0.1. Refer to the README at the `v0.0` tag for the old API.
+
 ### Dongle Overlay
 
 Your keyboard's dongle overlay (`your_keyboard_dongle.overlay`) must disable the physical key matrix and redirect ZMK to use the mock kscan provided by this module.
