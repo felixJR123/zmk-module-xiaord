@@ -50,11 +50,11 @@ static void bt_endpoint_cb(struct endpoint_state state)
 	endpoint_status_update_label(s_output_lbl, state);
 
 	int active = state.active_ble_profile;
-	enum zmk_transport transport = state.selected_endpoint.transport;
-	bool is_bt = (transport == ZMK_TRANSPORT_BLE);
+	bool prefer_bt = (state.preferred_endpoint.transport == ZMK_TRANSPORT_BLE);
 
-	LOG_DBG("preferred=%d selected=%d active_profile=%d",
-		state.preferred_endpoint.transport, transport, active);
+	LOG_DBG("preferred=%d selected=%d active_profile=%d prefer_bt=%d",
+		state.preferred_endpoint.transport,
+		state.selected_endpoint.transport, active, prefer_bt);
 
 	for (int i = 0; i < BT_PROFILE_COUNT; i++) {
 		lv_obj_clear_state(s_profile_btns[i],
@@ -65,30 +65,48 @@ static void bt_endpoint_cb(struct endpoint_state state)
 		bool bonded    = state.profiles_bonded[i];
 		bool connected = state.profiles_connected[i];
 
-		if (selected && is_bt) {
-			if (bonded && connected) {
-				lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED); /* blue */
-			} else if (bonded) {
-				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_3); /* red */
+		if (prefer_bt) {
+			if (selected) {
+				if (bonded && connected) {
+					lv_obj_add_state(s_profile_btns[i], LV_STATE_CHECKED); /* blue */
+				} else if (bonded) {
+					lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_3); /* red */
+				} else {
+					lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1); /* yellow */
+				}
 			} else {
-				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1); /* yellow */
-			}
-		} else if (selected && !is_bt) {
-			if (bonded) {
-				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_2); /* green */
-			} else {
-				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1); /* yellow */
+				if (bonded) {
+					lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_2); /* green */
+				}
+				/* !bonded → white (default) */
 			}
 		} else {
+			/* preferred is USB: bonded always shows green regardless of selected */
 			if (bonded) {
 				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_2); /* green */
+			} else if (selected) {
+				lv_obj_add_state(s_profile_btns[i], LV_STATE_USER_1); /* yellow */
 			}
-			/* !bonded → default (white) */
+			/* !bonded && !selected → white (default) */
 		}
+
+		LOG_DBG("profile[%d]: prefer_bt=%d selected=%d bonded=%d connected=%d -> %s",
+			i, prefer_bt, selected, bonded, connected,
+			prefer_bt
+				? (selected
+					? (bonded && connected ? "blue" : bonded ? "red" : "yellow")
+					: (bonded ? "green" : "white"))
+				: (bonded ? "green" : selected ? "yellow" : "white"));
 	}
 }
 
 /* ── Callbacks ──────────────────────────────────────────────────────────── */
+
+static void refresh_timer_cb(lv_timer_t *timer)
+{
+	endpoint_status_request_refresh();
+	lv_timer_delete(timer);
+}
 
 static void profile_btn_cb(lv_event_t *e)
 {
@@ -99,6 +117,7 @@ static void profile_btn_cb(lv_event_t *e)
 
 	ss_fire_behavior(INPUT_VIRTUAL_ZMK_OUT_BLE);
 	ss_fire_behavior(INPUT_VIRTUAL_ZMK_BT_SEL_0 + idx);
+	lv_timer_create(refresh_timer_cb, 100, NULL);
 }
 
 static void clr_btn_cb(lv_event_t *e)
@@ -107,6 +126,7 @@ static void clr_btn_cb(lv_event_t *e)
 		return;
 	}
 	ss_fire_behavior(INPUT_VIRTUAL_ZMK_BT_CLR);
+	lv_timer_create(refresh_timer_cb, 100, NULL);
 }
 
 static void home_btn_cb(lv_event_t *e)
@@ -123,6 +143,7 @@ static void usb_btn_cb(lv_event_t *e)
 		return;
 	}
 	ss_fire_behavior(INPUT_VIRTUAL_SYM_USB);
+	lv_timer_create(refresh_timer_cb, 100, NULL);
 }
 
 /* ── Page create ────────────────────────────────────────────────────────── */

@@ -43,3 +43,10 @@ void endpoint_status_update_label(lv_obj_t *lbl, struct endpoint_state state);
  * Caller is responsible for positioning the returned object.
  */
 lv_obj_t *create_output_status_label(lv_obj_t *parent, const lv_font_t *font);
+
+/**
+ * Force an immediate re-read of endpoint state and fan out to all registered
+ * callbacks.  Safe to call from the LVGL/display work queue (e.g. from a
+ * one-shot lv_timer callback after firing a ZMK behavior).
+ */
+void endpoint_status_request_refresh(void);

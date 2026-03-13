@@ -71,6 +71,12 @@ ZMK_SUBSCRIPTION(endpoint_status, zmk_ble_active_profile_changed);
 
 /* ── Public API ─────────────────────────────────────────────────────────── */
 
+void endpoint_status_request_refresh(void)
+{
+	endpoint_status_refresh_state(NULL);
+	k_work_submit_to_queue(zmk_display_work_q(), &endpoint_status_work);
+}
+
 void endpoint_status_register_cb(endpoint_status_cb_t cb)
 {
 	if (s_cb_count == 0) {
