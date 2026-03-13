@@ -142,7 +142,7 @@ static void usb_btn_cb(lv_event_t *e)
 	if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
 		return;
 	}
-	ss_fire_behavior(INPUT_VIRTUAL_SYM_USB);
+	ss_fire_behavior(INPUT_VIRTUAL_ZMK_OUT_USB);
 	lv_timer_create(refresh_timer_cb, 100, NULL);
 }
 

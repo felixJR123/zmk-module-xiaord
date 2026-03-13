@@ -2,8 +2,7 @@ description: |
   Home screen circle button ring configuration.
 
   Defines which of the 12 fixed clock-position slots are populated,
-  what virtual code they fire, what icon they display, and whether
-  they navigate to another page on tap.
+  what icon they display, and whether they navigate to another page on tap.
 
   Example:
 
@@ -12,11 +11,11 @@ description: |
 
         btn_upload {
             position = <0>;
-            code = <INPUT_VIRTUAL_SYM_UPLOAD>;
+            symbol = <ICON_UPLOAD>;
         };
         btn_bt {
             position = <9>;
-            code = <INPUT_VIRTUAL_SYM_BLUETOOTH>;
+            symbol = <ICON_BLUETOOTH>;
             nav-page = <XIAORD_PAGE_BT>;
         };
     };
@@ -33,21 +32,19 @@ child-binding:
         Clock-position slot index (0–11). 0 = 12 o'clock, 1 = 1 o'clock,
         clockwise in 30-degree steps.
 
-    code:
+    symbol:
       type: int
       required: true
       description: >
-        Virtual input code fired via ss_fire_behavior() on tap or long-press.
-        Use INPUT_VIRTUAL_SYM_* or INPUT_VIRTUAL_ZMK_* from
-        dt-bindings/xiaord/input_codes.h.
-
-    symbol:
-      type: int
-      description: >
-        INPUT_VIRTUAL_SYM_* code for the displayed icon. Defaults to the
-        value of 'code' when omitted (only valid if code is INPUT_VIRTUAL_SYM_*).
+        Unicode codepoint of the icon glyph.
+        Use ICON_* constants from dt-bindings/xiaord/icons.h.
 
     nav-page:
       type: int
       description: >
         XIAORD_PAGE_* index to navigate to on tap. Omit for no navigation.
+
+    dismiss:
+      type: boolean
+      description: >
+        If true, hide the button ring on tap.
