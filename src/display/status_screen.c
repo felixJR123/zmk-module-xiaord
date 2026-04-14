@@ -32,9 +32,63 @@ static struct k_timer status_screen_idle_timer;
 static bool status_screen_is_blank;
 #define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
 
-static void status_screen_set_blank(bool blank);
-static void status_screen_idle_timeout(struct k_timer *timer);
+static void status_screen_set_backlight(bool on)
+{
+    if (!device_is_ready(status_backlight)) {
+        LOG_WRN("backlight device not ready");
+        return;
+    }
 
+    int err = led_set_brightness(status_backlight, 0, on ? 255 : 0);
+    if (err) {
+        LOG_WRN("backlight brightness failed: %d", err);
+        if (on) {
+            led_on(status_backlight, 0);
+        } else {
+            led_off(status_backlight, 0);
+        }
+    }
+}
+
+static void status_screen_set_blank(bool blank)
+{
+    if (device_is_ready(status_display)) {
+        if (blank) {
+            display_blanking_on(status_display);
+        } else {
+            display_blanking_off(status_display);
+        }
+    }
+
+    status_screen_set_backlight(!blank);
+    status_screen_is_blank = blank;
+}
+
+static void status_screen_idle_timeout(struct k_timer *timer)
+{
+    ARG_UNUSED(timer);
+    status_screen_set_blank(true);
+}
+
+static void status_screen_restart_idle_timer(void)
+{
+    status_screen_set_blank(false);
+    k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);
+}
+
+static int status_screen_keycode_state_changed_listener(const zmk_event_t *eh)
+{
+    const struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
+    if (!ev || !ev->state) {
+        return ZMK_EV_EVENT_BUBBLE;
+    }
+
+    status_screen_restart_idle_timer();
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(status_screen_listener, status_screen_keycode_state_changed_listener);
+ZMK_SUBSCRIPTION(status_screen_listener, zmk_keycode_state_changed);
 BUILD_ASSERT(IS_ENABLED(CONFIG_ZMK_VIRTUAL_KEY_SOURCE),
 	"xiaord status_screen requires CONFIG_ZMK_VIRTUAL_KEY_SOURCE");
 BUILD_ASSERT(IS_ENABLED(CONFIG_LV_USE_THEME_DEFAULT),
@@ -158,52 +212,3 @@ lv_obj_t *zmk_display_status_screen(void)
 
 	return s_pages[0].screen;
 }
-
-static void status_screen_set_blank(bool blank)
-{
-    if (!device_is_ready(status_display)) {
-        return;
-    }
-
-    if (blank) {
-        display_blanking_on(status_display);
-    } else {
-        display_blanking_off(status_display);
-    }
-
-    if (device_is_ready(status_backlight)) {
-        if (blank) {
-            led_off(status_backlight, 0);
-        } else {
-            led_on(status_backlight, 0);
-        }
-    }
-
-    status_screen_is_blank = blank;
-}
-
-static void status_screen_idle_timeout(struct k_timer *timer)
-{
-    ARG_UNUSED(timer);
-    status_screen_set_blank(true);
-}
-
-static void status_screen_restart_idle_timer(void)
-{
-    status_screen_set_blank(false);
-    k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);
-}
-
-static int status_screen_keycode_state_changed_listener(const zmk_event_t *eh)
-{
-    const struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
-    if (!ev || !ev->state) {
-        return ZMK_EV_EVENT_BUBBLE;
-    }
-
-    status_screen_restart_idle_timer();
-    return ZMK_EV_EVENT_BUBBLE;
-}
-
-ZMK_LISTENER(status_screen_listener, status_screen_keycode_state_changed_listener);
-ZMK_SUBSCRIPTION(status_screen_listener, zmk_keycode_state_changed);
