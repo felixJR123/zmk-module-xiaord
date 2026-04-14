@@ -18,7 +18,6 @@
 #include <zephyr/logging/log.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/keycode_state_changed.h>
-#include <zmk/events/idle_state_changed.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -200,17 +199,3 @@ static int status_screen_keycode_state_changed_listener(const struct zmk_event *
 
 ZMK_LISTENER(status_screen_listener, status_screen_keycode_state_changed_listener);
 ZMK_SUBSCRIPTION(status_screen_listener, zmk_keycode_state_changed);
-
-static int status_screen_idle_event_listener(const struct zmk_event *eh)
-{
-    struct zmk_idle_state_changed *idle = as_zmk_idle_state_changed(eh);
-    if (!idle) {
-        return ZMK_EV_EVENT_BUBBLE;
-    }
-
-    status_screen_set_blank(idle->state == ZMK_IDLE_STATE_IDLE);
-    return ZMK_EV_EVENT_BUBBLE;
-}
-
-ZMK_LISTENER(status_screen_listener, status_screen_idle_event_listener);
-ZMK_SUBSCRIPTION(status_screen_listener, zmk_idle_state_changed);
