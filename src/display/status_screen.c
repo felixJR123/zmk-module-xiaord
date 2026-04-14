@@ -226,3 +226,7 @@ lv_obj_t *zmk_display_status_screen(void)
 
 	return s_pages[0].screen;
 }
+
+static struct k_timer status_screen_idle_timer;
+static bool status_screen_is_blank;
+#define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
