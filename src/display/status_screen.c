@@ -33,6 +33,10 @@ static const struct device *status_backlight =
 static const struct device *status_backlight_fallback =
     DEVICE_DT_GET_OR_NULL(DT_NODELABEL(display_backlight));
 
+static struct k_timer status_screen_idle_timer;
+static bool status_screen_is_blank;
+#define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
+
 static const struct device *status_backlight_dev(void)
 {
     if (status_backlight && device_is_ready(status_backlight)) {
@@ -226,7 +230,3 @@ lv_obj_t *zmk_display_status_screen(void)
 
 	return s_pages[0].screen;
 }
-
-static struct k_timer status_screen_idle_timer;
-static bool status_screen_is_blank;
-#define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
