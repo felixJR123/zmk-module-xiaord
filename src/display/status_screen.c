@@ -27,7 +27,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 extern const lv_image_dsc_t img_bg;
 
 static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-static const struct device *status_backlight = DEVICE_DT_GET(DT_NODELABEL(display_backlight));
+static const struct device *status_backlight = DEVICE_DT_GET(DT_NODELABEL(backlight));
 static struct k_timer status_screen_idle_timer;
 static bool status_screen_is_blank;
 #define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
@@ -190,7 +190,7 @@ static void status_screen_restart_idle_timer(void)
     k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);
 }
 
-static int status_screen_keycode_state_changed_listener(const struct zmk_event *eh)
+static int status_screen_keycode_state_changed_listener(const zmk_event_t *eh)
 {
     const struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
     if (!ev || !ev->state) {
