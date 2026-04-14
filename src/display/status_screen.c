@@ -14,6 +14,7 @@
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/display.h>
 #include <zephyr/drivers/led.h>
+#include <devicetree.h>
 #include <lvgl.h>
 #include <zephyr/logging/log.h>
 #include <zmk/event_manager.h>
@@ -27,26 +28,25 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 extern const lv_image_dsc_t img_bg;
 
 static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-static const struct device *status_backlight = DEVICE_DT_GET(DT_NODELABEL(display_backlight));
+static const struct device *status_backlight =
+    DEVICE_DT_GET_OR_NULL(DT_PHANDLE(DT_PATH(chosen), zmk_display_led));
 static struct k_timer status_screen_idle_timer;
 static bool status_screen_is_blank;
 #define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
 
 static void status_screen_set_backlight(bool on)
 {
-    if (!device_is_ready(status_backlight)) {
+    if (!status_backlight || !device_is_ready(status_backlight)) {
         LOG_WRN("backlight device not ready");
         return;
     }
 
-    int err = led_set_brightness(status_backlight, 0, on ? 255 : 0);
-    if (err) {
-        LOG_WRN("backlight brightness failed: %d", err);
-        if (on) {
-            led_on(status_backlight, 0);
-        } else {
-            led_off(status_backlight, 0);
-        }
+    if (on) {
+        led_set_brightness(status_backlight, 0, 255);
+        led_on(status_backlight, 0);
+    } else {
+        led_set_brightness(status_backlight, 0, 0);
+        led_off(status_backlight, 0);
     }
 }
 
