@@ -172,7 +172,11 @@ static void status_screen_set_blank(bool blank)
     }
 
     if (device_is_ready(status_backlight)) {
-        led_set_brightness(status_backlight, 0, blank ? 0 : 255);
+        if (blank) {
+            led_off(status_backlight, 0);
+        } else {
+            led_on(status_backlight, 0);
+        }
     }
 
     status_screen_is_blank = blank;
