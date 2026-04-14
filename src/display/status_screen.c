@@ -13,11 +13,12 @@
 #include <zephyr/device.h>
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/display.h>
+#include <zephyr/drivers/led.h>
 #include <lvgl.h>
 #include <zephyr/logging/log.h>
-#include <zmk/events/idle_state_changed.h>
 #include <zmk/event_manager.h>
-#include <zephyr/drivers/led.h>
+#include <zmk/events/keycode_state_changed.h>
+#include <zmk/events/idle_state_changed.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -123,7 +124,7 @@ static void xiaord_initialize_color_theme(void)
 
 lv_obj_t *zmk_display_status_screen(void)
 {
-	xiaord_initialize_color_theme();
+    xiaord_initialize_color_theme();
 
 	/* Create an independent screen for each page */
 	for (size_t i = 0; i < PAGE_COUNT; i++) {
@@ -144,12 +145,16 @@ lv_obj_t *zmk_display_status_screen(void)
 		s_pages[0].ops->on_enter();
 	}
 
-	/* Return the first screen — ZMK calls lv_scr_load() on this */
+	k_timer_init(&status_screen_idle_timer, status_screen_idle_timeout, NULL);
+	k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);
+
 	return s_pages[0].screen;
 }
 
 static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 static const struct device *status_backlight = DEVICE_DT_GET(DT_NODELABEL(display_backlight));
+static struct k_timer status_screen_idle_timer;
+static bool status_screen_is_blank;
 
 static void status_screen_set_blank(bool blank)
 {
@@ -166,7 +171,35 @@ static void status_screen_set_blank(bool blank)
     if (device_is_ready(status_backlight)) {
         led_set_brightness(status_backlight, 0, blank ? 0 : 255);
     }
+
+    status_screen_is_blank = blank;
 }
+
+static void status_screen_idle_timeout(struct k_timer *timer)
+{
+    ARG_UNUSED(timer);
+    status_screen_set_blank(true);
+}
+
+static void status_screen_restart_idle_timer(void)
+{
+    status_screen_set_blank(false);
+    k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);
+}
+
+static int status_screen_keycode_state_changed_listener(const struct zmk_event *eh)
+{
+    const struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
+    if (!ev || !ev->state) {
+        return ZMK_EV_EVENT_BUBBLE;
+    }
+
+    status_screen_restart_idle_timer();
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(status_screen_listener, status_screen_keycode_state_changed_listener);
+ZMK_SUBSCRIPTION(status_screen_listener, zmk_keycode_state_changed);
 
 static int status_screen_idle_event_listener(const struct zmk_event *eh)
 {
