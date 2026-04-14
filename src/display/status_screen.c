@@ -32,6 +32,9 @@ static struct k_timer status_screen_idle_timer;
 static bool status_screen_is_blank;
 #define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
 
+static void status_screen_set_blank(bool blank);
+static void status_screen_idle_timeout(struct k_timer *timer);
+
 BUILD_ASSERT(IS_ENABLED(CONFIG_ZMK_VIRTUAL_KEY_SOURCE),
 	"xiaord status_screen requires CONFIG_ZMK_VIRTUAL_KEY_SOURCE");
 BUILD_ASSERT(IS_ENABLED(CONFIG_LV_USE_THEME_DEFAULT),
