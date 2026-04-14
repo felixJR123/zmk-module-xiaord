@@ -15,6 +15,10 @@
 #include <zephyr/drivers/display.h>
 #include <lvgl.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/drivers/backlight.h>
+#include <zmk/events/idle_state_changed.h>
+#include <zmk/event_manager.h>
+
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #include "page_iface.h"
@@ -143,3 +147,37 @@ lv_obj_t *zmk_display_status_screen(void)
 	/* Return the first screen — ZMK calls lv_scr_load() on this */
 	return s_pages[0].screen;
 }
+
+static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+static const struct device *status_backlight = DEVICE_DT_GET(DT_NODELABEL(display_backlight));
+
+static void status_screen_set_blank(bool blank)
+{
+    if (!device_is_ready(status_display)) {
+        return;
+    }
+
+    if (blank) {
+        display_blanking_on(status_display);
+    } else {
+        display_blanking_off(status_display);
+    }
+
+    if (device_is_ready(status_backlight)) {
+        backlight_set_brightness(status_backlight, blank ? 0 : 255);
+    }
+}
+
+static int status_screen_idle_event_listener(const struct zmk_event *eh)
+{
+    struct zmk_idle_state_changed *idle = as_zmk_idle_state_changed(eh);
+    if (!idle) {
+        return ZMK_EV_EVENT_BUBBLE;
+    }
+
+    status_screen_set_blank(idle->state == ZMK_IDLE_STATE_IDLE);
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(status_screen_listener, status_screen_idle_event_listener);
+ZMK_SUBSCRIPTION(status_screen_listener, zmk_idle_state_changed);
