@@ -14,7 +14,7 @@
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/display.h>
 #include <zephyr/drivers/led.h>
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include <lvgl.h>
 #include <zephyr/logging/log.h>
 #include <zmk/event_manager.h>
