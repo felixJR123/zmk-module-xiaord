@@ -27,7 +27,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 extern const lv_image_dsc_t img_bg;
 
-static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+static const struct device *status_display = DEVICE_DT_GET_OR_NULL(DT_CHOSEN(zephyr_display));
 static const struct device *status_backlight;
 #define STATUS_BACKLIGHT_LABEL "DISPLAY_BACKLIGHT"
 
