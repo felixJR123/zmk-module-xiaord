@@ -26,6 +26,12 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 extern const lv_image_dsc_t img_bg;
 
+static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+static const struct device *status_backlight = DEVICE_DT_GET(DT_NODELABEL(display_backlight));
+static struct k_timer status_screen_idle_timer;
+static bool status_screen_is_blank;
+#define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
+
 BUILD_ASSERT(IS_ENABLED(CONFIG_ZMK_VIRTUAL_KEY_SOURCE),
 	"xiaord status_screen requires CONFIG_ZMK_VIRTUAL_KEY_SOURCE");
 BUILD_ASSERT(IS_ENABLED(CONFIG_LV_USE_THEME_DEFAULT),
@@ -149,11 +155,6 @@ lv_obj_t *zmk_display_status_screen(void)
 
 	return s_pages[0].screen;
 }
-
-static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-static const struct device *status_backlight = DEVICE_DT_GET(DT_NODELABEL(display_backlight));
-static struct k_timer status_screen_idle_timer;
-static bool status_screen_is_blank;
 
 static void status_screen_set_blank(bool blank)
 {
