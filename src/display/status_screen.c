@@ -33,6 +33,7 @@ static const struct device *status_backlight;
 
 static struct k_timer status_screen_idle_timer;
 static bool status_screen_is_blank;
+#define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
 
 static void status_screen_init_backlight(void)
 {
