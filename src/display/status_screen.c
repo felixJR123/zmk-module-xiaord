@@ -27,7 +27,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 extern const lv_image_dsc_t img_bg;
 
-static const struct device *status_display = DEVICE_DT_GET_OR_NULL(DT_CHOSEN(zephyr_display));
+static const struct device *status_display;
 static const struct device *status_backlight;
 #define STATUS_BACKLIGHT_LABEL "DISPLAY_BACKLIGHT"
 
@@ -41,14 +41,30 @@ static void status_screen_init_backlight(void)
         return;
     }
 
-    status_backlight = DEVICE_DT_GET_OR_NULL(DT_CHOSEN(zmk_display_led));
+#if DT_NODE_EXISTS(DT_CHOSEN(zmk_display_led))
+    status_backlight = DEVICE_DT_GET(DT_CHOSEN(zmk_display_led));
     if (status_backlight && !device_is_ready(status_backlight)) {
         status_backlight = NULL;
     }
+#endif
 
     if (!status_backlight) {
         status_backlight = device_get_binding(STATUS_BACKLIGHT_LABEL);
     }
+}
+
+static void status_screen_init_display(void)
+{
+    if (status_display) {
+        return;
+    }
+
+#if DT_NODE_EXISTS(DT_CHOSEN(zephyr_display))
+    status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+    if (status_display && !device_is_ready(status_display)) {
+        status_display = NULL;
+    }
+#endif
 }
 
 static const struct device *status_backlight_dev(void)
@@ -85,6 +101,8 @@ static void status_screen_set_backlight(bool on)
 
 static void status_screen_set_blank(bool blank)
 {
+    status_screen_init_display();
+
     if (status_display && device_is_ready(status_display)) {
         if (blank) {
             display_blanking_on(status_display);
@@ -135,7 +153,7 @@ extern const struct page_ops page_bt_ops;
 
 /* ── Virtual key source device ─────────────────────────────────────────── */
 
-static const struct device *s_vkey = DEVICE_DT_GET_OR_NULL(DT_NODELABEL(virtual_key_source));
+static const struct device *s_vkey;
 
 /* ── Page registration table ───────────────────────────────────────────── */
 
@@ -180,10 +198,28 @@ void ss_navigate_to(uint8_t page_idx)
 
 }
 
+static const struct device *status_vkey_dev(void)
+{
+    if (s_vkey) {
+        return s_vkey;
+    }
+
+#if DT_NODE_EXISTS(DT_NODELABEL(virtual_key_source))
+    s_vkey = DEVICE_DT_GET(DT_NODELABEL(virtual_key_source));
+#endif
+    return s_vkey;
+}
+
 void ss_fire_behavior(input_virtual_code code)
 {
-	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, code, 1, true, K_NO_WAIT);
-	input_report(s_vkey, INPUT_EV_ZMK_BEHAVIORS, code, 0, true, K_NO_WAIT);
+    const struct device *vkey = status_vkey_dev();
+    if (!vkey) {
+        LOG_WRN("virtual key source device not ready");
+        return;
+    }
+
+    input_report(vkey, INPUT_EV_ZMK_BEHAVIORS, code, 1, true, K_NO_WAIT);
+    input_report(vkey, INPUT_EV_ZMK_BEHAVIORS, code, 0, true, K_NO_WAIT);
 }
 
 /* ── Color theme ─────────────────────────────────────────────────────────── */
