@@ -15,7 +15,6 @@
 #include <zephyr/drivers/display.h>
 #include <lvgl.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/drivers/backlight.h>
 #include <zmk/events/idle_state_changed.h>
 #include <zmk/event_manager.h>
 #include <zephyr/drivers/led.h>
