@@ -30,23 +30,37 @@ extern const lv_image_dsc_t img_bg;
 static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 static const struct device *status_backlight =
     DEVICE_DT_GET_OR_NULL(DT_PHANDLE(DT_PATH(chosen), zmk_display_led));
-static struct k_timer status_screen_idle_timer;
-static bool status_screen_is_blank;
-#define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
+static const struct device *status_backlight_fallback =
+    DEVICE_DT_GET_OR_NULL(DT_NODELABEL(display_backlight));
+
+static const struct device *status_backlight_dev(void)
+{
+    if (status_backlight && device_is_ready(status_backlight)) {
+        return status_backlight;
+    }
+    if (status_backlight_fallback && device_is_ready(status_backlight_fallback)) {
+        return status_backlight_fallback;
+    }
+    return NULL;
+}
 
 static void status_screen_set_backlight(bool on)
 {
-    if (!status_backlight || !device_is_ready(status_backlight)) {
+    const struct device *dev = status_backlight_dev();
+    if (!dev) {
         LOG_WRN("backlight device not ready");
         return;
     }
 
+    int err = led_set_brightness(dev, 0, on ? 255 : 0);
+    if (err) {
+        LOG_WRN("backlight brightness failed: %d", err);
+    }
+
     if (on) {
-        led_set_brightness(status_backlight, 0, 255);
-        led_on(status_backlight, 0);
+        led_on(dev, 0);
     } else {
-        led_set_brightness(status_backlight, 0, 0);
-        led_off(status_backlight, 0);
+        led_off(dev, 0);
     }
 }
 
