@@ -27,7 +27,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 extern const lv_image_dsc_t img_bg;
 
 static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-static const struct device *status_backlight = DEVICE_DT_GET(DT_NODELABEL(backlight));
+static const struct device *status_backlight = DEVICE_DT_GET(DT_NODELABEL(display_backlight));
 static struct k_timer status_screen_idle_timer;
 static bool status_screen_is_blank;
 #define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
