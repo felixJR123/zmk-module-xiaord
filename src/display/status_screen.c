@@ -31,6 +31,9 @@ static const struct device *status_display = DEVICE_DT_GET(DT_CHOSEN(zephyr_disp
 static const struct device *status_backlight;
 #define STATUS_BACKLIGHT_LABEL "DISPLAY_BACKLIGHT"
 
+static struct k_timer status_screen_idle_timer;
+static bool status_screen_is_blank;
+
 static void status_screen_init_backlight(void)
 {
     if (status_backlight) {
