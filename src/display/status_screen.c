@@ -18,6 +18,7 @@
 #include <zephyr/drivers/backlight.h>
 #include <zmk/events/idle_state_changed.h>
 #include <zmk/event_manager.h>
+#include <zephyr/drivers/led.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -164,7 +165,7 @@ static void status_screen_set_blank(bool blank)
     }
 
     if (device_is_ready(status_backlight)) {
-        backlight_set_brightness(status_backlight, blank ? 0 : 255);
+        led_set_brightness(status_backlight, 0, blank ? 0 : 255);
     }
 }
 
