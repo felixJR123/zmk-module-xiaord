@@ -85,7 +85,7 @@ static void status_screen_set_backlight(bool on)
 
 static void status_screen_set_blank(bool blank)
 {
-    if (device_is_ready(status_display)) {
+    if (status_display && device_is_ready(status_display)) {
         if (blank) {
             display_blanking_on(status_display);
         } else {
@@ -135,7 +135,7 @@ extern const struct page_ops page_bt_ops;
 
 /* ── Virtual key source device ─────────────────────────────────────────── */
 
-static const struct device *s_vkey = DEVICE_DT_GET(DT_NODELABEL(virtual_key_source));
+static const struct device *s_vkey = DEVICE_DT_GET_OR_NULL(DT_NODELABEL(virtual_key_source));
 
 /* ── Page registration table ───────────────────────────────────────────── */
 
@@ -195,10 +195,10 @@ static void xiaord_initialize_color_theme(void)
 	/* Hardware rotation: called here (after LVGL init) so disp_data->cap is
 	 * captured with NORMAL orientation, letting lv_display_set_rotation below
 	 * handle touch coordinate transformation without Zephyr driver interference. */
-	const struct device *display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-	if (device_is_ready(display_dev)) {
-		display_set_orientation(display_dev, DISPLAY_ORIENTATION_ROTATED_270);
-	}
+    const struct device *display_dev = DEVICE_DT_GET_OR_NULL(DT_CHOSEN(zephyr_display));
+    if (display_dev && device_is_ready(display_dev)) {
+        display_set_orientation(display_dev, DISPLAY_ORIENTATION_ROTATED_270);
+    }
 
 	/* Touch coordinate transformation via LVGL rotation. */
 	lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_270);
