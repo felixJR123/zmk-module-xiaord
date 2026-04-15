@@ -13,3 +13,15 @@ config XIAORD_BG_3
     bool "Background 3"
 
 endchoice
+
+config XIAORD_BG_ROTATE
+    bool "Rotate background images"
+    default n
+    help
+      Rotate through the compiled Xiaord background images instead of using only one.
+
+config XIAORD_BG_ROTATE_INTERVAL_MIN
+    int "Background rotation interval in minutes"
+    depends on XIAORD_BG_ROTATE
+    range 1 1440
+    default 5

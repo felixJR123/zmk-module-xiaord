@@ -20,6 +20,7 @@
 #include <zephyr/logging/log.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/keycode_state_changed.h>
+#include <zmk/display.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -35,7 +36,21 @@ static const struct gpio_dt_spec status_backlight_gpio = GPIO_DT_SPEC_GET(STATUS
 #include "page_iface.h"
 #include "display_api.h"
 
-extern const lv_image_dsc_t img_bg;
+extern const lv_image_dsc_t img_bg_1;
+extern const lv_image_dsc_t img_bg_2;
+extern const lv_image_dsc_t img_bg_3;
+
+#if IS_ENABLED(CONFIG_XIAORD_BG_ROTATE)
+static const lv_image_dsc_t *const status_backgrounds[] = {&img_bg_1, &img_bg_2, &img_bg_3};
+#elif IS_ENABLED(CONFIG_XIAORD_BG_2)
+static const lv_image_dsc_t *const status_backgrounds[] = {&img_bg_2};
+#elif IS_ENABLED(CONFIG_XIAORD_BG_3)
+static const lv_image_dsc_t *const status_backgrounds[] = {&img_bg_3};
+#else
+static const lv_image_dsc_t *const status_backgrounds[] = {&img_bg_1};
+#endif
+
+static uint8_t status_background_index;
 
 static const struct device *status_display;
 static const struct device *status_backlight;
@@ -43,6 +58,9 @@ static uint32_t status_backlight_led;
 #define STATUS_BACKLIGHT_LABEL "DISPLAY_BACKLIGHT"
 
 static struct k_timer status_screen_idle_timer;
+#if IS_ENABLED(CONFIG_XIAORD_BG_ROTATE)
+static struct k_timer status_background_timer;
+#endif
 static bool status_screen_is_blank;
 #define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
 
@@ -218,6 +236,43 @@ static struct page_entry s_pages[] = {
 
 #define PAGE_COUNT ARRAY_SIZE(s_pages)
 
+static const lv_image_dsc_t *status_screen_current_background(void)
+{
+    return status_backgrounds[status_background_index];
+}
+
+static void status_screen_apply_background(void)
+{
+    const lv_image_dsc_t *bg = status_screen_current_background();
+
+    for (size_t i = 0; i < PAGE_COUNT; i++) {
+        if (s_pages[i].screen) {
+            lv_obj_set_style_bg_image_src(s_pages[i].screen, bg, LV_PART_MAIN);
+        }
+    }
+}
+
+#if IS_ENABLED(CONFIG_XIAORD_BG_ROTATE)
+static void status_background_work_handler(struct k_work *work)
+{
+    ARG_UNUSED(work);
+
+    status_background_index = (status_background_index + 1) % ARRAY_SIZE(status_backgrounds);
+    status_screen_apply_background();
+}
+
+K_WORK_DEFINE(status_background_work, status_background_work_handler);
+
+static void status_background_timer_handler(struct k_timer *timer)
+{
+    ARG_UNUSED(timer);
+
+    if (zmk_display_is_initialized()) {
+        k_work_submit_to_queue(zmk_display_work_q(), &status_background_work);
+    }
+}
+#endif
+
 /* ── Active page tracking ──────────────────────────────────────────────── */
 
 static uint8_t s_active_page;
@@ -309,7 +364,7 @@ lv_obj_t *zmk_display_status_screen(void)
 	for (size_t i = 0; i < PAGE_COUNT; i++) {
 		lv_obj_t *screen = lv_obj_create(NULL);
 		lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
-		lv_obj_set_style_bg_image_src(screen, &img_bg, LV_PART_MAIN);
+		lv_obj_set_style_bg_image_src(screen, status_screen_current_background(), LV_PART_MAIN);
 		s_pages[i].screen = screen;
 
 		/* Build page widgets */
