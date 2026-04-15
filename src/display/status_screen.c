@@ -91,7 +91,7 @@ static const struct device *status_backlight_dev(void)
     return NULL;
 }
 
-static bool status_backlight_gpio_ready(void)
+static bool status_backlight_gpio_ready(bool on)
 {
 #if STATUS_BACKLIGHT_HAS_GPIO
     static bool configured;
@@ -102,7 +102,8 @@ static bool status_backlight_gpio_ready(void)
     }
 
     if (!configured) {
-        int err = gpio_pin_configure_dt(&status_backlight_gpio, GPIO_OUTPUT_ACTIVE);
+        int err = gpio_pin_configure_dt(&status_backlight_gpio,
+                                        on ? GPIO_OUTPUT_ACTIVE : GPIO_OUTPUT_INACTIVE);
         if (err) {
             LOG_WRN("backlight GPIO configure failed: %d", err);
             return false;
@@ -119,7 +120,7 @@ static bool status_backlight_gpio_ready(void)
 static void status_screen_set_backlight(bool on)
 {
 #if STATUS_BACKLIGHT_HAS_GPIO
-    if (status_backlight_gpio_ready()) {
+    if (status_backlight_gpio_ready(on)) {
         int err = gpio_pin_set_dt(&status_backlight_gpio, on ? 1 : 0);
         if (err) {
             LOG_WRN("backlight GPIO update failed: %d", err);

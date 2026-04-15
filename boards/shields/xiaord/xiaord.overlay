@@ -103,7 +103,8 @@
         compatible = "gpio-leds";
 
         display_backlight: led_0 {
-            gpios = <&xiao_d 6 GPIO_ACTIVE_HIGH>;
+            /* Seeed Round Display BG_LIGHT is controlled by D6/TX when the KE switch is ON. */
+            gpios = <&xiao_d 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
             label = "DISPLAY_BACKLIGHT";
         };
     };
