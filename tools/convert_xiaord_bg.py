@@ -40,7 +40,9 @@ def crop_square(img: Image.Image, center_x: float, center_y: float, zoom: float)
 
 def rgb565_bytes(img: Image.Image) -> bytes:
     out = bytearray()
-    for r, g, b in img.convert("RGB").getdata():
+    rgb = img.convert("RGB")
+    pixels = rgb.get_flattened_data() if hasattr(rgb, "get_flattened_data") else rgb.getdata()
+    for r, g, b in pixels:
         value = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
         out.append(value & 0xFF)
         out.append((value >> 8) & 0xFF)

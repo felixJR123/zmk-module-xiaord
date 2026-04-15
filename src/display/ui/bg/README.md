@@ -32,7 +32,13 @@ Put the original photos in this folder:
 src/display/ui/bg/source/
 ```
 
-Generate firmware assets with:
+Generate firmware assets with the helper script. It takes the first three JPG/PNG images in the folder and writes `bg4`, `bg5`, and `bg6`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/convert_family_backgrounds.ps1 -SourceDir "C:\Users\fhern\OneDrive\Pictures\Dongle Pictures"
+```
+
+Or convert one photo at a time:
 
 ```powershell
 python -m pip install pillow
