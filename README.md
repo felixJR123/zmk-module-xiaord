@@ -209,7 +209,7 @@ Each profile slot is shown with a background color indicating its current state:
 
 ### Background Image
 
-Original backgrounds and family-photo backgrounds are available. Enable one image in your keyboard's `.conf` or `prj.conf`.
+Original backgrounds and custom photo backgrounds are available. Enable one image in your keyboard's `.conf` or `prj.conf`.
 
 | Setting | Preview |
 |---------|---------|
@@ -220,9 +220,9 @@ Original backgrounds and family-photo backgrounds are available. Enable one imag
 | `CONFIG_XIAORD_BG_5=y` | ![bg5](src/display/ui/bg/bg5.png) |
 | `CONFIG_XIAORD_BG_6=y` | ![bg6](src/display/ui/bg/bg6.png) |
 
-The nRF52840 build reliably fits one full-size photo background. If more than one background is enabled, the module picks the first family image before falling back to the original backgrounds.
+The nRF52840 build reliably fits one full-size photo background. If more than one background is enabled, the module picks the first custom image before falling back to the original backgrounds.
 
-To remove the home screen date and time for cleaner photos:
+To remove the home screen date and time for cleaner custom backgrounds:
 
 ```conf
 CONFIG_XIAORD_REMOVE_DATE_TIME=y

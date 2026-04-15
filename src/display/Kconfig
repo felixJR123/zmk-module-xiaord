@@ -13,15 +13,15 @@ config XIAORD_BG_3
     default n
 
 config XIAORD_BG_4
-    bool "Family background 1"
+    bool "Custom background 1"
     default n
 
 config XIAORD_BG_5
-    bool "Family background 2"
+    bool "Custom background 2"
     default n
 
 config XIAORD_BG_6
-    bool "Family background 3"
+    bool "Custom background 3"
     default n
 
 config XIAORD_REMOVE_DATE_TIME

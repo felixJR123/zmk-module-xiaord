@@ -19,7 +19,7 @@ if ([string]::IsNullOrWhiteSpace($SourceDir)) {
 $SourcePath = Resolve-Path $SourceDir
 $OutPath = Join-Path $RepoRoot $OutDir
 
-# Edit these if a face needs to move on the round display.
+# Edit these if the main subject needs to move on the round display.
 # center-x: smaller = left, larger = right
 # center-y: smaller = up, larger = down
 # zoom: larger = closer crop
@@ -57,4 +57,4 @@ for ($i = 0; $i -lt $CropPresets.Count; $i++) {
         --out-dir $OutPath
 }
 
-Write-Host "Done. Check the generated bg4.png, bg5.png, and bg6.png previews."
+Write-Host "Done. Check the generated bg4.png, bg5.png, and bg6.png preview images."

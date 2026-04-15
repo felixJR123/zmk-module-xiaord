@@ -5,7 +5,7 @@ Requires Pillow:
     python -m pip install pillow
 
 Example:
-    python tools/convert_xiaord_bg.py src/display/ui/bg/source/family1.jpg 4 --center-x 0.50 --center-y 0.48 --zoom 1.15
+    python tools/convert_xiaord_bg.py src/display/ui/bg/source/background1.jpg 4 --center-x 0.50 --center-y 0.48 --zoom 1.15
 """
 
 from __future__ import annotations
