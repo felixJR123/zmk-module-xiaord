@@ -63,3 +63,40 @@ After commit `b8b9da6`, the build should ignore original backgrounds if a stale 
 ## Confirmed Working
 
 After setting `CONFIG_XIAORD_BG_6=n` in the keyboard config, the GitHub build worked. Keep `BG_6` in the module as an available option, but only enable two full-size photo backgrounds at once unless image storage is optimized later.
+## UF2 Flashing / Bootloader Notes
+
+The dongle bootloader info shown by `INFO_UF2.TXT`:
+
+```text
+UF2 Bootloader 0.6.1 lib/nrfx (v2.0.0) lib/tinyusb (0.10.1-293-gaf8e5a90) lib/uf2 (remotes/origin/configupdate-9-gadbb8c7)
+Model: Seeed XIAO nRF52840
+Board-ID: Seeed_XIAO_nRF52840_Sense
+SoftDevice: S140 version 7.3.0
+Date: Nov 12 2021
+```
+
+Symptom after successful two-photo build: user could copy the UF2 file, but the board did not reset on its own and the screen stayed blank. Need verify whether the UF2 drive disappears after copy. If it disappears, the firmware probably flashed but crashes/does not start display. If it stays mounted, the bootloader likely rejected/ignored the UF2 or the wrong artifact was copied.
+
+Next test user planned: build with only one family image enabled to see if even two photos are too much at runtime or for final flash layout.
+
+Suggested one-photo config:
+
+```conf
+CONFIG_XIAORD_BG_1=n
+CONFIG_XIAORD_BG_2=n
+CONFIG_XIAORD_BG_3=n
+CONFIG_XIAORD_BG_4=y
+CONFIG_XIAORD_BG_5=n
+CONFIG_XIAORD_BG_6=n
+CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN=5
+```
+
+## Tomorrow Follow-Up Idea
+
+If the one-photo or two-photo firmware works today, user wants to go back to non-rotating backgrounds tomorrow. Removing or disabling rotation may clear a little memory and simplify the display code. Best approach tomorrow:
+
+- Keep `BG_4`, `BG_5`, and `BG_6` assets available.
+- Use only one selected background at compile time.
+- Remove or gate the `status_background_timer` rotation logic behind a config option defaulting off.
+- Consider making `CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN` depend on a new explicit rotate option, or remove rotation support if user decides it is not needed.
+- This will not save as much flash as removing an image file from the build, but it can reduce code/data a little and reduce risk.
