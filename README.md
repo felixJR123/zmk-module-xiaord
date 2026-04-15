@@ -200,7 +200,7 @@ Each profile slot is shown with a background color indicating its current state:
 
 ### Background Image
 
-Original backgrounds and family-photo backgrounds are available. Set the images in your keyboard's `.conf` or `prj.conf`.
+Original backgrounds and family-photo backgrounds are available. Enable one image in your keyboard's `.conf` or `prj.conf`.
 
 | Setting | Preview |
 |---------|---------|
@@ -211,7 +211,8 @@ Original backgrounds and family-photo backgrounds are available. Set the images 
 | `CONFIG_XIAORD_BG_5=y` | ![bg5](src/display/ui/bg/bg5.png) |
 | `CONFIG_XIAORD_BG_6=y` | ![bg6](src/display/ui/bg/bg6.png) |
 
-The nRF52840 build usually fits two full-size photo backgrounds. If the linker reports `FLASH` overflow, disable one enabled background.
+The nRF52840 build reliably fits one full-size photo background. If more than one background is enabled, the module picks the first family image before falling back to the original backgrounds.
+
 ### RTC
 
 Install a **CR927 coin cell** in the XIAO Round Display to retain the time across power cycles. Without a battery the clock resets on every boot.

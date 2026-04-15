@@ -15,19 +15,18 @@ CONFIG_XIAORD_BG_5=n
 CONFIG_XIAORD_BG_6=n
 ```
 
-If exactly one background is enabled, it stays static. If more than one is enabled, the dongle rotates through only the enabled images.
+The firmware uses one static background. If more than one background is enabled, the module chooses the first available image in this priority: `BG_4`, `BG_5`, `BG_6`, then `BG_1`, `BG_2`, `BG_3`.
 
 ```conf
 CONFIG_XIAORD_BG_1=n
 CONFIG_XIAORD_BG_2=n
 CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=y
-CONFIG_XIAORD_BG_5=y
+CONFIG_XIAORD_BG_5=n
 CONFIG_XIAORD_BG_6=n
-CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN=5
 ```
 
-The firmware usually has room for about two full-size 240x240 RGB565 photo backgrounds. If any family background is enabled, the original backgrounds are left out of the firmware even if an older keyboard config still sets one of them to `y`. If the linker reports `FLASH` overflow, disable one enabled photo background.
+The firmware reliably fits one full-size 240x240 RGB565 photo background. Keep only one `CONFIG_XIAORD_BG_*` option enabled in the keyboard config for the safest build.
 
 ## Replacing Family Photos
 

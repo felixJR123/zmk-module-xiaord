@@ -8,7 +8,7 @@ The dongle display now supports family photo backgrounds. The intent is:
 
 - Keep the original 3 backgrounds available as single/static options.
 - Add family backgrounds `BG_4`, `BG_5`, and `BG_6`.
-- If more than one enabled background is present, rotate through enabled images.
+- Use one static compile-time background; auto-rotation was removed after one photo was confirmed working.
 - Avoid compiling too many 240x240 RGB565 images because flash space is tight.
 
 ## Important Hardware Note
@@ -46,23 +46,23 @@ so when any family background is enabled, the module compiles/references only fa
 
 ## Keyboard Config To Use
 
-In the keyboard repo config, use this build-safe setup for two family pictures:
+In the keyboard repo config, use this build-safe setup for one family picture:
 
 ```conf
 CONFIG_XIAORD_BG_1=n
 CONFIG_XIAORD_BG_2=n
 CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=y
-CONFIG_XIAORD_BG_5=y
+CONFIG_XIAORD_BG_5=n
 CONFIG_XIAORD_BG_6=n
-CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN=5
 ```
 
 After commit `b8b9da6`, the build should ignore original backgrounds if a stale config still sets `CONFIG_XIAORD_BG_1=y`, but it is cleaner to set it to `n` explicitly.
 
 ## Confirmed Working
 
-After setting `CONFIG_XIAORD_BG_6=n` in the keyboard config, the GitHub build worked. Keep `BG_6` in the module as an available option, but only enable two full-size photo backgrounds at once unless image storage is optimized later.
+After setting only one family image to `y`, the GitHub build and UF2 worked. Keep `BG_5` and `BG_6` in the module as available options, but only enable one full-size photo background at once unless image storage is optimized later.
+
 ## UF2 Flashing / Bootloader Notes
 
 The dongle bootloader info shown by `INFO_UF2.TXT`:
@@ -77,7 +77,7 @@ Date: Nov 12 2021
 
 Symptom after successful two-photo build: user could copy the UF2 file, but the board did not reset on its own and the screen stayed blank. Need verify whether the UF2 drive disappears after copy. If it disappears, the firmware probably flashed but crashes/does not start display. If it stays mounted, the bootloader likely rejected/ignored the UF2 or the wrong artifact was copied.
 
-Next test user planned: build with only one family image enabled to see if even two photos are too much at runtime or for final flash layout.
+Confirmed: one family image works. Two photos built but caused UF2/boot/runtime trouble, so stay with one full-size photo for now.
 
 Suggested one-photo config:
 
@@ -88,15 +88,8 @@ CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=y
 CONFIG_XIAORD_BG_5=n
 CONFIG_XIAORD_BG_6=n
-CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN=5
 ```
 
-## Tomorrow Follow-Up Idea
+## Rotation Removed
 
-If the one-photo or two-photo firmware works today, user wants to go back to non-rotating backgrounds tomorrow. Removing or disabling rotation may clear a little memory and simplify the display code. Best approach tomorrow:
-
-- Keep `BG_4`, `BG_5`, and `BG_6` assets available.
-- Use only one selected background at compile time.
-- Remove or gate the `status_background_timer` rotation logic behind a config option defaulting off.
-- Consider making `CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN` depend on a new explicit rotate option, or remove rotation support if user decides it is not needed.
-- This will not save as much flash as removing an image file from the build, but it can reduce code/data a little and reduce risk.
+Auto-rotating backgrounds were removed after confirming one picture works. The module now uses a single static compile-time background. If more than one `CONFIG_XIAORD_BG_*` option is accidentally enabled, it picks the first available image in this priority: `BG_4`, `BG_5`, `BG_6`, then `BG_1`, `BG_2`, `BG_3`.

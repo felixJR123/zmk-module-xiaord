@@ -24,18 +24,4 @@ config XIAORD_BG_6
     bool "Family background 3"
     default n
 
-config XIAORD_BG_ROTATE
-    bool "Deprecated rotate background images option"
-    default n
-    help
-      Deprecated. Backgrounds now rotate automatically when more than one
-      CONFIG_XIAORD_BG_* option is enabled.
-
-config XIAORD_BG_ROTATE_INTERVAL_MIN
-    int "Background rotation interval in minutes"
-    range 1 1440
-    default 5
-    help
-      Used only when more than one CONFIG_XIAORD_BG_* image is enabled.
-
 endmenu

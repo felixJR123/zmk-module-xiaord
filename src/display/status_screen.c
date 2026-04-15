@@ -36,67 +36,38 @@ static const struct gpio_dt_spec status_backlight_gpio = GPIO_DT_SPEC_GET(STATUS
 #include "page_iface.h"
 #include "display_api.h"
 
-#define XIAORD_FAMILY_BG_ENABLED \
-    (IS_ENABLED(CONFIG_XIAORD_BG_4) || IS_ENABLED(CONFIG_XIAORD_BG_5) || IS_ENABLED(CONFIG_XIAORD_BG_6))
-#define XIAORD_ORIGINAL_BG_ENABLED \
-    (IS_ENABLED(CONFIG_XIAORD_BG_1) || IS_ENABLED(CONFIG_XIAORD_BG_2) || IS_ENABLED(CONFIG_XIAORD_BG_3))
-
-#if !XIAORD_FAMILY_BG_ENABLED && !XIAORD_ORIGINAL_BG_ENABLED
+#if IS_ENABLED(CONFIG_XIAORD_BG_4)
+extern const lv_image_dsc_t img_bg_4;
+#define STATUS_BACKGROUND_IMAGE (&img_bg_4)
+#elif IS_ENABLED(CONFIG_XIAORD_BG_5)
+extern const lv_image_dsc_t img_bg_5;
+#define STATUS_BACKGROUND_IMAGE (&img_bg_5)
+#elif IS_ENABLED(CONFIG_XIAORD_BG_6)
+extern const lv_image_dsc_t img_bg_6;
+#define STATUS_BACKGROUND_IMAGE (&img_bg_6)
+#elif IS_ENABLED(CONFIG_XIAORD_BG_1)
+extern const lv_image_dsc_t img_bg_1;
+#define STATUS_BACKGROUND_IMAGE (&img_bg_1)
+#elif IS_ENABLED(CONFIG_XIAORD_BG_2)
+extern const lv_image_dsc_t img_bg_2;
+#define STATUS_BACKGROUND_IMAGE (&img_bg_2)
+#elif IS_ENABLED(CONFIG_XIAORD_BG_3)
+extern const lv_image_dsc_t img_bg_3;
+#define STATUS_BACKGROUND_IMAGE (&img_bg_3)
+#else
 #error "At least one CONFIG_XIAORD_BG_* option must be enabled"
 #endif
 
-#if !XIAORD_FAMILY_BG_ENABLED
-#if IS_ENABLED(CONFIG_XIAORD_BG_1)
-extern const lv_image_dsc_t img_bg_1;
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_2)
-extern const lv_image_dsc_t img_bg_2;
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_3)
-extern const lv_image_dsc_t img_bg_3;
-#endif
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_4)
-extern const lv_image_dsc_t img_bg_4;
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_5)
-extern const lv_image_dsc_t img_bg_5;
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_6)
-extern const lv_image_dsc_t img_bg_6;
-#endif
-
-static const lv_image_dsc_t *const status_backgrounds[] = {
-#if !XIAORD_FAMILY_BG_ENABLED
-#if IS_ENABLED(CONFIG_XIAORD_BG_1)
-    &img_bg_1,
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_2)
-    &img_bg_2,
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_3)
-    &img_bg_3,
-#endif
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_4)
-    &img_bg_4,
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_5)
-    &img_bg_5,
-#endif
-#if IS_ENABLED(CONFIG_XIAORD_BG_6)
-    &img_bg_6,
-#endif
-};
-static uint8_t status_background_index;
-
+static const lv_image_dsc_t *status_screen_current_background(void)
+{
+    return STATUS_BACKGROUND_IMAGE;
+}
 static const struct device *status_display;
 static const struct device *status_backlight;
 static uint32_t status_backlight_led;
 #define STATUS_BACKLIGHT_LABEL "DISPLAY_BACKLIGHT"
 
 static struct k_timer status_screen_idle_timer;
-static struct k_timer status_background_timer;
 static bool status_screen_is_blank;
 #define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
 
@@ -272,43 +243,6 @@ static struct page_entry s_pages[] = {
 
 #define PAGE_COUNT ARRAY_SIZE(s_pages)
 
-static const lv_image_dsc_t *status_screen_current_background(void)
-{
-    return status_backgrounds[status_background_index];
-}
-
-static void status_screen_apply_background(void)
-{
-    const lv_image_dsc_t *bg = status_screen_current_background();
-
-    for (size_t i = 0; i < PAGE_COUNT; i++) {
-        if (s_pages[i].screen) {
-            lv_obj_set_style_bg_image_src(s_pages[i].screen, bg, LV_PART_MAIN);
-        }
-    }
-}
-
-static void status_background_work_handler(struct k_work *work)
-{
-    ARG_UNUSED(work);
-
-    status_background_index = (status_background_index + 1) % ARRAY_SIZE(status_backgrounds);
-    status_screen_apply_background();
-}
-
-K_WORK_DEFINE(status_background_work, status_background_work_handler);
-
-static void status_background_timer_handler(struct k_timer *timer)
-{
-    ARG_UNUSED(timer);
-
-    if (zmk_display_is_initialized()) {
-        k_work_submit_to_queue(zmk_display_work_q(), &status_background_work);
-    }
-}
-
-/* ── Active page tracking ──────────────────────────────────────────────── */
-
 static uint8_t s_active_page;
 
 /* ── Public API ─────────────────────────────────────────────────────────── */
@@ -412,14 +346,6 @@ lv_obj_t *zmk_display_status_screen(void)
 	if (s_pages[0].ops->on_enter) {
 		s_pages[0].ops->on_enter();
 	}
-
-    if (ARRAY_SIZE(status_backgrounds) > 1) {
-        k_timer_init(&status_background_timer, status_background_timer_handler, NULL);
-        k_timer_start(&status_background_timer,
-                      K_MINUTES(CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN),
-                      K_MINUTES(CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN));
-    }
-
 	k_timer_init(&status_screen_idle_timer, status_screen_idle_timeout, NULL);
 	k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);
 
