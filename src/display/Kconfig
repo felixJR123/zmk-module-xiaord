@@ -24,4 +24,11 @@ config XIAORD_BG_6
     bool "Family background 3"
     default n
 
+config XIAORD_REMOVE_DATE_TIME
+    bool "Remove date/time from home screen"
+    default n
+    help
+      Remove the home screen date and time labels for cleaner photo backgrounds.
+      The clock settings page remains available.
+
 endmenu

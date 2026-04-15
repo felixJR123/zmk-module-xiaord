@@ -93,3 +93,7 @@ CONFIG_XIAORD_BG_6=n
 ## Rotation Removed
 
 Auto-rotating backgrounds were removed after confirming one picture works. The module now uses a single static compile-time background. If more than one `CONFIG_XIAORD_BG_*` option is accidentally enabled, it picks the first available image in this priority: `BG_4`, `BG_5`, `BG_6`, then `BG_1`, `BG_2`, `BG_3`.
+
+## Date/Time Overlay Option
+
+Added `CONFIG_XIAORD_REMOVE_DATE_TIME=y` to remove the date and time labels from the home screen for cleaner family photos. Set it to `n` or remove the line to bring the clock/date back for default backgrounds. The separate clock settings page remains available.

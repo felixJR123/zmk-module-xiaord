@@ -28,6 +28,12 @@ CONFIG_XIAORD_BG_6=n
 
 The firmware reliably fits one full-size 240x240 RGB565 photo background. Keep only one `CONFIG_XIAORD_BG_*` option enabled in the keyboard config for the safest build.
 
+For a cleaner photo background, hide the home screen date and time:
+
+```conf
+CONFIG_XIAORD_REMOVE_DATE_TIME=y
+```
+
 ## Replacing Family Photos
 
 Put the original photos in this folder:

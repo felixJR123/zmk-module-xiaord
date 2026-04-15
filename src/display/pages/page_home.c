@@ -7,6 +7,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/rtc.h>
+#include <zephyr/sys/util.h>
 #include <lvgl.h>
 #include <zmk/split/central.h>
 #include "page_iface.h"
@@ -17,13 +18,17 @@
 
 /* ── RTC device ────────────────────────────────────────────────────────── */
 
+#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 static const struct device *s_rtc = DEVICE_DT_GET(DT_ALIAS(rtc));
+#endif
 
 /* ── Widget handles ────────────────────────────────────────────────────── */
 
+#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 static lv_obj_t   *s_date_lbl;
 static lv_obj_t   *s_time_lbl;
 static lv_timer_t *s_timer;
+#endif
 static lv_obj_t   *s_output_lbl;
 
 /* ── Endpoint status callback ──────────────────────────────────────────── */
@@ -35,6 +40,7 @@ static void home_endpoint_cb(struct endpoint_state state)
 
 /* ── Month / weekday name tables ───────────────────────────────────────── */
 
+#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 static const char *month_names[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -69,9 +75,12 @@ static void update_datetime(lv_timer_t *t)
 
 /* ── Page create ───────────────────────────────────────────────────────── */
 
+#endif
+
 static int page_home_create(lv_obj_t *tile)
 {
 	/* ── Date label — upper area ────────────────────────────────────── */
+#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 	s_date_lbl = lv_label_create(tile);
 	lv_label_set_text(s_date_lbl, "--- -- ---");
 	lv_obj_align(s_date_lbl, LV_ALIGN_CENTER, 0, -67);
@@ -81,6 +90,7 @@ static int page_home_create(lv_obj_t *tile)
 	lv_label_set_text(s_time_lbl, "--:--");
 	lv_obj_set_style_text_font(s_time_lbl, &lv_font_montserrat_48, 0);
 	lv_obj_align(s_time_lbl, LV_ALIGN_CENTER, 0, -27);
+#endif
 
 	/* ── Output status label ────────────────────────────────────────── */
 	s_output_lbl = create_output_status_label(tile, &lv_font_montserrat_16);
@@ -139,10 +149,12 @@ static int page_home_create(lv_obj_t *tile)
 
 	/* ── Button ring ─────────────────────────────────────────────────── */
 	home_buttons_create(tile);
+#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 
 	/* 1-second timer, created paused — resumed only while page is active */
 	s_timer = lv_timer_create(update_datetime, 1000, NULL);
 	lv_timer_pause(s_timer);
+#endif
 
 	return 0;
 }
@@ -151,14 +163,18 @@ static int page_home_create(lv_obj_t *tile)
 
 static void page_home_enter(void)
 {
+#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 	update_datetime(NULL); /* show current time immediately on entry */
 	lv_timer_resume(s_timer);
+#endif
 	home_buttons_set_visible(false);
 }
 
 static void page_home_leave(void)
 {
+#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 	lv_timer_pause(s_timer);
+#endif
 	home_buttons_pause();
 }
 

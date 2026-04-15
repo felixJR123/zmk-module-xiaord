@@ -12,7 +12,7 @@ A ZMK module for the Seeed XIAO Round Display. Adds a touch-enabled circular dis
 - Peripheral battery level shown on the display
 - BLE connection status display and management
 - ZMK behaviors triggered by touch input
-- Current time display via RTC
+- Optional current time display via RTC
 
 ### Home Screen
 
@@ -212,6 +212,14 @@ Original backgrounds and family-photo backgrounds are available. Enable one imag
 | `CONFIG_XIAORD_BG_6=y` | ![bg6](src/display/ui/bg/bg6.png) |
 
 The nRF52840 build reliably fits one full-size photo background. If more than one background is enabled, the module picks the first family image before falling back to the original backgrounds.
+
+To remove the home screen date and time for cleaner photos:
+
+```conf
+CONFIG_XIAORD_REMOVE_DATE_TIME=y
+```
+
+Set it back to `n` or remove the line to show the clock/date again.
 
 ### RTC
 
