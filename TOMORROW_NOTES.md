@@ -20,7 +20,7 @@ The LCD backlight issue was not only firmware. The tiny back-side screen switch 
 - `2543de6 Make family background converter path portable`
 - `b8b9da6 Exclude original backgrounds when family images are enabled`
 
-The latest pushed commit at the time this note was written is:
+The latest pushed commit at the time this note was first written was:
 
 ```text
 b8b9da6 Exclude original backgrounds when family images are enabled
@@ -35,7 +35,7 @@ section `rodata' will not fit in region `FLASH'
 region `FLASH' overflowed by 113912 bytes
 ```
 
-That overflow size is almost exactly one 240x240 RGB565 background image. The likely cause was `BG_1` still being compiled along with `BG_4`, `BG_5`, and `BG_6`.
+That overflow size is almost exactly one 240x240 RGB565 background image. After excluding original backgrounds when family images are enabled, the same overflow means the firmware likely fits two full-size photo backgrounds, not three.
 
 The latest fix changes both:
 
@@ -46,7 +46,7 @@ so when any family background is enabled, the module compiles/references only fa
 
 ## Keyboard Config To Use
 
-In the keyboard repo config, use this for only the three family pictures:
+In the keyboard repo config, use this build-safe setup for two family pictures:
 
 ```conf
 CONFIG_XIAORD_BG_1=n
@@ -54,8 +54,12 @@ CONFIG_XIAORD_BG_2=n
 CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=y
 CONFIG_XIAORD_BG_5=y
-CONFIG_XIAORD_BG_6=y
+CONFIG_XIAORD_BG_6=n
 CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN=5
 ```
 
-After commit `b8b9da6`, the build should also ignore original backgrounds if a stale config still sets `CONFIG_XIAORD_BG_1=y`, but it is cleaner to set it to `n` explicitly.
+After commit `b8b9da6`, the build should ignore original backgrounds if a stale config still sets `CONFIG_XIAORD_BG_1=y`, but it is cleaner to set it to `n` explicitly.
+
+## Confirmed Working
+
+After setting `CONFIG_XIAORD_BG_6=n` in the keyboard config, the GitHub build worked. Keep `BG_6` in the module as an available option, but only enable two full-size photo backgrounds at once unless image storage is optimized later.
