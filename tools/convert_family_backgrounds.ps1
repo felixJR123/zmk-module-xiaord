@@ -1,11 +1,21 @@
 param(
-    [string]$SourceDir = "src/display/ui/bg/source",
+    [string]$SourceDir = "",
     [string]$OutDir = "src/display/ui/bg"
 )
 
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+
+if ([string]::IsNullOrWhiteSpace($SourceDir)) {
+    $OneDrivePictures = Join-Path $env:USERPROFILE "OneDrive\Pictures\Dongle Pictures"
+    if (Test-Path -LiteralPath $OneDrivePictures) {
+        $SourceDir = $OneDrivePictures
+    } else {
+        $SourceDir = Join-Path $RepoRoot "src/display/ui/bg/source"
+    }
+}
+
 $SourcePath = Resolve-Path $SourceDir
 $OutPath = Join-Path $RepoRoot $OutDir
 
@@ -46,3 +56,5 @@ for ($i = 0; $i -lt $CropPresets.Count; $i++) {
         --zoom $Preset.Zoom `
         --out-dir $OutPath
 }
+
+Write-Host "Done. Check the generated bg4.png, bg5.png, and bg6.png previews."

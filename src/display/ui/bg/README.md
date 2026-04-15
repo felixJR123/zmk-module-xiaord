@@ -37,10 +37,16 @@ Put the original photos in this folder:
 src/display/ui/bg/source/
 ```
 
-Generate firmware assets with the helper script. It takes the first three JPG/PNG images in the folder and writes `bg4`, `bg5`, and `bg6`:
+Generate firmware assets with the helper script. By default it looks in `%USERPROFILE%\OneDrive\Pictures\Dongle Pictures`, takes the first three JPG/PNG images, and writes `bg4`, `bg5`, and `bg6`:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/convert_family_backgrounds.ps1 -SourceDir "C:\Users\fhern\OneDrive\Pictures\Dongle Pictures"
+powershell -ExecutionPolicy Bypass -File tools/convert_family_backgrounds.ps1
+```
+
+To use a different folder without hard-coding a Windows username:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/convert_family_backgrounds.ps1 -SourceDir "$env:USERPROFILE\Pictures\Dongle Pictures"
 ```
 
 Or convert one photo at a time:
