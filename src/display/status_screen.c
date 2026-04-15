@@ -36,19 +36,31 @@ static const struct gpio_dt_spec status_backlight_gpio = GPIO_DT_SPEC_GET(STATUS
 #include "page_iface.h"
 #include "display_api.h"
 
-extern const lv_image_dsc_t img_bg_1;
-extern const lv_image_dsc_t img_bg_2;
-extern const lv_image_dsc_t img_bg_3;
-
-#if IS_ENABLED(CONFIG_XIAORD_BG_ROTATE)
-static const lv_image_dsc_t *const status_backgrounds[] = {&img_bg_1, &img_bg_2, &img_bg_3};
-#elif IS_ENABLED(CONFIG_XIAORD_BG_2)
-static const lv_image_dsc_t *const status_backgrounds[] = {&img_bg_2};
-#elif IS_ENABLED(CONFIG_XIAORD_BG_3)
-static const lv_image_dsc_t *const status_backgrounds[] = {&img_bg_3};
-#else
-static const lv_image_dsc_t *const status_backgrounds[] = {&img_bg_1};
+#if !IS_ENABLED(CONFIG_XIAORD_BG_1) && !IS_ENABLED(CONFIG_XIAORD_BG_2) && !IS_ENABLED(CONFIG_XIAORD_BG_3)
+#error "At least one CONFIG_XIAORD_BG_* option must be enabled"
 #endif
+
+#if IS_ENABLED(CONFIG_XIAORD_BG_1)
+extern const lv_image_dsc_t img_bg_1;
+#endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_2)
+extern const lv_image_dsc_t img_bg_2;
+#endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_3)
+extern const lv_image_dsc_t img_bg_3;
+#endif
+
+static const lv_image_dsc_t *const status_backgrounds[] = {
+#if IS_ENABLED(CONFIG_XIAORD_BG_1)
+    &img_bg_1,
+#endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_2)
+    &img_bg_2,
+#endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_3)
+    &img_bg_3,
+#endif
+};
 
 static uint8_t status_background_index;
 
@@ -58,9 +70,7 @@ static uint32_t status_backlight_led;
 #define STATUS_BACKLIGHT_LABEL "DISPLAY_BACKLIGHT"
 
 static struct k_timer status_screen_idle_timer;
-#if IS_ENABLED(CONFIG_XIAORD_BG_ROTATE)
 static struct k_timer status_background_timer;
-#endif
 static bool status_screen_is_blank;
 #define STATUS_SCREEN_IDLE_TIMEOUT_MS CONFIG_ZMK_IDLE_TIMEOUT
 
@@ -252,7 +262,6 @@ static void status_screen_apply_background(void)
     }
 }
 
-#if IS_ENABLED(CONFIG_XIAORD_BG_ROTATE)
 static void status_background_work_handler(struct k_work *work)
 {
     ARG_UNUSED(work);
@@ -271,7 +280,6 @@ static void status_background_timer_handler(struct k_timer *timer)
         k_work_submit_to_queue(zmk_display_work_q(), &status_background_work);
     }
 }
-#endif
 
 /* ── Active page tracking ──────────────────────────────────────────────── */
 
@@ -378,6 +386,13 @@ lv_obj_t *zmk_display_status_screen(void)
 	if (s_pages[0].ops->on_enter) {
 		s_pages[0].ops->on_enter();
 	}
+
+    if (ARRAY_SIZE(status_backgrounds) > 1) {
+        k_timer_init(&status_background_timer, status_background_timer_handler, NULL);
+        k_timer_start(&status_background_timer,
+                      K_MINUTES(CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN),
+                      K_MINUTES(CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN));
+    }
 
 	k_timer_init(&status_screen_idle_timer, status_screen_idle_timeout, NULL);
 	k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);

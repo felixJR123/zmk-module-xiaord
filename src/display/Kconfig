@@ -1,27 +1,29 @@
-
-choice XIAORD_BG
-    prompt "Background image"
-    default XIAORD_BG_1
+menu "Xiaord background images"
 
 config XIAORD_BG_1
     bool "Background 1"
+    default y
 
 config XIAORD_BG_2
     bool "Background 2"
+    default n
 
 config XIAORD_BG_3
     bool "Background 3"
-
-endchoice
+    default n
 
 config XIAORD_BG_ROTATE
-    bool "Rotate background images"
+    bool "Deprecated rotate background images option"
     default n
     help
-      Rotate through the compiled Xiaord background images instead of using only one.
+      Deprecated. Backgrounds now rotate automatically when more than one
+      CONFIG_XIAORD_BG_* option is enabled.
 
 config XIAORD_BG_ROTATE_INTERVAL_MIN
     int "Background rotation interval in minutes"
-    depends on XIAORD_BG_ROTATE
     range 1 1440
     default 5
+    help
+      Used only when more than one CONFIG_XIAORD_BG_* image is enabled.
+
+endmenu
