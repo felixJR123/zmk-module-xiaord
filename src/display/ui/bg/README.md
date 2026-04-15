@@ -18,11 +18,16 @@ CONFIG_XIAORD_BG_6=n
 If exactly one background is enabled, it stays static. If more than one is enabled, the dongle rotates through only the enabled images.
 
 ```conf
+CONFIG_XIAORD_BG_1=n
+CONFIG_XIAORD_BG_2=n
+CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=y
 CONFIG_XIAORD_BG_5=y
 CONFIG_XIAORD_BG_6=y
 CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN=5
 ```
+
+The firmware usually has room for about three 240x240 RGB565 backgrounds. If the linker says FLASH overflowed, disable any extra `CONFIG_XIAORD_BG_*` entries in the keyboard config.
 
 ## Replacing Family Photos
 

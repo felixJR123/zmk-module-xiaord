@@ -2,7 +2,7 @@ menu "Xiaord background images"
 
 config XIAORD_BG_1
     bool "Background 1"
-    default y
+    default y if !XIAORD_BG_2 && !XIAORD_BG_3 && !XIAORD_BG_4 && !XIAORD_BG_5 && !XIAORD_BG_6
 
 config XIAORD_BG_2
     bool "Background 2"
