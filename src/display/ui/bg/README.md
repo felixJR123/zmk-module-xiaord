@@ -27,7 +27,7 @@ CONFIG_XIAORD_BG_6=y
 CONFIG_XIAORD_BG_ROTATE_INTERVAL_MIN=5
 ```
 
-The firmware usually has room for about three 240x240 RGB565 backgrounds. If the linker says FLASH overflowed, disable any extra `CONFIG_XIAORD_BG_*` entries in the keyboard config.
+The firmware usually has room for about three 240x240 RGB565 backgrounds. If any family background is enabled, the original backgrounds are left out of the firmware even if an older keyboard config still sets one of them to `y`.
 
 ## Replacing Family Photos
 
