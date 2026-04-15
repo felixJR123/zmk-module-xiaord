@@ -14,13 +14,13 @@ void home_buttons_create(lv_obj_t *parent);
 
 /*
  * Show or hide the button ring.
- * Manages the autohide timer and repeat timer accordingly.
+ * Manages the autohide timer, repeat timer, and tap gesture timer accordingly.
  * Call from page_home_enter() (false) and tap overlay callback (true).
  */
 void home_buttons_set_visible(bool visible);
 
 /*
- * Pause all button-related timers (repeat + autohide).
+ * Pause all button-related timers (repeat, autohide, tap gesture).
  * Call from page_home_leave().
  */
 void home_buttons_pause(void);

@@ -39,6 +39,15 @@ Up to 12 buttons can be placed around the edge of the screen, indexed clockwise 
 | 10 (10 o'clock) | `ICON_BLUETOOTH` (U+F293 ) | Go to BT management screen |
 | 11 (11 o'clock) | `ICON_SETTINGS` (U+F013 ) | Go to clock settings screen |
 
+Touch gestures on the photo/home screen:
+
+| Gesture | Action |
+|---------|--------|
+| Single tap | Mute (`INPUT_VIRTUAL_POS_3`) |
+| Double tap | Show/hide the shortcut button ring, same as the old single tap |
+| Clockwise slide | Volume up (`INPUT_VIRTUAL_POS_2`) |
+| Counterclockwise slide | Volume down (`INPUT_VIRTUAL_POS_4`) |
+
 ### Bluetooth Management Screen
 
 - Select a BT profile (up to 12 profiles)
@@ -219,7 +228,7 @@ To remove the home screen date and time for cleaner photos:
 CONFIG_XIAORD_REMOVE_DATE_TIME=y
 ```
 
-Set it back to `n` or remove the line to show the clock/date again.
+Set it back to `n` or remove the line to show the clock/date again. The RTC continues keeping time while the labels are hidden, so you do not need to reset the clock when changing backgrounds.
 
 ### RTC
 

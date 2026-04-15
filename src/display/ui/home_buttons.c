@@ -81,11 +81,91 @@ static lv_timer_t *s_repeat_timer;
 static int         s_repeat_idx;
 static bool        s_repeat_fired;
 static lv_timer_t *s_autohide_timer;
+static lv_timer_t *s_tap_timer;
+static bool        s_tap_pending;
+static bool        s_suppress_click;
+static bool        s_knob_active;
+static bool        s_knob_fired;
+static lv_point_t  s_knob_prev;
+static int32_t     s_knob_accum;
 
 #define CENTER_DISMISS_RADIUS 70
+#define KNOB_MIN_RADIUS 32
+#define KNOB_STEP_CROSS 1800
+#define DOUBLE_TAP_MS 280
 
 /* ── Timers ────────────────────────────────────────────────────────────── */
 
+static int32_t point_radius_sq(const lv_point_t *p)
+{
+    int32_t dx = p->x - 120;
+    int32_t dy = p->y - 120;
+    return dx * dx + dy * dy;
+}
+
+static bool point_in_center(const lv_point_t *p)
+{
+    return point_radius_sq(p) <= CENTER_DISMISS_RADIUS * CENTER_DISMISS_RADIUS;
+}
+
+static bool point_on_knob_ring(const lv_point_t *p)
+{
+    return point_radius_sq(p) >= KNOB_MIN_RADIUS * KNOB_MIN_RADIUS;
+}
+
+static void home_buttons_run_legacy_tap(const lv_point_t *p)
+{
+    if (!s_btns_visible) {
+        home_buttons_set_visible(true);
+        return;
+    }
+    if (point_in_center(p)) {
+        home_buttons_set_visible(false);
+    }
+}
+
+static void tap_timer_cb(lv_timer_t *t)
+{
+    ARG_UNUSED(t);
+    lv_timer_pause(s_tap_timer);
+    if (!s_tap_pending) {
+        return;
+    }
+    s_tap_pending = false;
+    ss_fire_behavior(INPUT_VIRTUAL_POS_3);
+}
+
+static void knob_handle_point(const lv_point_t *p)
+{
+    if (!point_on_knob_ring(p)) {
+        return;
+    }
+
+    int32_t prev_x = s_knob_prev.x - 120;
+    int32_t prev_y = s_knob_prev.y - 120;
+    int32_t cur_x = p->x - 120;
+    int32_t cur_y = p->y - 120;
+    int32_t cross = prev_x * cur_y - prev_y * cur_x;
+
+    if (cross > -80 && cross < 80) {
+        s_knob_prev = *p;
+        return;
+    }
+
+    s_knob_accum += cross;
+    s_knob_prev = *p;
+
+    while (s_knob_accum >= KNOB_STEP_CROSS) {
+        ss_fire_behavior(INPUT_VIRTUAL_POS_2);
+        s_knob_accum -= KNOB_STEP_CROSS;
+        s_knob_fired = true;
+    }
+    while (s_knob_accum <= -KNOB_STEP_CROSS) {
+        ss_fire_behavior(INPUT_VIRTUAL_POS_4);
+        s_knob_accum += KNOB_STEP_CROSS;
+        s_knob_fired = true;
+    }
+}
 static void autohide_timer_cb(lv_timer_t *t)
 {
 	ARG_UNUSED(t);
@@ -134,20 +214,57 @@ static void circle_btn_cb(lv_event_t *e)
 
 static void tap_overlay_cb(lv_event_t *e)
 {
-	if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
-	if (!s_btns_visible) {
-		home_buttons_set_visible(true);
-		return;
-	}
-	lv_point_t p;
-	lv_indev_get_point(lv_indev_active(), &p);
-	int dx = p.x - 120, dy = p.y - 120;
-	if (dx * dx + dy * dy <= CENTER_DISMISS_RADIUS * CENTER_DISMISS_RADIUS)
-		home_buttons_set_visible(false);
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_indev_t *indev = lv_indev_active();
+    lv_point_t p = {0};
+
+    if (indev) {
+        lv_indev_get_point(indev, &p);
+    }
+
+    if (code == LV_EVENT_PRESSED) {
+        s_knob_prev = p;
+        s_knob_accum = 0;
+        s_knob_fired = false;
+        s_knob_active = point_on_knob_ring(&p);
+        return;
+    }
+
+    if (code == LV_EVENT_PRESSING) {
+        if (s_knob_active) {
+            knob_handle_point(&p);
+        }
+        return;
+    }
+
+    if (code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) {
+        if (s_knob_fired) {
+            s_suppress_click = true;
+        }
+        s_knob_active = false;
+        return;
+    }
+
+    if (code != LV_EVENT_CLICKED) {
+        return;
+    }
+
+    if (s_suppress_click) {
+        s_suppress_click = false;
+        return;
+    }
+
+    if (s_tap_pending) {
+        s_tap_pending = false;
+        lv_timer_pause(s_tap_timer);
+        home_buttons_run_legacy_tap(&p);
+        return;
+    }
+
+    s_tap_pending = true;
+    lv_timer_reset(s_tap_timer);
+    lv_timer_resume(s_tap_timer);
 }
-
-/* ── Public API ────────────────────────────────────────────────────────── */
-
 void home_buttons_set_visible(bool visible)
 {
 	s_btns_visible = visible;
@@ -165,6 +282,8 @@ void home_buttons_set_visible(bool visible)
 	} else {
 		lv_timer_pause(s_autohide_timer);
 		lv_timer_pause(s_repeat_timer);
+		lv_timer_pause(s_tap_timer);
+		s_tap_pending = false;
 	}
 }
 
@@ -172,6 +291,8 @@ void home_buttons_pause(void)
 {
 	lv_timer_pause(s_repeat_timer);
 	lv_timer_pause(s_autohide_timer);
+	lv_timer_pause(s_tap_timer);
+	s_tap_pending = false;
 }
 
 void home_buttons_create(lv_obj_t *parent)
@@ -212,4 +333,7 @@ void home_buttons_create(lv_obj_t *parent)
 
 	s_autohide_timer = lv_timer_create(autohide_timer_cb, 10000, NULL);
 	lv_timer_pause(s_autohide_timer);
+
+	s_tap_timer = lv_timer_create(tap_timer_cb, DOUBLE_TAP_MS, NULL);
+	lv_timer_pause(s_tap_timer);
 }

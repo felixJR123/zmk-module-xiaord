@@ -97,3 +97,14 @@ Auto-rotating backgrounds were removed after confirming one picture works. The m
 ## Date/Time Overlay Option
 
 Added `CONFIG_XIAORD_REMOVE_DATE_TIME=y` to remove the date and time labels from the home screen for cleaner family photos. Set it to `n` or remove the line to bring the clock/date back for default backgrounds. The separate clock settings page remains available.
+
+## Touch Volume Gestures
+
+Added home-screen touch gestures:
+
+- Single tap fires `INPUT_VIRTUAL_POS_3` (default mute).
+- Double tap runs the old tap behavior to show/hide the shortcut ring.
+- Clockwise slide fires `INPUT_VIRTUAL_POS_2` repeatedly (default volume up).
+- Counterclockwise slide fires `INPUT_VIRTUAL_POS_4` repeatedly (default volume down).
+
+The gesture uses the existing positional bindings, so keyboard overlays can still customize what positions 2, 3, and 4 do.
