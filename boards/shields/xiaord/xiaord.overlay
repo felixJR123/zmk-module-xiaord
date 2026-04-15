@@ -103,8 +103,8 @@
         compatible = "gpio-leds";
 
         display_backlight: led_0 {
-            /* Seeed Round Display BG_LIGHT is controlled by D6/TX when the KE switch is ON. */
-            gpios = <&xiao_d 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            /* XIAO BLE D6/TX is nRF52840 P1.11; SW2/KE must connect it to BG_LIGHT. */
+            gpios = <&gpio1 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
             label = "DISPLAY_BACKLIGHT";
         };
     };
