@@ -13,15 +13,24 @@
 #include <zephyr/device.h>
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/display.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/led.h>
 #include <zephyr/devicetree.h>
 #include <lvgl.h>
 #include <zephyr/logging/log.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/keycode_state_changed.h>
-#include <errno.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
+
+#define STATUS_BACKLIGHT_NODE DT_CHOSEN(zmk_display_led)
+
+#if DT_NODE_EXISTS(STATUS_BACKLIGHT_NODE) && DT_NODE_HAS_PROP(STATUS_BACKLIGHT_NODE, gpios)
+static const struct gpio_dt_spec status_backlight_gpio = GPIO_DT_SPEC_GET(STATUS_BACKLIGHT_NODE, gpios);
+#define STATUS_BACKLIGHT_HAS_GPIO 1
+#else
+#define STATUS_BACKLIGHT_HAS_GPIO 0
+#endif
 
 #include "page_iface.h"
 #include "display_api.h"
@@ -82,8 +91,43 @@ static const struct device *status_backlight_dev(void)
     return NULL;
 }
 
+static bool status_backlight_gpio_ready(void)
+{
+#if STATUS_BACKLIGHT_HAS_GPIO
+    static bool configured;
+
+    if (!device_is_ready(status_backlight_gpio.port)) {
+        LOG_WRN("backlight GPIO device not ready");
+        return false;
+    }
+
+    if (!configured) {
+        int err = gpio_pin_configure_dt(&status_backlight_gpio, GPIO_OUTPUT_ACTIVE);
+        if (err) {
+            LOG_WRN("backlight GPIO configure failed: %d", err);
+            return false;
+        }
+        configured = true;
+    }
+
+    return true;
+#else
+    return false;
+#endif
+}
+
 static void status_screen_set_backlight(bool on)
 {
+#if STATUS_BACKLIGHT_HAS_GPIO
+    if (status_backlight_gpio_ready()) {
+        int err = gpio_pin_set_dt(&status_backlight_gpio, on ? 1 : 0);
+        if (err) {
+            LOG_WRN("backlight GPIO update failed: %d", err);
+        }
+        return;
+    }
+#endif
+
     const struct device *dev = status_backlight_dev();
     if (!dev) {
         LOG_WRN("backlight device not ready");
@@ -91,13 +135,14 @@ static void status_screen_set_backlight(bool on)
     }
 
     int err = led_set_brightness(dev, status_backlight_led, on ? 100 : 0);
-
-    if (err == -ENOSYS || err == -ENOTSUP) {
-        err = on ? led_on(dev, status_backlight_led) : led_off(dev, status_backlight_led);
-    }
-
     if (err) {
         LOG_WRN("backlight update failed: %d", err);
+        return;
+    }
+
+    err = on ? led_on(dev, status_backlight_led) : led_off(dev, status_backlight_led);
+    if (err) {
+        LOG_WRN("backlight switch failed: %d", err);
     }
 }
 
