@@ -36,7 +36,8 @@ static const struct gpio_dt_spec status_backlight_gpio = GPIO_DT_SPEC_GET(STATUS
 #include "page_iface.h"
 #include "display_api.h"
 
-#if !IS_ENABLED(CONFIG_XIAORD_BG_1) && !IS_ENABLED(CONFIG_XIAORD_BG_2) && !IS_ENABLED(CONFIG_XIAORD_BG_3)
+#if !IS_ENABLED(CONFIG_XIAORD_BG_1) && !IS_ENABLED(CONFIG_XIAORD_BG_2) && !IS_ENABLED(CONFIG_XIAORD_BG_3) && \
+    !IS_ENABLED(CONFIG_XIAORD_BG_4) && !IS_ENABLED(CONFIG_XIAORD_BG_5) && !IS_ENABLED(CONFIG_XIAORD_BG_6)
 #error "At least one CONFIG_XIAORD_BG_* option must be enabled"
 #endif
 
@@ -49,6 +50,15 @@ extern const lv_image_dsc_t img_bg_2;
 #if IS_ENABLED(CONFIG_XIAORD_BG_3)
 extern const lv_image_dsc_t img_bg_3;
 #endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_4)
+extern const lv_image_dsc_t img_bg_4;
+#endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_5)
+extern const lv_image_dsc_t img_bg_5;
+#endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_6)
+extern const lv_image_dsc_t img_bg_6;
+#endif
 
 static const lv_image_dsc_t *const status_backgrounds[] = {
 #if IS_ENABLED(CONFIG_XIAORD_BG_1)
@@ -59,6 +69,15 @@ static const lv_image_dsc_t *const status_backgrounds[] = {
 #endif
 #if IS_ENABLED(CONFIG_XIAORD_BG_3)
     &img_bg_3,
+#endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_4)
+    &img_bg_4,
+#endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_5)
+    &img_bg_5,
+#endif
+#if IS_ENABLED(CONFIG_XIAORD_BG_6)
+    &img_bg_6,
 #endif
 };
 
