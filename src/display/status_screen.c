@@ -19,6 +19,7 @@
 #include <zephyr/logging/log.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/keycode_state_changed.h>
+#include <errno.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -29,6 +30,7 @@ extern const lv_image_dsc_t img_bg;
 
 static const struct device *status_display;
 static const struct device *status_backlight;
+static uint32_t status_backlight_led;
 #define STATUS_BACKLIGHT_LABEL "DISPLAY_BACKLIGHT"
 
 static struct k_timer status_screen_idle_timer;
@@ -42,7 +44,8 @@ static void status_screen_init_backlight(void)
     }
 
 #if DT_NODE_EXISTS(DT_CHOSEN(zmk_display_led))
-    status_backlight = DEVICE_DT_GET(DT_CHOSEN(zmk_display_led));
+    status_backlight = DEVICE_DT_GET(DT_PARENT(DT_CHOSEN(zmk_display_led)));
+    status_backlight_led = DT_NODE_CHILD_IDX(DT_CHOSEN(zmk_display_led));
     if (status_backlight && !device_is_ready(status_backlight)) {
         status_backlight = NULL;
     }
@@ -87,15 +90,14 @@ static void status_screen_set_backlight(bool on)
         return;
     }
 
-    int err = led_set_brightness(dev, 0, on ? 255 : 0);
-    if (err) {
-        LOG_WRN("backlight brightness failed: %d", err);
+    int err = led_set_brightness(dev, status_backlight_led, on ? 100 : 0);
+
+    if (err == -ENOSYS || err == -ENOTSUP) {
+        err = on ? led_on(dev, status_backlight_led) : led_off(dev, status_backlight_led);
     }
 
-    if (on) {
-        led_on(dev, 0);
-    } else {
-        led_off(dev, 0);
+    if (err) {
+        LOG_WRN("backlight update failed: %d", err);
     }
 }
 
