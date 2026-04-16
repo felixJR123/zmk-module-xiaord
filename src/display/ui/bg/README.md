@@ -36,22 +36,20 @@ CONFIG_XIAORD_REMOVE_DATE_TIME=y
 
 ## Replacing Custom Backgrounds
 
-Put the original photos in this folder:
+The easiest method is documented in `tools/README.md`. It includes fork, clone, picture-folder selection, commit, and push steps.
 
-```text
-src/display/ui/bg/source/
-```
-
-Generate firmware assets with the helper script. By default it looks in `%USERPROFILE%\OneDrive\Pictures\Dongle Pictures`, takes the first three JPG/PNG images, and writes `bg4`, `bg5`, and `bg6`:
+To open a folder picker and choose any folder containing your pictures, run this from the repo root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/convert_backgrounds.ps1
+powershell -ExecutionPolicy Bypass -File tools/convert_backgrounds.ps1 -ChooseFolder
 ```
 
-To use a different folder without hard-coding a Windows username:
+The converter uses the first one to three JPG/PNG images it finds and writes `bg4`, `bg5`, and `bg6` as needed. If you only choose one picture, it only updates `bg4`.
+
+To use a typed path instead of the folder picker:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/convert_backgrounds.ps1 -SourceDir "$env:USERPROFILE\Pictures\Dongle Pictures"
+powershell -ExecutionPolicy Bypass -File tools/convert_backgrounds.ps1 -SourceDir "$env:USERPROFILE\Pictures\Dongle Backgrounds"
 ```
 
 Or convert one photo at a time:
@@ -69,4 +67,4 @@ The round screen hides the corners. Use these options to keep the main subject i
 - `--center-y`: move the crop up/down. Smaller moves up, larger moves down.
 - `--zoom`: larger values crop tighter around the main subject.
 
-After running the script, commit the generated `bg4.png`, `bg4.c`, `bg5.png`, `bg5.c`, `bg6.png`, and `bg6.c` files.
+After running the script, commit the generated `bg4.png`, `bg4.c`, `bg5.png`, `bg5.c`, `bg6.png`, and `bg6.c` files that changed.
