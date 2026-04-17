@@ -2,7 +2,7 @@
 
 The display backgrounds are compiled into firmware as 240x240 LVGL RGB565 C files.
 
-For the step-by-step beginner guide, including forking, cloning, choosing a picture folder, converting pictures, committing, and pushing, use:
+For the step-by-step beginner guide, including choosing a private picture folder and converting one picture, use:
 
 ```text
 tools/README.md
@@ -17,13 +17,11 @@ CONFIG_XIAORD_BG_1=y
 CONFIG_XIAORD_BG_2=n
 CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=n
-CONFIG_XIAORD_BG_5=n
-CONFIG_XIAORD_BG_6=n
 ```
 
-The firmware uses one static background. If more than one background is enabled, the module chooses the first available image in this priority: `BG_4`, `BG_5`, `BG_6`, then `BG_1`, `BG_2`, `BG_3`.
+The firmware uses one static background. `BG_4` is the only custom slot and is intentionally local-only. The generated `bg4.c` and `bg4.png` files are ignored by Git so personal pictures do not get published with the module.
 
-The firmware reliably fits one full-size 240x240 RGB565 photo background. Keep only one `CONFIG_XIAORD_BG_*` option enabled in the keyboard config for the safest build.
+If `CONFIG_XIAORD_BG_4=y` but no local custom image can be found or generated, the firmware falls back to `BG_1` and still compiles.
 
 For example, to use `bg4`:
 
@@ -32,8 +30,7 @@ CONFIG_XIAORD_BG_1=n
 CONFIG_XIAORD_BG_2=n
 CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=y
-CONFIG_XIAORD_BG_5=n
-CONFIG_XIAORD_BG_6=n
+CONFIG_XIAORD_BG_4_SOURCE_DIR="C:/Users/YOUR_NAME/Pictures/Dongle Backgrounds"
 ```
 
 For a cleaner photo background, hide the home screen date and time:

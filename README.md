@@ -253,18 +253,23 @@ Each profile slot is shown with a background color indicating its current state:
 
 ### Background Image
 
-Original backgrounds and custom photo backgrounds are available. Enable one image in your keyboard's `.conf` or `prj.conf`.
+Original backgrounds and one local custom photo background are available. Enable one image in your keyboard's `.conf` or `prj.conf`.
 
 | Setting | Preview |
 |---------|---------|
 | `CONFIG_XIAORD_BG_1=y` | ![bg1](src/display/ui/bg/bg1.png) |
 | `CONFIG_XIAORD_BG_2=y` | ![bg2](src/display/ui/bg/bg2.png) |
 | `CONFIG_XIAORD_BG_3=y` | ![bg3](src/display/ui/bg/bg3.png) |
-| `CONFIG_XIAORD_BG_4=y` | ![bg4](src/display/ui/bg/bg4.png) |
-| `CONFIG_XIAORD_BG_5=y` | ![bg5](src/display/ui/bg/bg5.png) |
-| `CONFIG_XIAORD_BG_6=y` | ![bg6](src/display/ui/bg/bg6.png) |
+| `CONFIG_XIAORD_BG_4=y` | Local private image, generated as `src/display/ui/bg/bg4.png` |
 
-The nRF52840 build reliably fits one full-size photo background. If more than one background is enabled, the module picks the first custom image before falling back to the original backgrounds.
+The nRF52840 build reliably fits one full-size photo background. `BG_4` is intentionally local-only and ignored by Git, so personal pictures are not published with the module. If `CONFIG_XIAORD_BG_4=y` but no local `bg4.c` can be found or generated, the firmware falls back to `BG_1` and still compiles.
+
+To auto-generate `BG_4` during a local build, point the config at a private folder containing one JPG or PNG:
+
+```conf
+CONFIG_XIAORD_BG_4=y
+CONFIG_XIAORD_BG_4_SOURCE_DIR="C:/Users/YOUR_NAME/Pictures/Dongle Backgrounds"
+```
 
 To remove the home screen date and time for cleaner custom backgrounds:
 

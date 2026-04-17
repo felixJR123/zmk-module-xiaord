@@ -2,7 +2,7 @@ menu "Xiaord display options"
 
 config XIAORD_BG_1
     bool "Background 1"
-    default y if !XIAORD_BG_2 && !XIAORD_BG_3 && !XIAORD_BG_4 && !XIAORD_BG_5 && !XIAORD_BG_6
+    default y if !XIAORD_BG_2 && !XIAORD_BG_3 && !XIAORD_BG_4
 
 config XIAORD_BG_2
     bool "Background 2"
@@ -13,15 +13,31 @@ config XIAORD_BG_3
     default n
 
 config XIAORD_BG_4
-    bool "Custom background 1"
+    bool "Local custom background"
     default n
+    help
+      Enable the local custom background slot. The build will use
+      src/display/ui/bg/bg4.c when it exists. If it does not exist, the build
+      will try to generate it from XIAORD_BG_4_SOURCE_DIR. If no local image is
+      available, the firmware falls back to Background 1 so public builds still
+      compile.
+
+config XIAORD_BG_4_SOURCE_DIR
+    string "Local folder for custom background source pictures"
+    default ""
+    depends on XIAORD_BG_4
+    help
+      Optional local folder containing JPG/PNG files. When XIAORD_BG_4 is
+      enabled and bg4.c is missing, the build uses the first image in this
+      folder to generate bg4.c and bg4.png. Leave empty to use an existing
+      local bg4.c or fall back to Background 1.
 
 config XIAORD_BG_5
-    bool "Custom background 2"
+    bool
     default n
 
 config XIAORD_BG_6
-    bool "Custom background 3"
+    bool
     default n
 
 config XIAORD_REMOVE_DATE_TIME

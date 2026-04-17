@@ -5,7 +5,7 @@ Requires Pillow:
     python -m pip install pillow
 
 Example:
-    python tools/convert_xiaord_bg.py src/display/ui/bg/source/background1.jpg 4 --center-x 0.50 --center-y 0.48 --zoom 1.15
+    python tools/convert_xiaord_bg.py src/display/ui/bg/source/background1.jpg --center-x 0.50 --center-y 0.48 --zoom 1.15
 """
 
 from __future__ import annotations
@@ -105,7 +105,7 @@ def write_c_file(path: Path, bg_num: int, data: bytes) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path, help="Input photo")
-    parser.add_argument("bg_num", type=int, choices=range(1, 10), help="Background number, e.g. 4")
+    parser.add_argument("bg_num", type=int, nargs="?", default=4, choices=[4], help="Background number; only bg4 is supported")
     parser.add_argument("--center-x", type=float, default=0.5, help="Crop center X, 0.0 left to 1.0 right")
     parser.add_argument("--center-y", type=float, default=0.5, help="Crop center Y, 0.0 top to 1.0 bottom")
     parser.add_argument("--zoom", type=float, default=1.0, help="Crop zoom, larger is closer")

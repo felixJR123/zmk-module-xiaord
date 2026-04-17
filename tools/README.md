@@ -4,22 +4,21 @@ These tools turn normal JPG or PNG pictures into firmware background files for t
 
 You do not need to know programming to use them. The short version is:
 
-1. Fork this repo on GitHub.
-2. Clone your fork to your computer.
-3. Put your pictures in any folder you like.
-4. Run one PowerShell command and choose that folder.
-5. Check the preview PNG files.
-6. Commit and push the generated files.
-7. Enable one background in your keyboard `.conf` file.
+1. Clone this repo to your computer.
+2. Put one private picture in a local folder.
+3. Run one PowerShell command and choose that folder.
+4. Check the preview PNG file.
+5. Enable the local custom background in your keyboard `.conf` file.
+6. Build from the computer or private build environment that has the picture.
 
 ## What The Tools Create
 
-For each background slot, the converter creates two files:
+The converter creates two local files:
 
-- `bg4.png`, `bg5.png`, or `bg6.png`: a preview image you can open and check.
-- `bg4.c`, `bg5.c`, or `bg6.c`: the firmware file ZMK compiles into the dongle.
+- `src/display/ui/bg/bg4.png`: a preview image you can open and check.
+- `src/display/ui/bg/bg4.c`: the firmware file ZMK compiles into the dongle.
 
-The firmware currently works best with one full-size custom photo enabled at a time. You can keep `bg5` and `bg6` available, but enable only one custom background in your keyboard config for the safest build.
+These files are ignored by Git. Do not commit them if they contain personal pictures. If `CONFIG_XIAORD_BG_4=y` but `bg4.c` cannot be found or generated, the firmware falls back to `BG_1` so public builds still compile.
 
 ## Step 1: Fork The Repo
 
@@ -71,7 +70,7 @@ C:\Users\YOUR_NAME\git\zmk-module-xiaord
 
 ## Step 4: Put Your Pictures In A Folder
 
-Create a folder anywhere you like, then put one to three JPG or PNG pictures in it.
+Create a folder anywhere you like, then put one JPG or PNG picture in it.
 
 Example folders:
 
@@ -81,12 +80,10 @@ D:\Keyboard Pictures
 Desktop\Dongle Pictures
 ```
 
-The converter uses the pictures in filename order. If you want a specific order, name them like this:
+If the folder has more than one picture, the converter uses the first one in filename order. Name the one you want first, for example:
 
 ```text
 01-background.jpg
-02-background.jpg
-03-background.jpg
 ```
 
 ## Step 5: Run The Easy Converter
@@ -99,20 +96,14 @@ powershell -ExecutionPolicy Bypass -File tools/convert_backgrounds.ps1 -ChooseFo
 
 A folder picker will open. Choose the folder that contains your pictures.
 
-The converter will create files for the first one to three pictures it finds:
+The converter will create:
 
 ```text
 src/display/ui/bg/bg4.png
 src/display/ui/bg/bg4.c
-src/display/ui/bg/bg5.png
-src/display/ui/bg/bg5.c
-src/display/ui/bg/bg6.png
-src/display/ui/bg/bg6.c
 ```
 
-If you only have one picture, it will only update `bg4.png` and `bg4.c`.
-
-Open the generated `.png` preview files to check how the pictures are cropped.
+Open `bg4.png` to check how the picture is cropped.
 
 ## Optional: Use A Typed Folder Path
 
@@ -130,15 +121,20 @@ powershell -ExecutionPolicy Bypass -File tools/convert_backgrounds.ps1 -SourceDi
 
 ## Choose Which Background To Use
 
-In your keyboard `.conf` file, enable only one custom background at a time. For example, to use `bg4`:
+In your keyboard `.conf` file, enable the local custom background:
 
 ```conf
 CONFIG_XIAORD_BG_1=n
 CONFIG_XIAORD_BG_2=n
 CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=y
-CONFIG_XIAORD_BG_5=n
-CONFIG_XIAORD_BG_6=n
+```
+
+For an easier local build, point ZMK at the private folder. If `bg4.c` is not already generated, the build will convert the first JPG/PNG in that folder automatically:
+
+```conf
+CONFIG_XIAORD_BG_4=y
+CONFIG_XIAORD_BG_4_SOURCE_DIR="C:/Users/YOUR_NAME/Pictures/Dongle Backgrounds"
 ```
 
 For cleaner pictures, hide the home screen clock/date:
@@ -162,11 +158,9 @@ tools/convert_backgrounds.ps1
 Find this section:
 
 ```powershell
-$CropPresets = @(
-    @{ Bg = 4; CenterX = "0.54"; CenterY = "0.50"; Zoom = "1.00" },
-    @{ Bg = 5; CenterX = "0.50"; CenterY = "0.42"; Zoom = "1.00" },
-    @{ Bg = 6; CenterX = "0.50"; CenterY = "0.42"; Zoom = "1.00" }
-)
+$CenterX = "0.54"
+$CenterY = "0.50"
+$Zoom = "1.00"
 ```
 
 Change these numbers:
@@ -185,7 +179,11 @@ Most people should use the folder converter above. This command is useful when y
 python tools/convert_xiaord_bg.py src/display/ui/bg/source/background1.jpg 4 --center-x 0.50 --center-y 0.50 --zoom 1.00
 ```
 
-The `4` means it will create `bg4.png` and `bg4.c`. Use `5` for `bg5`, or `6` for `bg6`.
+The `4` is optional now because `bg4` is the only custom slot:
+
+```powershell
+python tools/convert_xiaord_bg.py src/display/ui/bg/source/background1.jpg --center-x 0.50 --center-y 0.50 --zoom 1.00
+```
 
 ## If Python Says Pillow Is Missing
 
@@ -197,32 +195,10 @@ python -m pip install --user pillow
 
 Then run the converter again.
 
-## Step 6: Commit And Push The Generated Files
+## Step 6: Keep The Generated Files Private
 
-### Easy Way: VS Code
-
-1. Click the `Source Control` icon on the left side of VS Code.
-2. You should see changed files like `bg4.png` and `bg4.c`.
-3. Type a message like `Update custom background`.
-4. Click `Commit`.
-5. Click `Sync Changes` or `Push`.
-
-### Command Line Way
-
-```powershell
-git status
-git add src/display/ui/bg/bg4.png src/display/ui/bg/bg4.c src/display/ui/bg/bg5.png src/display/ui/bg/bg5.c src/display/ui/bg/bg6.png src/display/ui/bg/bg6.c
-git commit -m "Update custom backgrounds"
-git push
-```
-
-If you only converted one picture, it is okay if only `bg4.png` and `bg4.c` changed.
+Do not commit `src/display/ui/bg/bg4.png` or `src/display/ui/bg/bg4.c` if they contain a personal picture. They are ignored by this repo on purpose.
 
 ## Step 7: Build Your Keyboard Firmware
 
-After pushing the module changes:
-
-1. Go to your keyboard config repo on GitHub.
-2. Re-run the firmware build workflow.
-3. Download the new UF2 artifact.
-4. Flash it to the dongle.
+Build from the computer or private build environment that has the local picture files. Public builds that do not have the picture will fall back to `BG_1` instead of failing.

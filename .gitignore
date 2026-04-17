@@ -1,1 +1,11 @@
 CLAUDE.md
+
+# Locally generated custom background. Keep personal photos out of the public repo.
+/src/display/ui/bg/bg4.c
+/src/display/ui/bg/bg4.png
+/src/display/ui/bg/bg5.c
+/src/display/ui/bg/bg5.png
+/src/display/ui/bg/bg6.c
+/src/display/ui/bg/bg6.png
+/src/display/ui/bg/source/*
+!/src/display/ui/bg/source/.gitkeep

@@ -36,15 +36,12 @@ static const struct gpio_dt_spec status_backlight_gpio = GPIO_DT_SPEC_GET(STATUS
 #include "page_iface.h"
 #include "display_api.h"
 
-#if IS_ENABLED(CONFIG_XIAORD_BG_4)
+#if IS_ENABLED(CONFIG_XIAORD_BG_4) && defined(XIAORD_LOCAL_BG4_AVAILABLE)
 extern const lv_image_dsc_t img_bg_4;
 #define STATUS_BACKGROUND_IMAGE (&img_bg_4)
-#elif IS_ENABLED(CONFIG_XIAORD_BG_5)
-extern const lv_image_dsc_t img_bg_5;
-#define STATUS_BACKGROUND_IMAGE (&img_bg_5)
-#elif IS_ENABLED(CONFIG_XIAORD_BG_6)
-extern const lv_image_dsc_t img_bg_6;
-#define STATUS_BACKGROUND_IMAGE (&img_bg_6)
+#elif IS_ENABLED(CONFIG_XIAORD_BG_4)
+extern const lv_image_dsc_t img_bg_1;
+#define STATUS_BACKGROUND_IMAGE (&img_bg_1)
 #elif IS_ENABLED(CONFIG_XIAORD_BG_1)
 extern const lv_image_dsc_t img_bg_1;
 #define STATUS_BACKGROUND_IMAGE (&img_bg_1)
