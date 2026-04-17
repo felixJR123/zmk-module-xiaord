@@ -7,6 +7,12 @@ A ZMK module for the Seeed XIAO Round Display. Adds a touch-enabled circular dis
 - [Seeed Studio XIAO Round Display](https://wiki.seeedstudio.com/get_start_round_display/) (display + touchpad + RTC + microSD)
 - Tested with XIAO BLE (nRF52840)
 
+### Backlight Hardware Switch
+
+On the back of the XIAO Round Display, set `KE` switch 2 to the `ON` position.
+The display may still work with the switch off, but firmware backlight control
+depends on that switch being enabled.
+
 ## Features
 
 - Peripheral battery level shown on the display
@@ -295,6 +301,19 @@ CONFIG_XIAORD_REMOVE_DATE_TIME=y
 ```
 
 Set it back to `n` or remove the line to show the clock/date again. The RTC continues keeping time while the labels are hidden, so you do not need to reset the clock when changing backgrounds.
+
+### Display Backlight Timeout
+
+The module uses ZMK's idle timeout to turn off the XIAO Round Display backlight.
+To keep the display on for 5 minutes after activity, add this to your keyboard
+`.conf`:
+
+```conf
+CONFIG_ZMK_IDLE_TIMEOUT=300000
+```
+
+The value is in milliseconds. Backlight control also requires the back-side
+`KE` switch 2 to be in the `ON` position.
 
 ### RTC
 
