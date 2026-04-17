@@ -33,12 +33,20 @@ config XIAORD_BG_4_SOURCE_DIR
       local bg4.c or fall back to Background 1.
 
 config XIAORD_BG_5
-    bool
+    bool "Deprecated custom background 2 (ignored)"
     default n
+    help
+      Deprecated compatibility option. Custom backgrounds now use only
+      XIAORD_BG_4. This option is accepted so older keyboard configs that still
+      set CONFIG_XIAORD_BG_5=n or y do not fail Kconfig parsing.
 
 config XIAORD_BG_6
-    bool
+    bool "Deprecated custom background 3 (ignored)"
     default n
+    help
+      Deprecated compatibility option. Custom backgrounds now use only
+      XIAORD_BG_4. This option is accepted so older keyboard configs that still
+      set CONFIG_XIAORD_BG_6=n or y do not fail Kconfig parsing.
 
 config XIAORD_REMOVE_DATE_TIME
     bool "Remove date/time from home screen"

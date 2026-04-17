@@ -51,6 +51,9 @@ extern const lv_image_dsc_t img_bg_2;
 #elif IS_ENABLED(CONFIG_XIAORD_BG_3)
 extern const lv_image_dsc_t img_bg_3;
 #define STATUS_BACKGROUND_IMAGE (&img_bg_3)
+#elif IS_ENABLED(CONFIG_XIAORD_BG_5) || IS_ENABLED(CONFIG_XIAORD_BG_6)
+extern const lv_image_dsc_t img_bg_1;
+#define STATUS_BACKGROUND_IMAGE (&img_bg_1)
 #else
 #error "At least one CONFIG_XIAORD_BG_* option must be enabled"
 #endif
