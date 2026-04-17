@@ -13,25 +13,27 @@ config XIAORD_BG_3
     default n
 
 config XIAORD_BG_4
-    bool "Local custom background"
+    bool "Keyboard repo custom background"
     default n
     help
-      Enable the local custom background slot. The build will use
-      src/display/ui/bg/bg4.c when it exists. If it does not exist, the build
-      will try to generate it from XIAORD_BG_4_SOURCE_DIR. If no local image is
-      available, the firmware falls back to Background 1 so public builds still
-      compile.
+      Enable the custom background slot. The build will use an existing local
+      src/display/ui/bg/bg4.c when present. Otherwise, it will try to generate
+      bg4.c from XIAORD_BG_4_SOURCE_DIR, the XIAORD_BG_4_SOURCE_DIR
+      environment variable, or the default xiaord-bg folder in the keyboard
+      config repo. If no image is available, the firmware falls back to
+      Background 1 so public builds still compile.
 
 config XIAORD_BG_4_SOURCE_DIR
-    string "Local folder for custom background source pictures"
+    string "Custom background source picture folder"
     default ""
     depends on XIAORD_BG_4
     help
-      Optional local folder containing JPG/PNG files. When XIAORD_BG_4 is
-      enabled and bg4.c is missing, the build uses the first image in this
-      folder to generate bg4.c and bg4.png. Leave empty to use an existing
-      local bg4.c, use the XIAORD_BG_4_SOURCE_DIR environment variable, or
-      fall back to Background 1.
+      Optional folder containing JPG/PNG files. Relative paths are resolved
+      from the keyboard config repo. When XIAORD_BG_4 is enabled and bg4.c is
+      missing, the build uses the first image in this folder to generate bg4.c
+      and bg4.png. Leave empty to use xiaord-bg in the keyboard config repo,
+      use the XIAORD_BG_4_SOURCE_DIR environment variable, or fall back to
+      Background 1.
 
 config XIAORD_BG_5
     bool "Deprecated custom background 2 (ignored)"

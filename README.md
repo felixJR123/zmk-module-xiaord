@@ -253,27 +253,37 @@ Each profile slot is shown with a background color indicating its current state:
 
 ### Background Image
 
-Original backgrounds and one local custom photo background are available. Enable one image in your keyboard's `.conf` or `prj.conf`.
+Original backgrounds and one keyboard-repo custom photo background are available. Enable one image in your keyboard's `.conf` or `prj.conf`.
 
 | Setting | Preview |
 |---------|---------|
 | `CONFIG_XIAORD_BG_1=y` | ![bg1](src/display/ui/bg/bg1.png) |
 | `CONFIG_XIAORD_BG_2=y` | ![bg2](src/display/ui/bg/bg2.png) |
 | `CONFIG_XIAORD_BG_3=y` | ![bg3](src/display/ui/bg/bg3.png) |
-| `CONFIG_XIAORD_BG_4=y` | Local private image, generated as `src/display/ui/bg/bg4.png` |
+| `CONFIG_XIAORD_BG_4=y` | First image in your keyboard repo's `config/xiaord-bg` folder |
 
-The nRF52840 build reliably fits one full-size photo background. `BG_4` is intentionally local-only and ignored by Git, so personal pictures are not published with the module. If `CONFIG_XIAORD_BG_4=y` but no local `bg4.c` can be found or generated, the firmware falls back to `BG_1` and still compiles.
+The nRF52840 build reliably fits one full-size photo background. `BG_4` is generated during the keyboard build and is not stored in this module. If `CONFIG_XIAORD_BG_4=y` but no image can be found or generated, the firmware falls back to `BG_1` and still compiles.
 
-To auto-generate `BG_4` during a local build, point the config at a private folder containing one JPG or PNG:
+For the default GitHub Actions ZMK workflow, put one JPG or PNG in your keyboard config repo:
+
+```text
+config/xiaord-bg/01-background.jpg
+```
+
+Then enable `BG_4`:
 
 ```conf
 CONFIG_XIAORD_BG_4=y
-CONFIG_XIAORD_BG_4_SOURCE_DIR="C:/Users/YOUR_NAME/Pictures/Dongle Backgrounds"
 ```
 
-GitHub Actions builds can also provide the same folder through the
-`XIAORD_BG_4_SOURCE_DIR` environment variable after checking out a private
-background repo.
+If the picture is personal, such as family photos, keep your keyboard config repo private. If the picture is not private, it is fine for the keyboard config repo to be public.
+
+If you want to use a different folder inside the keyboard config repo, set a relative path:
+
+```conf
+CONFIG_XIAORD_BG_4=y
+CONFIG_XIAORD_BG_4_SOURCE_DIR="my-background-folder"
+```
 
 To remove the home screen date and time for cleaner custom backgrounds:
 

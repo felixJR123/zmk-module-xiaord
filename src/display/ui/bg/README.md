@@ -1,42 +1,44 @@
 # Xiaord Background Images
 
-The display backgrounds are compiled into firmware as 240x240 LVGL RGB565 C files.
+The built-in backgrounds are compiled from this module. The custom background
+slot, `CONFIG_XIAORD_BG_4`, is generated during the keyboard build from an image
+stored in the keyboard config repo.
 
-For the step-by-step beginner guide, including choosing a private picture folder and converting one picture, use:
+## Default Keyboard Repo Layout
+
+For the default ZMK GitHub Actions workflow, place one JPG or PNG here:
 
 ```text
-tools/README.md
+config/xiaord-bg/01-background.jpg
 ```
 
-## Config Behavior
-
-Each image has its own Kconfig option:
-
-```conf
-CONFIG_XIAORD_BG_1=y
-CONFIG_XIAORD_BG_2=n
-CONFIG_XIAORD_BG_3=n
-CONFIG_XIAORD_BG_4=n
-```
-
-The firmware uses one static background. `BG_4` is the only custom slot and is intentionally local-only. The generated `bg4.c` and `bg4.png` files are ignored by Git so personal pictures do not get published with the module.
-
-If `CONFIG_XIAORD_BG_4=y` but no local custom image can be found or generated, the firmware falls back to `BG_1` and still compiles.
-
-For example, to use `bg4`:
+Then enable the custom slot in the keyboard `.conf`:
 
 ```conf
 CONFIG_XIAORD_BG_1=n
 CONFIG_XIAORD_BG_2=n
 CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=y
-CONFIG_XIAORD_BG_4_SOURCE_DIR="C:/Users/YOUR_NAME/Pictures/Dongle Backgrounds"
 ```
 
-For a cleaner photo background, hide the home screen date and time:
+If the folder has more than one image, the first filename in sorted order is
+used. Prefix the one you want with `01-`.
+
+If no image is found or conversion fails, the firmware falls back to `BG_1`.
+
+## Privacy
+
+Pictures live in the keyboard config repo, not this public module. Keep the
+keyboard config repo private if the image is personal or contains family photos.
+If the image is meant to be public, the keyboard config repo can be public.
+
+## Custom Folder
+
+To use a different folder inside the keyboard config repo:
 
 ```conf
-CONFIG_XIAORD_REMOVE_DATE_TIME=y
+CONFIG_XIAORD_BG_4=y
+CONFIG_XIAORD_BG_4_SOURCE_DIR="my-background-folder"
 ```
 
-The RTC still keeps time while the clock/date is hidden.
+Relative paths are resolved from the keyboard config repo.
