@@ -30,7 +30,8 @@ config XIAORD_BG_4_SOURCE_DIR
       Optional local folder containing JPG/PNG files. When XIAORD_BG_4 is
       enabled and bg4.c is missing, the build uses the first image in this
       folder to generate bg4.c and bg4.png. Leave empty to use an existing
-      local bg4.c or fall back to Background 1.
+      local bg4.c, use the XIAORD_BG_4_SOURCE_DIR environment variable, or
+      fall back to Background 1.
 
 config XIAORD_BG_5
     bool "Deprecated custom background 2 (ignored)"

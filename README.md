@@ -271,6 +271,10 @@ CONFIG_XIAORD_BG_4=y
 CONFIG_XIAORD_BG_4_SOURCE_DIR="C:/Users/YOUR_NAME/Pictures/Dongle Backgrounds"
 ```
 
+GitHub Actions builds can also provide the same folder through the
+`XIAORD_BG_4_SOURCE_DIR` environment variable after checking out a private
+background repo.
+
 To remove the home screen date and time for cleaner custom backgrounds:
 
 ```conf
