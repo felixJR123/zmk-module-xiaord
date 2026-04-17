@@ -1,4 +1,4 @@
-menu "Xiaord background images"
+menu "Xiaord display options"
 
 config XIAORD_BG_1
     bool "Background 1"
@@ -30,5 +30,13 @@ config XIAORD_REMOVE_DATE_TIME
     help
       Remove the home screen date and time labels for cleaner photo backgrounds.
       The clock settings page remains available.
+
+config XIAORD_DOUBLE_TAP_MS
+    int "Home screen double-tap timeout in milliseconds"
+    default 450
+    range 100 2000
+    help
+      Maximum time between home screen taps to count as a double tap. Increase
+      this if opening the shortcut button ring feels too difficult.
 
 endmenu

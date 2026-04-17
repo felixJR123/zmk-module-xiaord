@@ -92,7 +92,7 @@ static int32_t     s_knob_accum;
 #define CENTER_DISMISS_RADIUS 70
 #define KNOB_MIN_RADIUS 32
 #define KNOB_STEP_CROSS 1800
-#define DOUBLE_TAP_MS 280
+#define DOUBLE_TAP_MS CONFIG_XIAORD_DOUBLE_TAP_MS
 
 /* ── Timers ────────────────────────────────────────────────────────────── */
 

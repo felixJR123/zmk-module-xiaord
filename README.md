@@ -48,6 +48,13 @@ Touch gestures on the photo/home screen:
 | Clockwise slide | Volume up (`INPUT_VIRTUAL_POS_2`) |
 | Counterclockwise slide | Volume down (`INPUT_VIRTUAL_POS_4`) |
 
+The double-tap window defaults to 450 ms. To make it faster or slower, add this
+to your keyboard's `.conf` file:
+
+```conf
+CONFIG_XIAORD_DOUBLE_TAP_MS=600
+```
+
 ### Bluetooth Management Screen
 
 - Select a BT profile (up to 12 profiles)
