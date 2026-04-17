@@ -41,7 +41,7 @@
     touchpad_listener: touchpad_listener {
         compatible = "zmk,input-listener";
         device = <&virtual_key_source>;
-        input-processors = <&virtual_zmk_behavior &virtual_symbol_behavior>;
+        input-processors = <&virtual_zmk_behavior &virtual_gesture_behavior &virtual_symbol_behavior>;
     };
 
     home_buttons {

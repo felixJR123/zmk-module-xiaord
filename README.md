@@ -55,6 +55,43 @@ to your keyboard's `.conf` file:
 CONFIG_XIAORD_DOUBLE_TAP_MS=600
 ```
 
+Single tap and slide gestures are regular ZMK behavior bindings, so you can
+override them in your keyboard's dongle overlay. The defaults are mute, volume
+up, and volume down:
+
+```dts
+&virtual_gesture_behavior {
+    codes = <
+        INPUT_VIRTUAL_GESTURE_TAP
+        INPUT_VIRTUAL_GESTURE_CW
+        INPUT_VIRTUAL_GESTURE_CCW
+    >;
+    bindings = <
+        &kp C_MUTE       /* single tap */
+        &kp C_VOL_UP     /* clockwise slide */
+        &kp C_VOL_DN     /* counterclockwise slide */
+    >;
+};
+```
+
+Any ZMK behavior binding that is valid in a binding array works here, including
+key presses, layer changes, and macros. For example:
+
+```dts
+&virtual_gesture_behavior {
+    codes = <
+        INPUT_VIRTUAL_GESTURE_TAP
+        INPUT_VIRTUAL_GESTURE_CW
+        INPUT_VIRTUAL_GESTURE_CCW
+    >;
+    bindings = <
+        &macro_my_action
+        &mo 1
+        &tog 2
+    >;
+};
+```
+
 ### Bluetooth Management Screen
 
 - Select a BT profile (up to 12 profiles)
@@ -261,6 +298,10 @@ The virtual event codes fired on button tap are defined in `include/dt-bindings/
 |-------|----------|
 | `0x00–0x0B` | Home button positions (`INPUT_VIRTUAL_POS_0` … `INPUT_VIRTUAL_POS_11`) |
 | `0x40–0x6B` | ZMK BT/output behaviors (`INPUT_VIRTUAL_ZMK_*`) |
+
+Gesture codes use `INPUT_VIRTUAL_GESTURE_TAP`, `INPUT_VIRTUAL_GESTURE_CW`, and
+`INPUT_VIRTUAL_GESTURE_CCW`. They are handled by `virtual_gesture_behavior`,
+which runs before the home button position processor.
 
 ## Behavior Conversion Flow
 

@@ -132,7 +132,7 @@ static void tap_timer_cb(lv_timer_t *t)
         return;
     }
     s_tap_pending = false;
-    ss_fire_behavior(INPUT_VIRTUAL_POS_3);
+    ss_fire_behavior(INPUT_VIRTUAL_GESTURE_TAP);
 }
 
 static void knob_handle_point(const lv_point_t *p)
@@ -156,12 +156,12 @@ static void knob_handle_point(const lv_point_t *p)
     s_knob_prev = *p;
 
     while (s_knob_accum >= KNOB_STEP_CROSS) {
-        ss_fire_behavior(INPUT_VIRTUAL_POS_2);
+        ss_fire_behavior(INPUT_VIRTUAL_GESTURE_CW);
         s_knob_accum -= KNOB_STEP_CROSS;
         s_knob_fired = true;
     }
     while (s_knob_accum <= -KNOB_STEP_CROSS) {
-        ss_fire_behavior(INPUT_VIRTUAL_POS_4);
+        ss_fire_behavior(INPUT_VIRTUAL_GESTURE_CCW);
         s_knob_accum += KNOB_STEP_CROSS;
         s_knob_fired = true;
     }

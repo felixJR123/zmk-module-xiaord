@@ -5,9 +5,10 @@
  * Zephyr reserves INPUT_EV_VENDOR_START (0xF0) .. INPUT_EV_VENDOR_STOP (0xFF)
  * for vendor use. We claim 0xF1 for behavior events.
  *
- * Three categories:
+ * Four categories:
  *   INPUT_VIRTUAL_POS_<n>          — Home button positions    (0x00-0x0B)
- *   INPUT_VIRTUAL_SCROLL_*         — UI scroll actions        (0x0C-0x0D)
+ *   INPUT_VIRTUAL_GESTURE_*        — Home screen gestures     (0x10-0x12)
+ *   INPUT_VIRTUAL_SCROLL_*         — Legacy gesture aliases
  *   INPUT_VIRTUAL_ZMK_<behavior>   — ZMK BT behavior codes    (0x40-0x6B)
  *
  * Usable from both C source and DTS overlays via #include.
@@ -33,10 +34,15 @@
 #define INPUT_VIRTUAL_POS_10             0x0A
 #define INPUT_VIRTUAL_POS_11             0x0B
 
-/* ── Category 1: UI actions (0x0C-0x0F) ─────────────────────────────────── */
+/* ── Category 1: Home screen gestures (0x10-0x12) ───────────────────────── */
 
-#define INPUT_VIRTUAL_SCROLL_CW          0x0C
-#define INPUT_VIRTUAL_SCROLL_CCW         0x0D
+#define INPUT_VIRTUAL_GESTURE_TAP        0x10
+#define INPUT_VIRTUAL_GESTURE_CW         0x11
+#define INPUT_VIRTUAL_GESTURE_CCW        0x12
+
+/* Backward-compatible aliases. Prefer INPUT_VIRTUAL_GESTURE_* in new configs. */
+#define INPUT_VIRTUAL_SCROLL_CW          INPUT_VIRTUAL_GESTURE_CW
+#define INPUT_VIRTUAL_SCROLL_CCW         INPUT_VIRTUAL_GESTURE_CCW
 
 /* ── Category 2: ZMK BT behavior codes ─────────────────────────────────── */
 /*

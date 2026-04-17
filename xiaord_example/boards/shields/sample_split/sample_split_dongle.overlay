@@ -1,5 +1,6 @@
 #include "sample_split.dtsi"
 #include <dt-bindings/xiaord/icons.h>
+#include <dt-bindings/xiaord/input_codes.h>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/outputs.h>
 
@@ -52,3 +53,17 @@
         &none                  &none
     >;
 };
+
+// Optional: customize home screen gestures independently from button positions.
+// &virtual_gesture_behavior {
+//     codes = <
+//         INPUT_VIRTUAL_GESTURE_TAP
+//         INPUT_VIRTUAL_GESTURE_CW
+//         INPUT_VIRTUAL_GESTURE_CCW
+//     >;
+//     bindings = <
+//         &kp C_MUTE
+//         &kp C_VOL_UP
+//         &kp C_VOL_DN
+//     >;
+// };

@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 
-/* INPUT_VIRTUAL_ZMK_*, INPUT_VIRTUAL_POS_*, INPUT_EV_ZMK_BEHAVIORS: */
+/* INPUT_VIRTUAL_ZMK_*, INPUT_VIRTUAL_POS_*, INPUT_VIRTUAL_GESTURE_*, INPUT_EV_ZMK_BEHAVIORS: */
 #include "xiaord_input_codes.h"
 
 /* Unified type for all virtual input codes (POS, ZMK categories). */
@@ -22,6 +22,6 @@ void ss_navigate_to(uint8_t page_idx);
 
 /**
  * Fire a ZMK behavior by sending a press+release pair.
- * @param code  INPUT_VIRTUAL_POS_* or INPUT_VIRTUAL_ZMK_* constant
+ * @param code  INPUT_VIRTUAL_POS_*, INPUT_VIRTUAL_GESTURE_*, or INPUT_VIRTUAL_ZMK_* constant
  */
 void ss_fire_behavior(input_virtual_code code);
