@@ -264,10 +264,10 @@ Original backgrounds and one keyboard-repo custom photo background are available
 
 The nRF52840 build reliably fits one full-size photo background. `BG_4` is generated during the keyboard build and is not stored in this module. If `CONFIG_XIAORD_BG_4=y` but no image can be found or generated, the firmware falls back to `BG_1` and still compiles.
 
-For the default GitHub Actions ZMK workflow, put one JPG or PNG in your keyboard config repo:
+For the default GitHub Actions ZMK workflow, put one PNG in your keyboard config repo:
 
 ```text
-config/xiaord-bg/01-background.jpg
+config/xiaord-bg/01-background.png
 ```
 
 Then enable `BG_4`:
@@ -277,6 +277,9 @@ CONFIG_XIAORD_BG_4=y
 ```
 
 If the picture is personal, such as family photos, keep your keyboard config repo private. If the picture is not private, it is fine for the keyboard config repo to be public.
+
+PNG works in GitHub Actions without extra dependencies. JPG/JPEG files require
+Pillow, which the default runner may not have.
 
 If you want to use a different folder inside the keyboard config repo, set a relative path:
 

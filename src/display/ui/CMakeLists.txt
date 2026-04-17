@@ -40,14 +40,21 @@ if(CONFIG_XIAORD_BG_4)
         find_package(Python3 COMPONENTS Interpreter QUIET)
 
         if(Python3_Interpreter_FOUND)
-          execute_process(
-            COMMAND "${Python3_EXECUTABLE}" -c "import PIL"
-            RESULT_VARIABLE XIAORD_BG_4_PIL_RESULT
-            OUTPUT_QUIET
-            ERROR_QUIET
-          )
+          get_filename_component(XIAORD_BG_4_SOURCE_EXT "${XIAORD_BG_4_SOURCE}" EXT)
+          string(TOLOWER "${XIAORD_BG_4_SOURCE_EXT}" XIAORD_BG_4_SOURCE_EXT)
 
-          if(NOT XIAORD_BG_4_PIL_RESULT EQUAL 0)
+          if(NOT XIAORD_BG_4_SOURCE_EXT STREQUAL ".png")
+            execute_process(
+              COMMAND "${Python3_EXECUTABLE}" -c "import PIL"
+              RESULT_VARIABLE XIAORD_BG_4_PIL_RESULT
+              OUTPUT_QUIET
+              ERROR_QUIET
+            )
+          else()
+            set(XIAORD_BG_4_PIL_RESULT 0)
+          endif()
+
+          if(NOT XIAORD_BG_4_PIL_RESULT EQUAL 0 AND NOT XIAORD_BG_4_SOURCE_EXT STREQUAL ".png")
             message(STATUS "XIAORD_BG_4: Pillow not found; installing with pip")
             execute_process(
               COMMAND "${Python3_EXECUTABLE}" -m pip install --user pillow

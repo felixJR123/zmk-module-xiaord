@@ -6,10 +6,10 @@ can do it automatically from the keyboard config repo.
 
 ## Recommended GitHub Actions Setup
 
-Put one image in the keyboard config repo:
+Put one PNG image in the keyboard config repo:
 
 ```text
-config/xiaord-bg/01-background.jpg
+config/xiaord-bg/01-background.png
 ```
 
 Then enable the custom slot in the keyboard `.conf`:
@@ -35,14 +35,16 @@ used. Name the preferred image with a leading number:
 01-background.jpg
 ```
 
-If the image is missing, Pillow is unavailable, or conversion fails, the build
-falls back to `BG_1` instead of failing.
+PNG files work in the default GitHub Actions environment without extra
+dependencies. JPG/JPEG files require Pillow, which the default runner may not
+have. If the image is missing or conversion fails, the build falls back to
+`BG_1` instead of failing.
 
 In the build log, look for lines like:
 
 ```text
 XIAORD_BG_4: looking for background image in /tmp/zmk-config/config/xiaord-bg
-XIAORD_BG_4: converting /tmp/zmk-config/config/xiaord-bg/01-background.jpg
+XIAORD_BG_4: converting /tmp/zmk-config/config/xiaord-bg/01-background.png
 XIAORD_BG_4: generated .../src/display/ui/bg/bg4.c
 ```
 
@@ -92,7 +94,7 @@ contain a private image.
 To convert one image directly:
 
 ```powershell
-python tools/convert_xiaord_bg.py path/to/background.jpg --center-x 0.50 --center-y 0.50 --zoom 1.00
+python tools/convert_xiaord_bg.py path/to/background.png --center-x 0.50 --center-y 0.50 --zoom 1.00
 ```
 
 If Python says Pillow is missing:

@@ -6,10 +6,10 @@ stored in the keyboard config repo.
 
 ## Default Keyboard Repo Layout
 
-For the default ZMK GitHub Actions workflow, place one JPG or PNG here:
+For the default ZMK GitHub Actions workflow, place one PNG here:
 
 ```text
-config/xiaord-bg/01-background.jpg
+config/xiaord-bg/01-background.png
 ```
 
 Then enable the custom slot in the keyboard `.conf`:
@@ -23,6 +23,9 @@ CONFIG_XIAORD_BG_4=y
 
 If the folder has more than one image, the first filename in sorted order is
 used. Prefix the one you want with `01-`.
+
+PNG works in GitHub Actions without extra dependencies. JPG/JPEG files require
+Pillow, which the default runner may not have.
 
 If no image is found or conversion fails, the firmware falls back to `BG_1`.
 
