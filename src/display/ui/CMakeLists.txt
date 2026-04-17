@@ -23,6 +23,7 @@ if(CONFIG_XIAORD_BG_4)
 
   if(NOT EXISTS "${XIAORD_BG4_C}" AND NOT "${XIAORD_BG_4_SOURCE_DIR_EFFECTIVE}" STREQUAL "")
     file(TO_CMAKE_PATH "${XIAORD_BG_4_SOURCE_DIR_EFFECTIVE}" XIAORD_BG_4_SOURCE_DIR_NORMALIZED)
+    message(STATUS "XIAORD_BG_4: looking for background image in ${XIAORD_BG_4_SOURCE_DIR_NORMALIZED}")
 
     if(EXISTS "${XIAORD_BG_4_SOURCE_DIR_NORMALIZED}")
       file(GLOB XIAORD_BG_4_SOURCES LIST_DIRECTORIES false
@@ -35,9 +36,31 @@ if(CONFIG_XIAORD_BG_4)
 
       if(XIAORD_BG_4_SOURCE_COUNT GREATER 0)
         list(GET XIAORD_BG_4_SOURCES 0 XIAORD_BG_4_SOURCE)
+        message(STATUS "XIAORD_BG_4: converting ${XIAORD_BG_4_SOURCE}")
         find_package(Python3 COMPONENTS Interpreter QUIET)
 
         if(Python3_Interpreter_FOUND)
+          execute_process(
+            COMMAND "${Python3_EXECUTABLE}" -c "import PIL"
+            RESULT_VARIABLE XIAORD_BG_4_PIL_RESULT
+            OUTPUT_QUIET
+            ERROR_QUIET
+          )
+
+          if(NOT XIAORD_BG_4_PIL_RESULT EQUAL 0)
+            message(STATUS "XIAORD_BG_4: Pillow not found; installing with pip")
+            execute_process(
+              COMMAND "${Python3_EXECUTABLE}" -m pip install --user pillow
+              RESULT_VARIABLE XIAORD_BG_4_PIP_RESULT
+              OUTPUT_VARIABLE XIAORD_BG_4_PIP_OUTPUT
+              ERROR_VARIABLE XIAORD_BG_4_PIP_ERROR
+            )
+
+            if(NOT XIAORD_BG_4_PIP_RESULT EQUAL 0)
+              message(WARNING "XIAORD_BG_4: Pillow install failed; falling back to BG_1. ${XIAORD_BG_4_PIP_ERROR}")
+            endif()
+          endif()
+
           execute_process(
             COMMAND
               "${Python3_EXECUTABLE}"
@@ -53,6 +76,8 @@ if(CONFIG_XIAORD_BG_4)
 
           if(NOT XIAORD_BG_4_CONVERT_RESULT EQUAL 0)
             message(WARNING "XIAORD_BG_4 conversion failed; falling back to BG_1. ${XIAORD_BG_4_CONVERT_ERROR}")
+          else()
+            message(STATUS "XIAORD_BG_4: generated ${XIAORD_BG4_C}")
           endif()
         else()
           message(WARNING "Python3 was not found; falling back to BG_1 for XIAORD_BG_4.")

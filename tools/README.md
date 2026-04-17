@@ -38,6 +38,14 @@ used. Name the preferred image with a leading number:
 If the image is missing, Pillow is unavailable, or conversion fails, the build
 falls back to `BG_1` instead of failing.
 
+In the build log, look for lines like:
+
+```text
+XIAORD_BG_4: looking for background image in /tmp/zmk-config/config/xiaord-bg
+XIAORD_BG_4: converting /tmp/zmk-config/config/xiaord-bg/01-background.jpg
+XIAORD_BG_4: generated .../src/display/ui/bg/bg4.c
+```
+
 ## Privacy
 
 Pictures are stored in the keyboard config repo.
