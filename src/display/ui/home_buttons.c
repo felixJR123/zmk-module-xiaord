@@ -88,13 +88,20 @@ static bool        s_knob_active;
 static bool        s_knob_fired;
 static lv_point_t  s_knob_prev;
 static int32_t     s_knob_accum;
+static lv_point_t  s_slide_start;
 
 #define CENTER_DISMISS_RADIUS 70
 #define KNOB_MIN_RADIUS 32
 #define KNOB_STEP_CROSS 1800
+#define SLIDE_MIN_DISTANCE 40
 #define DOUBLE_TAP_MS CONFIG_XIAORD_DOUBLE_TAP_MS
 
 /* ── Timers ────────────────────────────────────────────────────────────── */
+
+static int32_t abs32(int32_t v)
+{
+    return v < 0 ? -v : v;
+}
 
 static int32_t point_radius_sq(const lv_point_t *p)
 {
@@ -166,6 +173,30 @@ static void knob_handle_point(const lv_point_t *p)
         s_knob_fired = true;
     }
 }
+
+static bool slide_fire_from_points(const lv_point_t *start, const lv_point_t *end)
+{
+    int32_t dx = end->x - start->x;
+    int32_t dy = end->y - start->y;
+    int32_t abs_x = abs32(dx);
+    int32_t abs_y = abs32(dy);
+
+    if (abs_x < SLIDE_MIN_DISTANCE && abs_y < SLIDE_MIN_DISTANCE) {
+        return false;
+    }
+
+    if (abs_y > abs_x) {
+        ss_fire_behavior(dy < 0 ? INPUT_VIRTUAL_GESTURE_SLIDE_UP :
+                                  INPUT_VIRTUAL_GESTURE_SLIDE_DOWN);
+    } else {
+        ss_fire_behavior(dx < 0 ? INPUT_VIRTUAL_GESTURE_SLIDE_LEFT :
+                                  INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT);
+    }
+
+    s_tap_pending = false;
+    lv_timer_pause(s_tap_timer);
+    return true;
+}
 static void autohide_timer_cb(lv_timer_t *t)
 {
 	ARG_UNUSED(t);
@@ -223,6 +254,7 @@ static void tap_overlay_cb(lv_event_t *e)
     }
 
     if (code == LV_EVENT_PRESSED) {
+        s_slide_start = p;
         s_knob_prev = p;
         s_knob_accum = 0;
         s_knob_fired = false;
@@ -238,7 +270,8 @@ static void tap_overlay_cb(lv_event_t *e)
     }
 
     if (code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) {
-        if (s_knob_fired) {
+        if (s_knob_fired || (code == LV_EVENT_RELEASED &&
+                             slide_fire_from_points(&s_slide_start, &p))) {
             s_suppress_click = true;
         }
         s_knob_active = false;

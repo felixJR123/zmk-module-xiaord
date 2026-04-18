@@ -98,13 +98,17 @@ Auto-rotating backgrounds were removed after confirming one picture works. The m
 
 Added `CONFIG_XIAORD_REMOVE_DATE_TIME=y` to remove the date and time labels from the home screen for cleaner custom backgrounds. Set it to `n` or remove the line to bring the clock/date back for default backgrounds. The separate clock settings page remains available.
 
-## Touch Volume Gestures
+## Touch Gestures
 
 Added home-screen touch gestures:
 
-- Single tap fires `INPUT_VIRTUAL_POS_3` (default mute).
+- Single tap fires `INPUT_VIRTUAL_GESTURE_TAP` (default mute).
 - Double tap runs the old tap behavior to show/hide the shortcut ring.
-- Clockwise slide fires `INPUT_VIRTUAL_POS_2` repeatedly (default volume up).
-- Counterclockwise slide fires `INPUT_VIRTUAL_POS_4` repeatedly (default volume down).
+- Clockwise slide fires `INPUT_VIRTUAL_GESTURE_CW` repeatedly (default volume up).
+- Counterclockwise slide fires `INPUT_VIRTUAL_GESTURE_CCW` repeatedly (default volume down).
+- Slide up fires `INPUT_VIRTUAL_GESTURE_SLIDE_UP` once (default up arrow).
+- Slide down fires `INPUT_VIRTUAL_GESTURE_SLIDE_DOWN` once (default down arrow).
+- Slide left fires `INPUT_VIRTUAL_GESTURE_SLIDE_LEFT` once (default left arrow).
+- Slide right fires `INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT` once (default right arrow).
 
-The gesture uses the existing positional bindings, so keyboard overlays can still customize what positions 2, 3, and 4 do.
+The gestures use `virtual_gesture_behavior`, so keyboard overlays can customize them independently from the home button positions.

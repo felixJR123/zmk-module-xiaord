@@ -7,7 +7,7 @@
  *
  * Four categories:
  *   INPUT_VIRTUAL_POS_<n>          — Home button positions    (0x00-0x0B)
- *   INPUT_VIRTUAL_GESTURE_*        — Home screen gestures     (0x10-0x12)
+ *   INPUT_VIRTUAL_GESTURE_*        — Home screen gestures     (0x10-0x16)
  *   INPUT_VIRTUAL_SCROLL_*         — Legacy gesture aliases
  *   INPUT_VIRTUAL_ZMK_<behavior>   — ZMK BT behavior codes    (0x40-0x6B)
  *
@@ -34,11 +34,15 @@
 #define INPUT_VIRTUAL_POS_10             0x0A
 #define INPUT_VIRTUAL_POS_11             0x0B
 
-/* ── Category 1: Home screen gestures (0x10-0x12) ───────────────────────── */
+/* ── Category 1: Home screen gestures (0x10-0x16) ───────────────────────── */
 
 #define INPUT_VIRTUAL_GESTURE_TAP        0x10
 #define INPUT_VIRTUAL_GESTURE_CW         0x11
 #define INPUT_VIRTUAL_GESTURE_CCW        0x12
+#define INPUT_VIRTUAL_GESTURE_SLIDE_UP   0x13
+#define INPUT_VIRTUAL_GESTURE_SLIDE_DOWN 0x14
+#define INPUT_VIRTUAL_GESTURE_SLIDE_LEFT 0x15
+#define INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT 0x16
 
 /* Backward-compatible aliases. Prefer INPUT_VIRTUAL_GESTURE_* in new configs. */
 #define INPUT_VIRTUAL_SCROLL_CW          INPUT_VIRTUAL_GESTURE_CW

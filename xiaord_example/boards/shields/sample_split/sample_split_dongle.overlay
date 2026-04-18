@@ -60,10 +60,18 @@
 //         INPUT_VIRTUAL_GESTURE_TAP
 //         INPUT_VIRTUAL_GESTURE_CW
 //         INPUT_VIRTUAL_GESTURE_CCW
+//         INPUT_VIRTUAL_GESTURE_SLIDE_UP
+//         INPUT_VIRTUAL_GESTURE_SLIDE_DOWN
+//         INPUT_VIRTUAL_GESTURE_SLIDE_LEFT
+//         INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
 //     >;
 //     bindings = <
 //         &kp C_MUTE
 //         &kp C_VOL_UP
 //         &kp C_VOL_DN
+//         &kp UP_ARROW
+//         &kp DOWN_ARROW
+//         &kp LEFT_ARROW
+//         &kp RIGHT_ARROW
 //     >;
 // };

@@ -49,10 +49,14 @@ Touch gestures on the photo/home screen:
 
 | Gesture | Action |
 |---------|--------|
-| Single tap | Mute (`INPUT_VIRTUAL_POS_3`) |
+| Single tap | Mute (`INPUT_VIRTUAL_GESTURE_TAP`) |
 | Double tap | Show/hide the shortcut button ring, same as the old single tap |
-| Clockwise slide | Volume up (`INPUT_VIRTUAL_POS_2`) |
-| Counterclockwise slide | Volume down (`INPUT_VIRTUAL_POS_4`) |
+| Clockwise slide | Volume up (`INPUT_VIRTUAL_GESTURE_CW`) |
+| Counterclockwise slide | Volume down (`INPUT_VIRTUAL_GESTURE_CCW`) |
+| Slide up | Up arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_UP`) |
+| Slide down | Down arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_DOWN`) |
+| Slide left | Left arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_LEFT`) |
+| Slide right | Right arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT`) |
 
 The double-tap window defaults to 450 ms. To make it faster or slower, add this
 to your keyboard's `.conf` file:
@@ -63,7 +67,7 @@ CONFIG_XIAORD_DOUBLE_TAP_MS=600
 
 Single tap and slide gestures are regular ZMK behavior bindings, so you can
 override them in your keyboard's dongle overlay. The defaults are mute, volume
-up, and volume down:
+up, volume down, and arrow keys:
 
 ```dts
 &virtual_gesture_behavior {
@@ -71,11 +75,19 @@ up, and volume down:
         INPUT_VIRTUAL_GESTURE_TAP
         INPUT_VIRTUAL_GESTURE_CW
         INPUT_VIRTUAL_GESTURE_CCW
+        INPUT_VIRTUAL_GESTURE_SLIDE_UP
+        INPUT_VIRTUAL_GESTURE_SLIDE_DOWN
+        INPUT_VIRTUAL_GESTURE_SLIDE_LEFT
+        INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
     >;
     bindings = <
-        &kp C_MUTE       /* single tap */
-        &kp C_VOL_UP     /* clockwise slide */
-        &kp C_VOL_DN     /* counterclockwise slide */
+        &kp C_MUTE        /* single tap */
+        &kp C_VOL_UP      /* clockwise slide */
+        &kp C_VOL_DN      /* counterclockwise slide */
+        &kp UP_ARROW      /* slide up */
+        &kp DOWN_ARROW    /* slide down */
+        &kp LEFT_ARROW    /* slide left */
+        &kp RIGHT_ARROW   /* slide right */
     >;
 };
 ```
@@ -89,11 +101,55 @@ key presses, layer changes, and macros. For example:
         INPUT_VIRTUAL_GESTURE_TAP
         INPUT_VIRTUAL_GESTURE_CW
         INPUT_VIRTUAL_GESTURE_CCW
+        INPUT_VIRTUAL_GESTURE_SLIDE_UP
+        INPUT_VIRTUAL_GESTURE_SLIDE_DOWN
+        INPUT_VIRTUAL_GESTURE_SLIDE_LEFT
+        INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
     >;
     bindings = <
         &macro_my_action
         &mo 1
         &tog 2
+        &kp UP_ARROW
+        &kp DOWN_ARROW
+        &kp LEFT_ARROW
+        &kp RIGHT_ARROW
+    >;
+};
+```
+
+#### Updating an existing keyboard repo for directional slides
+
+If your keyboard repo does not override `&virtual_gesture_behavior`, no overlay
+change is required. Update the `zmk-module-xiaord` revision in your keyboard
+repo's `config/west.yml`, rebuild, and the default slide bindings will be used.
+
+If your keyboard repo already overrides `&virtual_gesture_behavior`, update that
+whole node to include all gesture codes. DTS array overrides replace the full
+list, so partial updates will drop any omitted gestures:
+
+```dts
+#include <dt-bindings/xiaord/input_codes.h>
+#include <dt-bindings/zmk/keys.h>
+
+&virtual_gesture_behavior {
+    codes = <
+        INPUT_VIRTUAL_GESTURE_TAP
+        INPUT_VIRTUAL_GESTURE_CW
+        INPUT_VIRTUAL_GESTURE_CCW
+        INPUT_VIRTUAL_GESTURE_SLIDE_UP
+        INPUT_VIRTUAL_GESTURE_SLIDE_DOWN
+        INPUT_VIRTUAL_GESTURE_SLIDE_LEFT
+        INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
+    >;
+    bindings = <
+        &kp C_MUTE
+        &kp C_VOL_UP
+        &kp C_VOL_DN
+        &kp UP_ARROW
+        &kp DOWN_ARROW
+        &kp LEFT_ARROW
+        &kp RIGHT_ARROW
     >;
 };
 ```
@@ -338,11 +394,15 @@ The virtual event codes fired on button tap are defined in `include/dt-bindings/
 | Range | Category |
 |-------|----------|
 | `0x00–0x0B` | Home button positions (`INPUT_VIRTUAL_POS_0` … `INPUT_VIRTUAL_POS_11`) |
+| `0x10–0x16` | Home screen gestures (`INPUT_VIRTUAL_GESTURE_*`) |
 | `0x40–0x6B` | ZMK BT/output behaviors (`INPUT_VIRTUAL_ZMK_*`) |
 
-Gesture codes use `INPUT_VIRTUAL_GESTURE_TAP`, `INPUT_VIRTUAL_GESTURE_CW`, and
-`INPUT_VIRTUAL_GESTURE_CCW`. They are handled by `virtual_gesture_behavior`,
-which runs before the home button position processor.
+Gesture codes use `INPUT_VIRTUAL_GESTURE_TAP`, `INPUT_VIRTUAL_GESTURE_CW`,
+`INPUT_VIRTUAL_GESTURE_CCW`, `INPUT_VIRTUAL_GESTURE_SLIDE_UP`,
+`INPUT_VIRTUAL_GESTURE_SLIDE_DOWN`, `INPUT_VIRTUAL_GESTURE_SLIDE_LEFT`, and
+`INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT`. They are handled by
+`virtual_gesture_behavior`, which runs before the home button position
+processor.
 
 ## Behavior Conversion Flow
 
