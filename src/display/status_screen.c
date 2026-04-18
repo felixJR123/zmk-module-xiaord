@@ -392,6 +392,7 @@ static lv_result_t status_screen_sd_decoder_info(lv_image_decoder_t *decoder,
 
     header->w = STATUS_BG_SIZE;
     header->h = STATUS_BG_SIZE;
+    header->stride = STATUS_BG_SIZE * 2;
     header->cf = LV_COLOR_FORMAT_RGB565;
     return LV_RESULT_OK;
 }
@@ -423,6 +424,7 @@ static lv_result_t status_screen_sd_decoder_open(lv_image_decoder_t *decoder,
 
     dsc->header.w = STATUS_BG_SIZE;
     dsc->header.h = STATUS_BG_SIZE;
+    dsc->header.stride = STATUS_BG_SIZE * 2;
     dsc->header.cf = LV_COLOR_FORMAT_RGB565;
     dsc->src_type = LV_IMAGE_SRC_FILE;
     dsc->decoded = NULL;
@@ -498,8 +500,10 @@ static void status_screen_sd_decoder_close(lv_image_decoder_t *decoder,
     }
 
     if (dsc->decoded) {
-        lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
+        lv_draw_buf_t *buf = (lv_draw_buf_t *)dsc->decoded;
         dsc->decoded = NULL;
+        lv_image_cache_drop(dsc->src);
+        lv_draw_buf_destroy(buf);
     }
 }
 
