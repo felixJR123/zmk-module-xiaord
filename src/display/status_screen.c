@@ -441,7 +441,9 @@ static void status_screen_sd_create_bg_obj(lv_obj_t *screen, size_t page_idx)
     lv_obj_remove_style_all(obj);
     lv_obj_set_pos(obj, 0, 0);
     lv_obj_set_size(obj, STATUS_BG_SIZE, STATUS_BG_SIZE);
-    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE |
+                           LV_OBJ_FLAG_GESTURE_BUBBLE);
+    lv_obj_add_flag(obj, LV_OBJ_FLAG_EVENT_BUBBLE);
     lv_obj_add_event_cb(obj, status_screen_sd_bg_draw_cb, LV_EVENT_DRAW_MAIN, NULL);
     lv_obj_move_background(obj);
     s_sd_bg_objs[page_idx] = obj;
