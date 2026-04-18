@@ -10,7 +10,6 @@
  */
 
 #include <zephyr/kernel.h>
-#include <zephyr/atomic.h>
 #include <zephyr/device.h>
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/display.h>
