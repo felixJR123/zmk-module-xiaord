@@ -344,6 +344,19 @@ static int status_screen_sd_path(char *path, size_t path_len, uint16_t id)
     return (ret > 0 && (size_t)ret < path_len) ? 0 : -ENAMETOOLONG;
 }
 
+static void status_screen_sd_prepare_chunk(size_t len)
+{
+#if IS_ENABLED(CONFIG_LV_COLOR_16_SWAP)
+    for (size_t i = 0; i + 1 < len; i += 2) {
+        uint8_t tmp = s_sd_bg_chunk[i];
+        s_sd_bg_chunk[i] = s_sd_bg_chunk[i + 1];
+        s_sd_bg_chunk[i + 1] = tmp;
+    }
+#else
+    ARG_UNUSED(len);
+#endif
+}
+
 static int status_screen_sd_mount(void)
 {
     int err = disk_access_init(CONFIG_XIAORD_BG_SD_VOLUME_NAME);
@@ -442,6 +455,7 @@ static int status_screen_sd_draw_index(size_t index)
         if (err) {
             break;
         }
+        status_screen_sd_prepare_chunk(want);
 
         struct display_buffer_descriptor desc = {
             .buf_size = want,
