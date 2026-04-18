@@ -262,9 +262,12 @@ static uint8_t s_active_page;
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
 #define STATUS_BG_SIZE 240
 #define STATUS_BG_RGB565_BYTES (STATUS_BG_SIZE * STATUS_BG_SIZE * 2)
-#define STATUS_BG_SD_ROWS 8
-#define STATUS_BG_SD_CHUNK_BYTES (STATUS_BG_SIZE * STATUS_BG_SD_ROWS * 2)
 #define STATUS_BG_SD_PATH_MAX 96
+#define STATUS_BG_SD_LVGL_SRC_MAX 24
+
+typedef struct {
+    struct fs_file_t file;
+} status_screen_sd_decoder_data_t;
 
 static FATFS s_sd_fatfs;
 
@@ -276,7 +279,11 @@ static struct fs_mount_t s_sd_mount = {
     .flags = FS_MOUNT_FLAG_USE_DISK_ACCESS,
 };
 
-static LV_ATTRIBUTE_MEM_ALIGN uint8_t s_sd_bg_chunk[STATUS_BG_SD_CHUNK_BYTES];
+static lv_image_decoder_t *s_sd_bg_decoder;
+static char s_sd_bg_lvgl_src[2][STATUS_BG_SD_LVGL_SRC_MAX];
+static uint8_t s_sd_bg_lvgl_src_slot;
+static const char *s_sd_bg_current_src;
+static lv_obj_t *s_sd_bg_objs[PAGE_COUNT];
 static uint16_t s_sd_bg_ids[CONFIG_XIAORD_BG_SD_MAX_FILES];
 static size_t s_sd_bg_count;
 static size_t s_sd_bg_index;
@@ -344,17 +351,172 @@ static int status_screen_sd_path(char *path, size_t path_len, uint16_t id)
     return (ret > 0 && (size_t)ret < path_len) ? 0 : -ENAMETOOLONG;
 }
 
-static void status_screen_sd_prepare_chunk(size_t len)
+static bool status_screen_sd_lvgl_src_id(const char *src, uint16_t *id)
 {
-#if IS_ENABLED(CONFIG_LV_COLOR_16_SWAP)
-    for (size_t i = 0; i + 1 < len; i += 2) {
-        uint8_t tmp = s_sd_bg_chunk[i];
-        s_sd_bg_chunk[i] = s_sd_bg_chunk[i + 1];
-        s_sd_bg_chunk[i + 1] = tmp;
+    if (!src || src[0] != 'X' || src[1] != ':' || src[2] != '/') {
+        return false;
     }
-#else
-    ARG_UNUSED(len);
-#endif
+
+    return status_screen_sd_filename_id(src + 3, id);
+}
+
+static int status_screen_sd_lvgl_src(char *src, size_t src_len, uint16_t id)
+{
+    int ret = snprintf(src, src_len, "X:/bg%03u.rgb565", (unsigned int)id);
+    return (ret > 0 && (size_t)ret < src_len) ? 0 : -ENAMETOOLONG;
+}
+
+static int status_screen_sd_path_from_lvgl_src(char *path, size_t path_len, const char *src)
+{
+    uint16_t id;
+
+    if (!status_screen_sd_lvgl_src_id(src, &id)) {
+        return -EINVAL;
+    }
+
+    return status_screen_sd_path(path, path_len, id);
+}
+
+static lv_result_t status_screen_sd_decoder_info(lv_image_decoder_t *decoder,
+                                                 const void *src,
+                                                 lv_image_header_t *header)
+{
+    uint16_t id;
+
+    ARG_UNUSED(decoder);
+
+    if (!status_screen_sd_lvgl_src_id(src, &id)) {
+        return LV_RESULT_INVALID;
+    }
+
+    header->w = STATUS_BG_SIZE;
+    header->h = STATUS_BG_SIZE;
+    header->cf = LV_COLOR_FORMAT_RGB565;
+    return LV_RESULT_OK;
+}
+
+static lv_result_t status_screen_sd_decoder_open(lv_image_decoder_t *decoder,
+                                                 lv_image_decoder_dsc_t *dsc)
+{
+    char path[STATUS_BG_SD_PATH_MAX];
+    int err;
+
+    ARG_UNUSED(decoder);
+
+    if (status_screen_sd_path_from_lvgl_src(path, sizeof(path), dsc->src) != 0) {
+        return LV_RESULT_INVALID;
+    }
+
+    status_screen_sd_decoder_data_t *data = lv_malloc(sizeof(*data));
+    if (!data) {
+        return LV_RESULT_INVALID;
+    }
+
+    fs_file_t_init(&data->file);
+    err = fs_open(&data->file, path, FS_O_READ);
+    if (err) {
+        LOG_WRN("SD background decoder open failed: %s (%d)", path, err);
+        lv_free(data);
+        return LV_RESULT_INVALID;
+    }
+
+    dsc->header.w = STATUS_BG_SIZE;
+    dsc->header.h = STATUS_BG_SIZE;
+    dsc->header.cf = LV_COLOR_FORMAT_RGB565;
+    dsc->src_type = LV_IMAGE_SRC_FILE;
+    dsc->decoded = NULL;
+    dsc->user_data = data;
+    return LV_RESULT_OK;
+}
+
+static lv_result_t status_screen_sd_decoder_get_area(lv_image_decoder_t *decoder,
+                                                     lv_image_decoder_dsc_t *dsc,
+                                                     const lv_area_t *full_area,
+                                                     lv_area_t *decoded_area)
+{
+    status_screen_sd_decoder_data_t *data = dsc->user_data;
+    lv_draw_buf_t *decoded = (lv_draw_buf_t *)dsc->decoded;
+
+    ARG_UNUSED(decoder);
+
+    if (!data) {
+        return LV_RESULT_INVALID;
+    }
+
+    if (decoded_area->y1 == LV_COORD_MIN) {
+        *decoded_area = *full_area;
+        decoded_area->y2 = decoded_area->y1;
+        if (!decoded) {
+            decoded = lv_draw_buf_create(lv_area_get_width(full_area), 1,
+                                         dsc->header.cf, LV_STRIDE_AUTO);
+            if (!decoded) {
+                return LV_RESULT_INVALID;
+            }
+            dsc->decoded = decoded;
+        }
+    } else {
+        decoded_area->y1++;
+        decoded_area->y2++;
+    }
+
+    if (decoded_area->y1 > full_area->y2) {
+        return LV_RESULT_INVALID;
+    }
+
+    uint32_t width = lv_area_get_width(full_area);
+    uint32_t bytes = width * 2U;
+    off_t pos = ((off_t)decoded_area->y1 * STATUS_BG_SIZE + decoded_area->x1) * 2;
+    int err = fs_seek(&data->file, pos, FS_SEEK_SET);
+    if (err) {
+        return LV_RESULT_INVALID;
+    }
+
+    uint32_t off = 0;
+    while (off < bytes) {
+        ssize_t got = fs_read(&data->file, &decoded->data[off], bytes - off);
+        if (got <= 0) {
+            return LV_RESULT_INVALID;
+        }
+        off += (uint32_t)got;
+    }
+
+    return LV_RESULT_OK;
+}
+
+static void status_screen_sd_decoder_close(lv_image_decoder_t *decoder,
+                                           lv_image_decoder_dsc_t *dsc)
+{
+    status_screen_sd_decoder_data_t *data = dsc->user_data;
+
+    ARG_UNUSED(decoder);
+
+    if (data) {
+        fs_close(&data->file);
+        lv_free(data);
+        dsc->user_data = NULL;
+    }
+
+    if (dsc->decoded) {
+        lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
+        dsc->decoded = NULL;
+    }
+}
+
+static void status_screen_sd_decoder_init(void)
+{
+    if (s_sd_bg_decoder) {
+        return;
+    }
+
+    s_sd_bg_decoder = lv_image_decoder_create();
+    if (!s_sd_bg_decoder) {
+        return;
+    }
+
+    lv_image_decoder_set_info_cb(s_sd_bg_decoder, status_screen_sd_decoder_info);
+    lv_image_decoder_set_open_cb(s_sd_bg_decoder, status_screen_sd_decoder_open);
+    lv_image_decoder_set_get_area_cb(s_sd_bg_decoder, status_screen_sd_decoder_get_area);
+    lv_image_decoder_set_close_cb(s_sd_bg_decoder, status_screen_sd_decoder_close);
 }
 
 static int status_screen_sd_mount(void)
@@ -419,68 +581,26 @@ static int status_screen_sd_draw_index(size_t index)
         return -EINVAL;
     }
 
-    status_screen_init_display();
-    if (!status_display || !device_is_ready(status_display)) {
-        return -ENODEV;
+    if (s_sd_bg_current_src) {
+        lv_image_cache_drop(s_sd_bg_current_src);
     }
 
-    char path[STATUS_BG_SD_PATH_MAX];
-    int err = status_screen_sd_path(path, sizeof(path), s_sd_bg_ids[index]);
+    s_sd_bg_lvgl_src_slot ^= 1U;
+    char *src = s_sd_bg_lvgl_src[s_sd_bg_lvgl_src_slot];
+    int err = status_screen_sd_lvgl_src(src, STATUS_BG_SD_LVGL_SRC_MAX,
+                                        s_sd_bg_ids[index]);
     if (err) {
         return err;
     }
 
-    struct fs_file_t file;
-    fs_file_t_init(&file);
-
-    err = fs_open(&file, path, FS_O_READ);
-    if (err) {
-        LOG_WRN("SD background open failed: %s (%d)", path, err);
-        return err;
-    }
-
-    for (uint16_t y = 0; y < STATUS_BG_SIZE; y += STATUS_BG_SD_ROWS) {
-        uint16_t rows = MIN(STATUS_BG_SD_ROWS, STATUS_BG_SIZE - y);
-        size_t want = STATUS_BG_SIZE * rows * 2;
-        size_t off = 0;
-
-        while (off < want) {
-            ssize_t got = fs_read(&file, &s_sd_bg_chunk[off], want - off);
-            if (got <= 0) {
-                err = got == 0 ? -EIO : (int)got;
-                break;
-            }
-            off += (size_t)got;
-        }
-        if (err) {
-            break;
-        }
-        status_screen_sd_prepare_chunk(want);
-
-        struct display_buffer_descriptor desc = {
-            .buf_size = want,
-            .width = STATUS_BG_SIZE,
-            .height = rows,
-            .pitch = STATUS_BG_SIZE,
-        };
-
-        err = display_write(status_display, 0, y, &desc, s_sd_bg_chunk);
-        if (err) {
-            LOG_WRN("SD background display write failed: %d", err);
-            break;
-        }
-    }
-
-    int close_err = fs_close(&file);
-    if (!err && close_err) {
-        err = close_err;
-    }
-    if (err) {
-        LOG_WRN("SD background read failed: %s (%d)", path, err);
-        return err;
-    }
-
+    s_sd_bg_current_src = src;
     s_sd_bg_index = index;
+    for (size_t i = 0; i < ARRAY_SIZE(s_sd_bg_objs); i++) {
+        if (s_sd_bg_objs[i]) {
+            lv_image_set_src(s_sd_bg_objs[i], s_sd_bg_current_src);
+            lv_obj_invalidate(s_sd_bg_objs[i]);
+        }
+    }
     return 0;
 }
 
@@ -489,6 +609,20 @@ static void status_screen_sd_invalidate_active_page(void)
     if (s_active_page < PAGE_COUNT && s_pages[s_active_page].screen) {
         lv_obj_invalidate(s_pages[s_active_page].screen);
     }
+}
+
+static void status_screen_sd_create_bg_obj(lv_obj_t *screen, size_t page_idx)
+{
+    if (page_idx >= ARRAY_SIZE(s_sd_bg_objs) || s_sd_bg_objs[page_idx]) {
+        return;
+    }
+
+    lv_obj_t *img = lv_image_create(screen);
+    lv_obj_set_pos(img, 0, 0);
+    lv_obj_set_size(img, STATUS_BG_SIZE, STATUS_BG_SIZE);
+    lv_image_set_src(img, s_sd_bg_current_src);
+    lv_obj_move_background(img);
+    s_sd_bg_objs[page_idx] = img;
 }
 
 static void status_screen_sd_set_mode(bool sd_background)
@@ -501,7 +635,8 @@ static void status_screen_sd_set_mode(bool sd_background)
 
         if (sd_background) {
             lv_obj_set_style_bg_image_src(screen, NULL, LV_PART_MAIN);
-            lv_obj_set_style_bg_opa(screen, LV_OPA_TRANSP, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, LV_PART_MAIN);
+            status_screen_sd_create_bg_obj(screen, i);
         } else {
             lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, LV_PART_MAIN);
             lv_obj_set_style_bg_image_src(screen, status_screen_current_background(), LV_PART_MAIN);
@@ -515,6 +650,8 @@ static bool status_screen_sd_init(void)
     if (s_sd_bg_ready) {
         return true;
     }
+
+    status_screen_sd_decoder_init();
 
     if (status_screen_sd_mount() != 0 || status_screen_sd_scan() != 0) {
         LOG_WRN("Using compiled fallback background");
@@ -562,8 +699,8 @@ static void status_screen_sd_retry_cb(lv_timer_t *timer)
 
     LOG_INF("SD background became available after boot");
     status_screen_sd_retry_stop();
-    status_screen_sd_set_mode(true);
     (void)status_screen_sd_draw_index(0);
+    status_screen_sd_set_mode(true);
     status_screen_sd_start_timer();
 }
 
@@ -706,6 +843,9 @@ lv_obj_t *zmk_display_status_screen(void)
     xiaord_initialize_color_theme();
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
     bool sd_bg_ready = status_screen_sd_init();
+    if (sd_bg_ready) {
+        (void)status_screen_sd_draw_index(0);
+    }
 #endif
 
 	/* Create an independent screen for each page */
@@ -715,7 +855,8 @@ lv_obj_t *zmk_display_status_screen(void)
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
         if (sd_bg_ready) {
             lv_obj_set_style_bg_image_src(screen, NULL, LV_PART_MAIN);
-            lv_obj_set_style_bg_opa(screen, LV_OPA_TRANSP, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, LV_PART_MAIN);
+            status_screen_sd_create_bg_obj(screen, i);
         } else {
             lv_obj_set_style_bg_image_src(screen, status_screen_current_background(), LV_PART_MAIN);
         }
@@ -732,11 +873,6 @@ lv_obj_t *zmk_display_status_screen(void)
 	}
 
 	/* Fire on_enter for the initial page */
-#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
-    if (sd_bg_ready) {
-        (void)status_screen_sd_draw_index(0);
-    }
-#endif
 	if (s_pages[0].ops->on_enter) {
 		s_pages[0].ops->on_enter();
 	}
