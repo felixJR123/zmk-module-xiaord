@@ -378,6 +378,9 @@ CONFIG_XIAORD_BG_SD_VOLUME_NAME="SD"
 # Optional: rotate every 60 seconds. Set to 0 to disable auto-rotation.
 CONFIG_XIAORD_BG_SD_ROTATE_MS=60000
 
+# Optional: retry mounting every 5 seconds if the SD card is not ready at boot.
+CONFIG_XIAORD_BG_SD_RETRY_MS=5000
+
 # Optional: slide left/right cycle SD backgrounds instead of sending arrow keys.
 CONFIG_XIAORD_BG_SD_GESTURES=y
 ```
@@ -452,6 +455,7 @@ is formatted as FAT32, the converted files are under `xiaord-bg/converted`, and
 `CONFIG_XIAORD_BG_SD_VOLUME_NAME` matches the disk name registered by the board.
 The Seeed XIAO Round Display normally uses `SD`, which mounts at `/SD:`.
 The card needs to be inserted before the keyboard boots.
+If it is slow to become ready, the firmware retries by default every 5 seconds.
 
 Each converted full-screen background is 115,200 bytes on the SD card. The
 firmware streams SD backgrounds to the display in small row chunks and does not

@@ -59,6 +59,7 @@ CONFIG_XIAORD_BG_4=n
 CONFIG_XIAORD_BG_SD=y
 CONFIG_XIAORD_BG_SD_VOLUME_NAME="SD"
 CONFIG_XIAORD_BG_SD_ROTATE_MS=60000
+CONFIG_XIAORD_BG_SD_RETRY_MS=5000
 ```
 
 Keep one compiled background enabled as the fallback. Use `BG_4=y` instead of

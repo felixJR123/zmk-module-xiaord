@@ -282,6 +282,7 @@ static size_t s_sd_bg_count;
 static size_t s_sd_bg_index;
 static bool s_sd_bg_ready;
 static lv_timer_t *s_sd_bg_rotate_timer;
+static lv_timer_t *s_sd_bg_retry_timer;
 
 static bool status_screen_sd_filename_id(const char *name, uint16_t *id)
 {
@@ -348,7 +349,6 @@ static int status_screen_sd_mount(void)
     int err = disk_access_init(CONFIG_XIAORD_BG_SD_VOLUME_NAME);
     if (err && err != -EALREADY && err != -EBUSY) {
         LOG_WRN("SD disk init failed for %s: %d", CONFIG_XIAORD_BG_SD_VOLUME_NAME, err);
-        return err;
     }
 
     err = fs_mount(&s_sd_mount);
@@ -477,6 +477,25 @@ static void status_screen_sd_invalidate_active_page(void)
     }
 }
 
+static void status_screen_sd_set_mode(bool sd_background)
+{
+    for (size_t i = 0; i < PAGE_COUNT; i++) {
+        lv_obj_t *screen = s_pages[i].screen;
+        if (!screen) {
+            continue;
+        }
+
+        if (sd_background) {
+            lv_obj_set_style_bg_image_src(screen, NULL, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(screen, LV_OPA_TRANSP, LV_PART_MAIN);
+        } else {
+            lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, LV_PART_MAIN);
+            lv_obj_set_style_bg_image_src(screen, status_screen_current_background(), LV_PART_MAIN);
+        }
+        lv_obj_invalidate(screen);
+    }
+}
+
 static bool status_screen_sd_init(void)
 {
     if (s_sd_bg_ready) {
@@ -507,6 +526,42 @@ static void status_screen_sd_start_timer(void)
     s_sd_bg_rotate_timer = lv_timer_create(status_screen_sd_rotate_cb,
                                            CONFIG_XIAORD_BG_SD_ROTATE_MS,
                                            NULL);
+}
+
+static void status_screen_sd_retry_stop(void)
+{
+    if (!s_sd_bg_retry_timer) {
+        return;
+    }
+
+    lv_timer_del(s_sd_bg_retry_timer);
+    s_sd_bg_retry_timer = NULL;
+}
+
+static void status_screen_sd_retry_cb(lv_timer_t *timer)
+{
+    ARG_UNUSED(timer);
+
+    if (!status_screen_sd_init()) {
+        return;
+    }
+
+    LOG_INF("SD background became available after boot");
+    status_screen_sd_retry_stop();
+    status_screen_sd_set_mode(true);
+    (void)status_screen_sd_draw_index(0);
+    status_screen_sd_start_timer();
+}
+
+static void status_screen_sd_start_retry_timer(void)
+{
+    if (CONFIG_XIAORD_BG_SD_RETRY_MS <= 0 || s_sd_bg_ready || s_sd_bg_retry_timer) {
+        return;
+    }
+
+    s_sd_bg_retry_timer = lv_timer_create(status_screen_sd_retry_cb,
+                                          CONFIG_XIAORD_BG_SD_RETRY_MS,
+                                          NULL);
 }
 #endif /* CONFIG_XIAORD_BG_SD */
 
@@ -645,6 +700,7 @@ lv_obj_t *zmk_display_status_screen(void)
 		lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
         if (sd_bg_ready) {
+            lv_obj_set_style_bg_image_src(screen, NULL, LV_PART_MAIN);
             lv_obj_set_style_bg_opa(screen, LV_OPA_TRANSP, LV_PART_MAIN);
         } else {
             lv_obj_set_style_bg_image_src(screen, status_screen_current_background(), LV_PART_MAIN);
@@ -674,6 +730,7 @@ lv_obj_t *zmk_display_status_screen(void)
 	k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
     status_screen_sd_start_timer();
+    status_screen_sd_start_retry_timer();
 #endif
 
 	return s_pages[0].screen;

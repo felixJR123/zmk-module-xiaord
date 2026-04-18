@@ -90,6 +90,15 @@ config XIAORD_BG_SD_ROTATE_MS
       Automatically advance to the next SD-card background after this many
       milliseconds. Set to 0 to disable automatic rotation.
 
+config XIAORD_BG_SD_RETRY_MS
+    int "SD background retry timeout in milliseconds"
+    default 5000
+    range 0 600000
+    depends on XIAORD_BG_SD
+    help
+      Retry SD-card mounting after boot if the card is not ready when the
+      display starts. Set to 0 to disable retrying.
+
 config XIAORD_BG_SD_GESTURES
     bool "Use left/right slide gestures for SD backgrounds"
     default y
