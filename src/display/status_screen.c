@@ -10,6 +10,7 @@
  */
 
 #include <zephyr/kernel.h>
+#include <zephyr/atomic.h>
 #include <zephyr/device.h>
 #include <zephyr/input/input.h>
 #include <zephyr/drivers/display.h>
@@ -237,6 +238,23 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_LV_USE_THEME_DEFAULT),
 extern const struct page_ops page_home_ops;
 extern const struct page_ops page_clock_ops;
 extern const struct page_ops page_bt_ops;
+
+/* ── Menu toggle (cross-thread: ZMK behavior → LVGL timer) ─────────────── */
+
+static atomic_t s_menu_toggle_req = ATOMIC_INIT(0);
+
+void xiaord_menu_request_toggle(void)
+{
+    atomic_set(&s_menu_toggle_req, 1);
+}
+
+static void status_screen_menu_poll_cb(lv_timer_t *t)
+{
+    ARG_UNUSED(t);
+    if (atomic_cas(&s_menu_toggle_req, 1, 0)) {
+        home_buttons_toggle_visible();
+    }
+}
 
 /* ── Virtual key source device ─────────────────────────────────────────── */
 
@@ -795,6 +813,8 @@ lv_obj_t *zmk_display_status_screen(void)
     status_screen_sd_update_pause_dot();
     status_screen_sd_start_retry_timer();
 #endif
+
+    lv_timer_create(status_screen_menu_poll_cb, 50, NULL);
 
 	return s_pages[0].screen;
 }

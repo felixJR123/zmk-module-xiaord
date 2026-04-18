@@ -83,6 +83,7 @@ static bool        s_repeat_fired;
 static lv_timer_t *s_autohide_timer;
 static lv_timer_t *s_tap_timer;
 static bool        s_tap_pending;
+static lv_point_t  s_tap_point;
 static bool        s_suppress_click;
 static bool        s_knob_active;
 static bool        s_knob_fired;
@@ -308,14 +309,20 @@ static void tap_overlay_cb(lv_event_t *e)
     if (s_tap_pending) {
         s_tap_pending = false;
         lv_timer_pause(s_tap_timer);
-        home_buttons_run_legacy_tap(&p);
+        ss_fire_behavior(INPUT_VIRTUAL_GESTURE_DOUBLE_TAP);
         return;
     }
 
+    s_tap_point = p;
     s_tap_pending = true;
     lv_timer_reset(s_tap_timer);
     lv_timer_resume(s_tap_timer);
 }
+void home_buttons_toggle_visible(void)
+{
+    home_buttons_set_visible(!s_btns_visible);
+}
+
 void home_buttons_set_visible(bool visible)
 {
 	s_btns_visible = visible;

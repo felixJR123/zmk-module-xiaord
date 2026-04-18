@@ -20,6 +20,11 @@ void home_buttons_create(lv_obj_t *parent);
 void home_buttons_set_visible(bool visible);
 
 /*
+ * Toggle the button ring visibility (show if hidden, hide if visible).
+ */
+void home_buttons_toggle_visible(void);
+
+/*
  * Pause all button-related timers (repeat, autohide, tap gesture).
  * Call from page_home_leave().
  */

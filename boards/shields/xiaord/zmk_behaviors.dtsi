@@ -22,6 +22,11 @@
 #include <dt-bindings/xiaord/input_codes.h>
 
 / {
+    xiaord_menu: xiaord_menu {
+        compatible = "zmk,behavior-xiaord-menu";
+        #binding-cells = <0>;
+    };
+
     virtual_zmk_behavior: virtual_zmk_behavior {
         compatible = "zmk,input-processor-behaviors";
         #input-processor-cells = <0>;
@@ -80,6 +85,7 @@
         type = <INPUT_EV_ZMK_BEHAVIORS>;
         codes = <
             INPUT_VIRTUAL_GESTURE_TAP
+            INPUT_VIRTUAL_GESTURE_DOUBLE_TAP
             INPUT_VIRTUAL_GESTURE_CW
             INPUT_VIRTUAL_GESTURE_CCW
             INPUT_VIRTUAL_GESTURE_SLIDE_UP
@@ -88,7 +94,8 @@
             INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
         >;
         bindings = <
-            &kp C_MUTE
+            &xiaord_menu        /* single tap   — show/hide shortcut ring */
+            &kp C_MUTE          /* double tap   — mute/unmute */
             &kp C_VOL_UP
             &kp C_VOL_DN
             &kp UP_ARROW

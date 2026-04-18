@@ -1,0 +1,7 @@
+description: Toggle the Xiaord home screen shortcut button ring
+compatible: "zmk,behavior-xiaord-menu"
+include: zero_param.yaml
+properties:
+  "#binding-cells":
+    type: int
+    const: 0

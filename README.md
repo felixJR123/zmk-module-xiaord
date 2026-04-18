@@ -49,8 +49,8 @@ Touch gestures on the photo/home screen:
 
 | Gesture | Action |
 |---------|--------|
-| Single tap | Mute (`INPUT_VIRTUAL_GESTURE_TAP`) |
-| Double tap | Show/hide the shortcut button ring, same as the old single tap |
+| Single tap | Show/hide the shortcut button ring |
+| Double tap | Mute/unmute (`INPUT_VIRTUAL_GESTURE_TAP`) |
 | Clockwise slide | Volume up (`INPUT_VIRTUAL_GESTURE_CW`) |
 | Counterclockwise slide | Volume down (`INPUT_VIRTUAL_GESTURE_CCW`) |
 | Slide up | Up arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_UP`) |
@@ -65,14 +65,15 @@ to your keyboard's `.conf` file:
 CONFIG_XIAORD_DOUBLE_TAP_MS=600
 ```
 
-Single tap and slide gestures are regular ZMK behavior bindings, so you can
-override them in your keyboard's dongle overlay. The defaults are mute, volume
-up, volume down, and arrow keys:
+All gestures except single tap are regular ZMK behavior bindings you can
+override in your dongle overlay. Single tap always fires `INPUT_VIRTUAL_GESTURE_TAP`
+whose default binding is `&xiaord_menu` (toggle the shortcut ring). Defaults:
 
 ```dts
 &virtual_gesture_behavior {
     codes = <
         INPUT_VIRTUAL_GESTURE_TAP
+        INPUT_VIRTUAL_GESTURE_DOUBLE_TAP
         INPUT_VIRTUAL_GESTURE_CW
         INPUT_VIRTUAL_GESTURE_CCW
         INPUT_VIRTUAL_GESTURE_SLIDE_UP
@@ -81,7 +82,8 @@ up, volume down, and arrow keys:
         INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
     >;
     bindings = <
-        &kp C_MUTE        /* single tap */
+        &xiaord_menu      /* single tap   — show/hide shortcut ring */
+        &kp C_MUTE        /* double tap   — mute/unmute */
         &kp C_VOL_UP      /* clockwise slide */
         &kp C_VOL_DN      /* counterclockwise slide */
         &kp UP_ARROW      /* slide up */
@@ -91,6 +93,9 @@ up, volume down, and arrow keys:
     >;
 };
 ```
+
+`&xiaord_menu` is a built-in behavior provided by this module that toggles the
+home screen shortcut button ring. You can bind it to any gesture or home button.
 
 Any ZMK behavior binding that is valid in a binding array works here, including
 key presses, layer changes, and macros. For example:
@@ -107,7 +112,8 @@ key presses, layer changes, and macros. For example:
         INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
     >;
     bindings = <
-        &macro_my_action
+        &xiaord_menu      /* single tap */
+        &macro_my_action  /* double tap */
         &mo 1
         &tog 2
         &kp UP_ARROW
@@ -143,7 +149,8 @@ list, so partial updates will drop any omitted gestures:
         INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
     >;
     bindings = <
-        &kp C_MUTE
+        &xiaord_menu      /* single tap */
+        &kp C_MUTE        /* double tap */
         &kp C_VOL_UP
         &kp C_VOL_DN
         &kp UP_ARROW
@@ -381,7 +388,7 @@ CONFIG_XIAORD_BG_SD_ROTATE_MS=60000
 # Optional: retry mounting every 5 seconds if the SD card is not ready at boot.
 CONFIG_XIAORD_BG_SD_RETRY_MS=5000
 
-# Optional: slide left/right cycle SD backgrounds instead of sending arrow keys.
+# Optional: remap gestures for SD backgrounds (see below).
 CONFIG_XIAORD_BG_SD_GESTURES=y
 ```
 
@@ -458,8 +465,34 @@ The card needs to be inserted before the keyboard boots.
 If it is slow to become ready, the firmware retries by default every 5 seconds.
 
 Each converted full-screen background is 115,200 bytes on the SD card. The
-firmware streams SD backgrounds to the display in small row chunks and does not
+firmware loads each background into RAM when you switch to it and does not
 compile the SD photos into the UF2.
+
+#### SD Gesture Mode (`CONFIG_XIAORD_BG_SD_GESTURES=y`)
+
+When enabled, the four slide directions are remapped to control SD backgrounds
+instead of firing the standard arrow-key bindings:
+
+| Gesture | Action |
+|---------|--------|
+| Single tap | Show/hide the shortcut button ring |
+| Double tap | Mute/unmute |
+| Swipe down (top → bottom) | Next background |
+| Swipe up (bottom → top) | Previous background |
+| Swipe left (right → left) | Resume auto-scroll |
+| Swipe right (left → right) | Pause auto-scroll |
+
+A small white dot appears at the bottom of the screen when auto-scroll is
+paused, so you always know the current state.
+
+Auto-scroll uses the `CONFIG_XIAORD_BG_SD_ROTATE_MS` interval. When you
+manually change the background while auto-scroll is running, the timer resets
+so the full interval elapses before the next automatic advance. Pausing and
+resuming auto-scroll with swipe-right / swipe-left preserves the current
+background and the timer state.
+
+When `CONFIG_XIAORD_BG_SD_GESTURES=n` (the default), all four slide directions
+fire the normal `virtual_gesture_behavior` bindings defined in your overlay.
 
 ### Display Backlight Timeout
 
