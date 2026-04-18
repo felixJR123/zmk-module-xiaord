@@ -109,7 +109,8 @@ BG_2=y instead of BG_4=y if you want BG_2 to appear when the SD card is missing.
 If the card is inserted but the keyboard still uses the fallback background,
 format the card as FAT32, confirm the converted files are in
 xiaord-bg\converted, and keep CONFIG_XIAORD_BG_SD_VOLUME_NAME="SD" unless your
-board registers the SD disk with a different name.
+board registers the SD disk with a different name. Insert the card before the
+keyboard boots.
 
 
 Notes

@@ -28,6 +28,8 @@
 
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
 #include <zephyr/fs/fs.h>
+#include <zephyr/storage/disk_access.h>
+#include <ff.h>
 #endif
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -264,10 +266,14 @@ static uint8_t s_active_page;
 #define STATUS_BG_SD_CHUNK_BYTES (STATUS_BG_SIZE * STATUS_BG_SD_ROWS * 2)
 #define STATUS_BG_SD_PATH_MAX 96
 
+static FATFS s_sd_fatfs;
+
 static struct fs_mount_t s_sd_mount = {
     .type = FS_FATFS,
     .mnt_point = CONFIG_XIAORD_BG_SD_MOUNT_POINT,
+    .fs_data = &s_sd_fatfs,
     .storage_dev = (void *)CONFIG_XIAORD_BG_SD_VOLUME_NAME,
+    .flags = FS_MOUNT_FLAG_USE_DISK_ACCESS,
 };
 
 static LV_ATTRIBUTE_MEM_ALIGN uint8_t s_sd_bg_chunk[STATUS_BG_SD_CHUNK_BYTES];
@@ -279,7 +285,7 @@ static lv_timer_t *s_sd_bg_rotate_timer;
 
 static bool status_screen_sd_filename_id(const char *name, uint16_t *id)
 {
-    if (strncmp(name, "bg", 2) != 0) {
+    if (!((name[0] == 'b' || name[0] == 'B') && (name[1] == 'g' || name[1] == 'G'))) {
         return false;
     }
 
@@ -297,7 +303,15 @@ static bool status_screen_sd_filename_id(const char *name, uint16_t *id)
         p++;
     }
 
-    if (strcmp(p, ".rgb565") != 0 || value == 0U) {
+    if (value == 0U ||
+        !(p[0] == '.' &&
+          (p[1] == 'r' || p[1] == 'R') &&
+          (p[2] == 'g' || p[2] == 'G') &&
+          (p[3] == 'b' || p[3] == 'B') &&
+          p[4] == '5' &&
+          p[5] == '6' &&
+          p[6] == '5' &&
+          p[7] == '\0')) {
         return false;
     }
 
@@ -331,12 +345,21 @@ static int status_screen_sd_path(char *path, size_t path_len, uint16_t id)
 
 static int status_screen_sd_mount(void)
 {
-    int err = fs_mount(&s_sd_mount);
+    int err = disk_access_init(CONFIG_XIAORD_BG_SD_VOLUME_NAME);
+    if (err && err != -EALREADY && err != -EBUSY) {
+        LOG_WRN("SD disk init failed for %s: %d", CONFIG_XIAORD_BG_SD_VOLUME_NAME, err);
+        return err;
+    }
+
+    err = fs_mount(&s_sd_mount);
     if (err == -EALREADY || err == -EBUSY) {
         return 0;
     }
     if (err) {
-        LOG_WRN("SD background mount failed: %d", err);
+        LOG_WRN("SD background mount failed for %s at %s: %d",
+                CONFIG_XIAORD_BG_SD_VOLUME_NAME,
+                CONFIG_XIAORD_BG_SD_MOUNT_POINT,
+                err);
     }
     return err;
 }

@@ -451,6 +451,7 @@ If the SD card is inserted but the firmware does not find it, make sure the card
 is formatted as FAT32, the converted files are under `xiaord-bg/converted`, and
 `CONFIG_XIAORD_BG_SD_VOLUME_NAME` matches the disk name registered by the board.
 The Seeed XIAO Round Display normally uses `SD`, which mounts at `/SD:`.
+The card needs to be inserted before the keyboard boots.
 
 Each converted full-screen background is 115,200 bytes on the SD card. The
 firmware streams SD backgrounds to the display in small row chunks and does not

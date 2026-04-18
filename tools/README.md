@@ -179,4 +179,5 @@ index. It is fine if the SD card has fewer pictures.
 If the firmware still falls back to the compiled background while the SD card is
 inserted, format the card as FAT32, confirm the converted files are in
 `xiaord-bg/converted`, and keep `CONFIG_XIAORD_BG_SD_VOLUME_NAME="SD"` unless
-your board registers the SD disk with a different name.
+your board registers the SD disk with a different name. Insert the card before
+the keyboard boots.
