@@ -323,6 +323,7 @@ Original backgrounds and one keyboard-repo custom photo background are available
 | `CONFIG_XIAORD_BG_2=y` | ![bg2](src/display/ui/bg/bg2.png) |
 | `CONFIG_XIAORD_BG_3=y` | ![bg3](src/display/ui/bg/bg3.png) |
 | `CONFIG_XIAORD_BG_4=y` | First image in your keyboard repo's `config/xiaord-bg` folder |
+| `CONFIG_XIAORD_BG_SD=y` | Runtime backgrounds from the microSD card |
 
 The nRF52840 build reliably fits one full-size photo background. `BG_4` is generated during the keyboard build and is not stored in this module. If `CONFIG_XIAORD_BG_4=y` but no image can be found or generated, the firmware falls back to `BG_1` and still compiles.
 
@@ -357,6 +358,74 @@ CONFIG_XIAORD_REMOVE_DATE_TIME=y
 ```
 
 Set it back to `n` or remove the line to show the clock/date again. The RTC continues keeping time while the labels are hidden, so you do not need to reset the clock when changing backgrounds.
+
+### SD Card Backgrounds
+
+SD card backgrounds keep the existing `BG_1` through `BG_4` options intact, but
+move photo storage out of the firmware. Enable SD mode in the dongle `.conf`
+and leave one compiled background enabled as the fallback:
+
+```conf
+CONFIG_XIAORD_BG_1=y
+CONFIG_XIAORD_BG_2=n
+CONFIG_XIAORD_BG_3=n
+CONFIG_XIAORD_BG_4=n
+CONFIG_XIAORD_BG_SD=y
+
+# Optional: rotate every 60 seconds. Set to 0 to disable auto-rotation.
+CONFIG_XIAORD_BG_SD_ROTATE_MS=60000
+
+# Optional: slide left/right cycle SD backgrounds instead of sending arrow keys.
+CONFIG_XIAORD_BG_SD_GESTURES=y
+```
+
+The firmware expects converted 240x240 RGB565 files here:
+
+```text
+/SD:/xiaord-bg/converted/bg001.rgb565
+/SD:/xiaord-bg/converted/bg002.rgb565
+/SD:/xiaord-bg/converted/bg003.rgb565
+```
+
+The host-side prep tool creates this SD card layout:
+
+```text
+xiaord-bg/
+  raw/        original JPG/PNG files
+  converted/  bg001.rgb565, bg002.rgb565, ...
+  tools/      converter scripts copied onto the SD card
+```
+
+From this repo, prepare a mounted SD card like this:
+
+```powershell
+python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
+```
+
+Later, you can put new JPG/PNG files directly into `E:\xiaord-bg\raw` and run
+the copied tool from the SD card:
+
+```powershell
+python E:\xiaord-bg\tools\xiaord_sd_backgrounds.py E:\
+```
+
+Files are scanned in numeric filename order. `bg001.rgb565` is shown first, then
+`bg002.rgb565`, and the list wraps back to the first image. If the SD card is
+missing, the mount fails, or no converted files are found, the firmware falls
+back to whichever compiled background option is enabled.
+
+For example, this uses SD backgrounds when available and `BG_4` as the fallback:
+
+```conf
+CONFIG_XIAORD_BG_1=n
+CONFIG_XIAORD_BG_2=n
+CONFIG_XIAORD_BG_3=n
+CONFIG_XIAORD_BG_4=y
+CONFIG_XIAORD_BG_SD=y
+```
+
+Each converted full-screen background is 115,200 bytes. The firmware keeps one
+active SD background in RAM and does not compile the SD photos into the UF2.
 
 ### Display Backlight Timeout
 
@@ -433,6 +502,5 @@ Both processors are defined in `boards/shields/xiaord/zmk_behaviors.dtsi`. `virt
 
 - Only tested on XIAO BLE (nRF52840)
 - Occasional hang on the date-setting screen
-- Loading custom background images from microSD
 - Font color options other than white
 - Battery management UI for the XIAO Round Display itself

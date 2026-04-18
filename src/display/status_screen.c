@@ -16,11 +16,20 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/led.h>
 #include <zephyr/devicetree.h>
+#include <errno.h>
 #include <lvgl.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
 #include <zephyr/logging/log.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/keycode_state_changed.h>
 #include <zmk/display.h>
+
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+#include <ff.h>
+#include <zephyr/fs/fs.h>
+#endif
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -35,6 +44,10 @@ static const struct gpio_dt_spec status_backlight_gpio = GPIO_DT_SPEC_GET(STATUS
 
 #include "page_iface.h"
 #include "display_api.h"
+
+#ifndef LV_ATTRIBUTE_MEM_ALIGN
+#define LV_ATTRIBUTE_MEM_ALIGN
+#endif
 
 #if IS_ENABLED(CONFIG_XIAORD_BG_4) && defined(XIAORD_LOCAL_BG4_AVAILABLE)
 extern const lv_image_dsc_t img_bg_4;
@@ -245,6 +258,232 @@ static struct page_entry s_pages[] = {
 
 static uint8_t s_active_page;
 
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+#define STATUS_BG_SIZE 240
+#define STATUS_BG_RGB565_BYTES (STATUS_BG_SIZE * STATUS_BG_SIZE * 2)
+#define STATUS_BG_SD_PATH_MAX 96
+
+static FATFS s_sd_fat_fs;
+static struct fs_mount_t s_sd_mount = {
+    .type = FS_FATFS,
+    .mnt_point = CONFIG_XIAORD_BG_SD_MOUNT_POINT,
+    .fs_data = &s_sd_fat_fs,
+};
+
+static LV_ATTRIBUTE_MEM_ALIGN uint8_t s_sd_bg_map[STATUS_BG_RGB565_BYTES];
+static lv_image_dsc_t s_sd_bg_dsc = {
+    .header.cf = LV_COLOR_FORMAT_RGB565,
+    .header.magic = LV_IMAGE_HEADER_MAGIC,
+    .header.w = STATUS_BG_SIZE,
+    .header.h = STATUS_BG_SIZE,
+    .data_size = STATUS_BG_RGB565_BYTES,
+    .data = s_sd_bg_map,
+};
+static lv_obj_t *s_sd_bg_objs[PAGE_COUNT];
+static uint16_t s_sd_bg_ids[CONFIG_XIAORD_BG_SD_MAX_FILES];
+static size_t s_sd_bg_count;
+static size_t s_sd_bg_index;
+static bool s_sd_bg_ready;
+static lv_timer_t *s_sd_bg_rotate_timer;
+
+static bool status_screen_sd_filename_id(const char *name, uint16_t *id)
+{
+    if (strncmp(name, "bg", 2) != 0) {
+        return false;
+    }
+
+    uint32_t value = 0;
+    const char *p = name + 2;
+    if (*p < '0' || *p > '9') {
+        return false;
+    }
+
+    while (*p >= '0' && *p <= '9') {
+        value = (value * 10U) + (uint32_t)(*p - '0');
+        if (value > CONFIG_XIAORD_BG_SD_MAX_FILES) {
+            return false;
+        }
+        p++;
+    }
+
+    if (strcmp(p, ".rgb565") != 0 || value == 0U) {
+        return false;
+    }
+
+    *id = (uint16_t)value;
+    return true;
+}
+
+static void status_screen_sd_add_id(uint16_t id)
+{
+    if (s_sd_bg_count >= ARRAY_SIZE(s_sd_bg_ids)) {
+        return;
+    }
+
+    size_t pos = s_sd_bg_count;
+    while (pos > 0 && s_sd_bg_ids[pos - 1] > id) {
+        s_sd_bg_ids[pos] = s_sd_bg_ids[pos - 1];
+        pos--;
+    }
+    s_sd_bg_ids[pos] = id;
+    s_sd_bg_count++;
+}
+
+static int status_screen_sd_path(char *path, size_t path_len, uint16_t id)
+{
+    int ret = snprintf(path, path_len, "%s%s/bg%03u.rgb565",
+                       CONFIG_XIAORD_BG_SD_MOUNT_POINT,
+                       CONFIG_XIAORD_BG_SD_DIR,
+                       (unsigned int)id);
+    return (ret > 0 && (size_t)ret < path_len) ? 0 : -ENAMETOOLONG;
+}
+
+static int status_screen_sd_mount(void)
+{
+    int err = fs_mount(&s_sd_mount);
+    if (err == -EALREADY || err == -EBUSY) {
+        return 0;
+    }
+    if (err) {
+        LOG_WRN("SD background mount failed: %d", err);
+    }
+    return err;
+}
+
+static int status_screen_sd_scan(void)
+{
+    char dir_path[STATUS_BG_SD_PATH_MAX];
+    int ret = snprintf(dir_path, sizeof(dir_path), "%s%s",
+                       CONFIG_XIAORD_BG_SD_MOUNT_POINT,
+                       CONFIG_XIAORD_BG_SD_DIR);
+    if (ret <= 0 || (size_t)ret >= sizeof(dir_path)) {
+        return -ENAMETOOLONG;
+    }
+
+    struct fs_dir_t dir;
+    struct fs_dirent entry;
+    fs_dir_t_init(&dir);
+
+    int err = fs_opendir(&dir, dir_path);
+    if (err) {
+        LOG_WRN("SD background directory unavailable: %s (%d)", dir_path, err);
+        return err;
+    }
+
+    s_sd_bg_count = 0;
+    while (fs_readdir(&dir, &entry) == 0 && entry.name[0] != '\0') {
+        uint16_t id;
+        if (entry.type != FS_DIR_ENTRY_FILE || entry.size != STATUS_BG_RGB565_BYTES) {
+            continue;
+        }
+        if (status_screen_sd_filename_id(entry.name, &id)) {
+            status_screen_sd_add_id(id);
+        }
+    }
+
+    fs_closedir(&dir);
+    LOG_INF("Found %u SD background(s)", (unsigned int)s_sd_bg_count);
+    return s_sd_bg_count > 0 ? 0 : -ENOENT;
+}
+
+static int status_screen_sd_load_index(size_t index)
+{
+    if (index >= s_sd_bg_count) {
+        return -EINVAL;
+    }
+
+    char path[STATUS_BG_SD_PATH_MAX];
+    int err = status_screen_sd_path(path, sizeof(path), s_sd_bg_ids[index]);
+    if (err) {
+        return err;
+    }
+
+    struct fs_file_t file;
+    fs_file_t_init(&file);
+
+    err = fs_open(&file, path, FS_O_READ);
+    if (err) {
+        LOG_WRN("SD background open failed: %s (%d)", path, err);
+        return err;
+    }
+
+    size_t off = 0;
+    while (off < sizeof(s_sd_bg_map)) {
+        ssize_t got = fs_read(&file, &s_sd_bg_map[off], sizeof(s_sd_bg_map) - off);
+        if (got <= 0) {
+            err = got == 0 ? -EIO : (int)got;
+            break;
+        }
+        off += (size_t)got;
+    }
+
+    int close_err = fs_close(&file);
+    if (!err && close_err) {
+        err = close_err;
+    }
+    if (err) {
+        LOG_WRN("SD background read failed: %s (%d)", path, err);
+        return err;
+    }
+
+    s_sd_bg_index = index;
+    return 0;
+}
+
+static void status_screen_sd_refresh_objs(void)
+{
+    for (size_t i = 0; i < PAGE_COUNT; i++) {
+        if (!s_sd_bg_objs[i]) {
+            continue;
+        }
+        lv_image_set_src(s_sd_bg_objs[i], &s_sd_bg_dsc);
+        lv_obj_invalidate(s_sd_bg_objs[i]);
+    }
+}
+
+static bool status_screen_sd_init(void)
+{
+    if (s_sd_bg_ready) {
+        return true;
+    }
+
+    if (status_screen_sd_mount() != 0 || status_screen_sd_scan() != 0 ||
+        status_screen_sd_load_index(0) != 0) {
+        LOG_WRN("Using compiled fallback background");
+        return false;
+    }
+
+    s_sd_bg_ready = true;
+    return true;
+}
+
+static void status_screen_sd_create_bg(lv_obj_t *screen, size_t page_idx)
+{
+    lv_obj_t *img = lv_image_create(screen);
+    lv_image_set_src(img, &s_sd_bg_dsc);
+    lv_obj_center(img);
+    lv_obj_move_background(img);
+    s_sd_bg_objs[page_idx] = img;
+}
+
+static void status_screen_sd_rotate_cb(lv_timer_t *timer)
+{
+    ARG_UNUSED(timer);
+    ss_background_next();
+}
+
+static void status_screen_sd_start_timer(void)
+{
+    if (CONFIG_XIAORD_BG_SD_ROTATE_MS <= 0 || s_sd_bg_count < 2 || s_sd_bg_rotate_timer) {
+        return;
+    }
+
+    s_sd_bg_rotate_timer = lv_timer_create(status_screen_sd_rotate_cb,
+                                           CONFIG_XIAORD_BG_SD_ROTATE_MS,
+                                           NULL);
+}
+#endif /* CONFIG_XIAORD_BG_SD */
+
 /* ── Public API ─────────────────────────────────────────────────────────── */
 
 void ss_navigate_to(uint8_t page_idx)
@@ -293,6 +532,44 @@ void ss_fire_behavior(input_virtual_code code)
     input_report(vkey, INPUT_EV_ZMK_BEHAVIORS, code, 0, true, K_NO_WAIT);
 }
 
+bool ss_background_next(void)
+{
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+    if (!s_sd_bg_ready || s_sd_bg_count < 2) {
+        return false;
+    }
+
+    size_t next = (s_sd_bg_index + 1) % s_sd_bg_count;
+    if (status_screen_sd_load_index(next) != 0) {
+        return false;
+    }
+
+    status_screen_sd_refresh_objs();
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool ss_background_prev(void)
+{
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+    if (!s_sd_bg_ready || s_sd_bg_count < 2) {
+        return false;
+    }
+
+    size_t prev = s_sd_bg_index == 0 ? s_sd_bg_count - 1 : s_sd_bg_index - 1;
+    if (status_screen_sd_load_index(prev) != 0) {
+        return false;
+    }
+
+    status_screen_sd_refresh_objs();
+    return true;
+#else
+    return false;
+#endif
+}
+
 /* ── Color theme ─────────────────────────────────────────────────────────── */
 
 static void xiaord_initialize_color_theme(void)
@@ -327,12 +604,23 @@ static void xiaord_initialize_color_theme(void)
 lv_obj_t *zmk_display_status_screen(void)
 {
     xiaord_initialize_color_theme();
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+    bool sd_bg_ready = status_screen_sd_init();
+#endif
 
 	/* Create an independent screen for each page */
 	for (size_t i = 0; i < PAGE_COUNT; i++) {
 		lv_obj_t *screen = lv_obj_create(NULL);
 		lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+        if (sd_bg_ready) {
+            status_screen_sd_create_bg(screen, i);
+        } else {
+            lv_obj_set_style_bg_image_src(screen, status_screen_current_background(), LV_PART_MAIN);
+        }
+#else
 		lv_obj_set_style_bg_image_src(screen, status_screen_current_background(), LV_PART_MAIN);
+#endif
 		s_pages[i].screen = screen;
 
 		/* Build page widgets */
@@ -348,6 +636,9 @@ lv_obj_t *zmk_display_status_screen(void)
 	}
 	k_timer_init(&status_screen_idle_timer, status_screen_idle_timeout, NULL);
 	k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+    status_screen_sd_start_timer();
+#endif
 
 	return s_pages[0].screen;
 }

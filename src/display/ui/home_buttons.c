@@ -189,6 +189,13 @@ static bool slide_fire_from_points(const lv_point_t *start, const lv_point_t *en
         ss_fire_behavior(dy < 0 ? INPUT_VIRTUAL_GESTURE_SLIDE_UP :
                                   INPUT_VIRTUAL_GESTURE_SLIDE_DOWN);
     } else {
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD_GESTURES)
+        if (dx < 0 ? ss_background_prev() : ss_background_next()) {
+            s_tap_pending = false;
+            lv_timer_pause(s_tap_timer);
+            return true;
+        }
+#endif
         ss_fire_behavior(dx < 0 ? INPUT_VIRTUAL_GESTURE_SLIDE_LEFT :
                                   INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT);
     }

@@ -223,6 +223,10 @@ def write_c_file(path: Path, bg_num: int, data: bytes) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def write_rgb565_file(path: Path, pixels: list[tuple[int, int, int]]) -> None:
+    path.write_bytes(rgb565_bytes(pixels))
+
+
 def convert_with_pillow(source: Path, center_x: float, center_y: float, zoom: float) -> list[tuple[int, int, int]] | None:
     try:
         from PIL import Image, ImageOps
@@ -257,6 +261,7 @@ def main() -> None:
     parser.add_argument("--center-y", type=float, default=0.5, help="Crop center Y, 0.0 top to 1.0 bottom")
     parser.add_argument("--zoom", type=float, default=1.0, help="Crop zoom, larger is closer")
     parser.add_argument("--out-dir", type=Path, default=Path("src/display/ui/bg"))
+    parser.add_argument("--rgb565-out", type=Path, help="Optional raw RGB565 output path for SD-card backgrounds")
     args = parser.parse_args()
 
     pixels = convert_source(args.source, args.center_x, args.center_y, args.zoom)
@@ -270,6 +275,11 @@ def main() -> None:
 
     print(f"Wrote {png_path}")
     print(f"Wrote {c_path}")
+
+    if args.rgb565_out:
+        args.rgb565_out.parent.mkdir(parents=True, exist_ok=True)
+        write_rgb565_file(args.rgb565_out, pixels)
+        print(f"Wrote {args.rgb565_out}")
 
 
 if __name__ == "__main__":

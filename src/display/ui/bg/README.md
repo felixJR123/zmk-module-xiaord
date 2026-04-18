@@ -45,3 +45,38 @@ CONFIG_XIAORD_BG_4_SOURCE_DIR="my-background-folder"
 ```
 
 Relative paths are resolved from the keyboard config repo.
+
+## Runtime microSD Backgrounds
+
+To store many pictures on the XIAO Round Display microSD card, use SD mode
+instead of compiling photos into the firmware:
+
+```conf
+CONFIG_XIAORD_BG_1=y
+CONFIG_XIAORD_BG_2=n
+CONFIG_XIAORD_BG_3=n
+CONFIG_XIAORD_BG_4=n
+CONFIG_XIAORD_BG_SD=y
+CONFIG_XIAORD_BG_SD_ROTATE_MS=60000
+```
+
+Keep one compiled background enabled as the fallback. Use `BG_4=y` instead of
+`BG_1=y` if you want your custom compiled image as the fallback.
+
+Prepare the card with:
+
+```powershell
+python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
+```
+
+This creates:
+
+```text
+xiaord-bg/
+  raw/        original JPG/PNG files
+  converted/  bg001.rgb565, bg002.rgb565, ...
+  tools/      converter scripts copied onto the SD card
+```
+
+The firmware reads from `/SD:/xiaord-bg/converted` by default. Slide left/right
+cycles pictures when `CONFIG_XIAORD_BG_SD_GESTURES=y`.

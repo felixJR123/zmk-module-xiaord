@@ -116,4 +116,32 @@ $Zoom = "1.00"
 
 - `CenterX`: smaller moves the crop left, larger moves it right.
 - `CenterY`: smaller moves the crop up, larger moves it down.
+
+## Preparing a microSD Card
+
+Use `xiaord_sd_backgrounds.py` when you want many runtime backgrounds on the
+XIAO Round Display microSD card instead of one compiled `BG_4` image.
+
+```powershell
+python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
+```
+
+The tool creates this card layout:
+
+```text
+xiaord-bg/
+  raw/        original JPG/PNG files
+  converted/  bg001.rgb565, bg002.rgb565, ...
+  tools/      converter scripts copied onto the SD card
+```
+
+After the first setup, you can add new pictures to `E:\xiaord-bg\raw` and run
+the copied tool from the card:
+
+```powershell
+python E:\xiaord-bg\tools\xiaord_sd_backgrounds.py E:\
+```
+
+The firmware expects the converted files in `/SD:/xiaord-bg/converted` when
+`CONFIG_XIAORD_BG_SD=y`.
 - `Zoom`: larger zooms in closer, smaller shows more of the picture.

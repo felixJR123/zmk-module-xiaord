@@ -98,6 +98,21 @@ Auto-rotating backgrounds were removed after confirming one picture works. The m
 
 Added `CONFIG_XIAORD_REMOVE_DATE_TIME=y` to remove the date and time labels from the home screen for cleaner custom backgrounds. Set it to `n` or remove the line to bring the clock/date back for default backgrounds. The separate clock settings page remains available.
 
+## Runtime SD Backgrounds
+
+Added planned runtime SD-card background support:
+
+- `CONFIG_XIAORD_BG_SD=y` loads one active `bgNNN.rgb565` file from the SD card and falls back to whichever compiled `BG_1`/`BG_2`/`BG_3`/`BG_4` option is enabled.
+- `CONFIG_XIAORD_BG_SD_ROTATE_MS=<ms>` rotates through converted SD backgrounds automatically. `0` disables auto-rotation.
+- `CONFIG_XIAORD_BG_SD_GESTURES=y` lets slide left/right cycle previous/next SD background instead of sending normal left/right gesture bindings.
+- Default SD path is `/SD:/xiaord-bg/converted`.
+- `tools/xiaord_sd_backgrounds.py` prepares the SD layout:
+  - `xiaord-bg/raw` for original JPG/PNG files.
+  - `xiaord-bg/converted` for `bg001.rgb565`, `bg002.rgb565`, etc.
+  - `xiaord-bg/tools` for converter scripts copied onto the SD card.
+
+This moves multiple photos out of firmware flash. The firmware still keeps one 240x240 RGB565 image in RAM while SD mode is active.
+
 ## Touch Gestures
 
 Added home-screen touch gestures:
