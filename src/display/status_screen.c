@@ -27,7 +27,6 @@
 #include <zmk/display.h>
 
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
-#include <ff.h>
 #include <zephyr/fs/fs.h>
 #endif
 
@@ -263,11 +262,9 @@ static uint8_t s_active_page;
 #define STATUS_BG_RGB565_BYTES (STATUS_BG_SIZE * STATUS_BG_SIZE * 2)
 #define STATUS_BG_SD_PATH_MAX 96
 
-static FATFS s_sd_fat_fs;
 static struct fs_mount_t s_sd_mount = {
     .type = FS_FATFS,
     .mnt_point = CONFIG_XIAORD_BG_SD_MOUNT_POINT,
-    .fs_data = &s_sd_fat_fs,
 };
 
 static LV_ATTRIBUTE_MEM_ALIGN uint8_t s_sd_bg_map[STATUS_BG_RGB565_BYTES];
