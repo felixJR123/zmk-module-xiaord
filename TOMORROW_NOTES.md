@@ -114,7 +114,7 @@ Added planned runtime SD-card background support:
 - Quote picture paths that contain spaces.
 - `CONFIG_XIAORD_BG_SD_MAX_FILES=999` is a maximum only; fewer pictures are fine.
 
-This moves multiple photos out of firmware flash. The firmware still keeps one 240x240 RGB565 image in RAM while SD mode is active.
+This moves multiple photos out of firmware flash. The firmware streams SD backgrounds to the display in small row chunks instead of keeping a full 240x240 RGB565 image in RAM.
 
 ## Touch Gestures
 

@@ -260,6 +260,8 @@ static uint8_t s_active_page;
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
 #define STATUS_BG_SIZE 240
 #define STATUS_BG_RGB565_BYTES (STATUS_BG_SIZE * STATUS_BG_SIZE * 2)
+#define STATUS_BG_SD_ROWS 8
+#define STATUS_BG_SD_CHUNK_BYTES (STATUS_BG_SIZE * STATUS_BG_SD_ROWS * 2)
 #define STATUS_BG_SD_PATH_MAX 96
 
 static struct fs_mount_t s_sd_mount = {
@@ -267,16 +269,7 @@ static struct fs_mount_t s_sd_mount = {
     .mnt_point = CONFIG_XIAORD_BG_SD_MOUNT_POINT,
 };
 
-static LV_ATTRIBUTE_MEM_ALIGN uint8_t s_sd_bg_map[STATUS_BG_RGB565_BYTES];
-static lv_image_dsc_t s_sd_bg_dsc = {
-    .header.cf = LV_COLOR_FORMAT_RGB565,
-    .header.magic = LV_IMAGE_HEADER_MAGIC,
-    .header.w = STATUS_BG_SIZE,
-    .header.h = STATUS_BG_SIZE,
-    .data_size = STATUS_BG_RGB565_BYTES,
-    .data = s_sd_bg_map,
-};
-static lv_obj_t *s_sd_bg_objs[PAGE_COUNT];
+static LV_ATTRIBUTE_MEM_ALIGN uint8_t s_sd_bg_chunk[STATUS_BG_SD_CHUNK_BYTES];
 static uint16_t s_sd_bg_ids[CONFIG_XIAORD_BG_SD_MAX_FILES];
 static size_t s_sd_bg_count;
 static size_t s_sd_bg_index;
@@ -383,10 +376,15 @@ static int status_screen_sd_scan(void)
     return s_sd_bg_count > 0 ? 0 : -ENOENT;
 }
 
-static int status_screen_sd_load_index(size_t index)
+static int status_screen_sd_draw_index(size_t index)
 {
     if (index >= s_sd_bg_count) {
         return -EINVAL;
+    }
+
+    status_screen_init_display();
+    if (!status_display || !device_is_ready(status_display)) {
+        return -ENODEV;
     }
 
     char path[STATUS_BG_SD_PATH_MAX];
@@ -404,14 +402,35 @@ static int status_screen_sd_load_index(size_t index)
         return err;
     }
 
-    size_t off = 0;
-    while (off < sizeof(s_sd_bg_map)) {
-        ssize_t got = fs_read(&file, &s_sd_bg_map[off], sizeof(s_sd_bg_map) - off);
-        if (got <= 0) {
-            err = got == 0 ? -EIO : (int)got;
+    for (uint16_t y = 0; y < STATUS_BG_SIZE; y += STATUS_BG_SD_ROWS) {
+        uint16_t rows = MIN(STATUS_BG_SD_ROWS, STATUS_BG_SIZE - y);
+        size_t want = STATUS_BG_SIZE * rows * 2;
+        size_t off = 0;
+
+        while (off < want) {
+            ssize_t got = fs_read(&file, &s_sd_bg_chunk[off], want - off);
+            if (got <= 0) {
+                err = got == 0 ? -EIO : (int)got;
+                break;
+            }
+            off += (size_t)got;
+        }
+        if (err) {
             break;
         }
-        off += (size_t)got;
+
+        struct display_buffer_descriptor desc = {
+            .buf_size = want,
+            .width = STATUS_BG_SIZE,
+            .height = rows,
+            .pitch = STATUS_BG_SIZE,
+        };
+
+        err = display_write(status_display, 0, y, &desc, s_sd_bg_chunk);
+        if (err) {
+            LOG_WRN("SD background display write failed: %d", err);
+            break;
+        }
     }
 
     int close_err = fs_close(&file);
@@ -427,14 +446,10 @@ static int status_screen_sd_load_index(size_t index)
     return 0;
 }
 
-static void status_screen_sd_refresh_objs(void)
+static void status_screen_sd_invalidate_active_page(void)
 {
-    for (size_t i = 0; i < PAGE_COUNT; i++) {
-        if (!s_sd_bg_objs[i]) {
-            continue;
-        }
-        lv_image_set_src(s_sd_bg_objs[i], &s_sd_bg_dsc);
-        lv_obj_invalidate(s_sd_bg_objs[i]);
+    if (s_active_page < PAGE_COUNT && s_pages[s_active_page].screen) {
+        lv_obj_invalidate(s_pages[s_active_page].screen);
     }
 }
 
@@ -444,23 +459,13 @@ static bool status_screen_sd_init(void)
         return true;
     }
 
-    if (status_screen_sd_mount() != 0 || status_screen_sd_scan() != 0 ||
-        status_screen_sd_load_index(0) != 0) {
+    if (status_screen_sd_mount() != 0 || status_screen_sd_scan() != 0) {
         LOG_WRN("Using compiled fallback background");
         return false;
     }
 
     s_sd_bg_ready = true;
     return true;
-}
-
-static void status_screen_sd_create_bg(lv_obj_t *screen, size_t page_idx)
-{
-    lv_obj_t *img = lv_image_create(screen);
-    lv_image_set_src(img, &s_sd_bg_dsc);
-    lv_obj_center(img);
-    lv_obj_move_background(img);
-    s_sd_bg_objs[page_idx] = img;
 }
 
 static void status_screen_sd_rotate_cb(lv_timer_t *timer)
@@ -497,6 +502,11 @@ void ss_navigate_to(uint8_t page_idx)
 
 	/* Enter new page */
 	s_active_page = page_idx;
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+    if (s_sd_bg_ready) {
+        (void)status_screen_sd_draw_index(s_sd_bg_index);
+    }
+#endif
 	lv_scr_load(s_pages[page_idx].screen);
 	if (s_pages[page_idx].ops->on_enter) {
 		s_pages[page_idx].ops->on_enter();
@@ -537,11 +547,11 @@ bool ss_background_next(void)
     }
 
     size_t next = (s_sd_bg_index + 1) % s_sd_bg_count;
-    if (status_screen_sd_load_index(next) != 0) {
+    if (status_screen_sd_draw_index(next) != 0) {
         return false;
     }
 
-    status_screen_sd_refresh_objs();
+    status_screen_sd_invalidate_active_page();
     return true;
 #else
     return false;
@@ -556,11 +566,11 @@ bool ss_background_prev(void)
     }
 
     size_t prev = s_sd_bg_index == 0 ? s_sd_bg_count - 1 : s_sd_bg_index - 1;
-    if (status_screen_sd_load_index(prev) != 0) {
+    if (status_screen_sd_draw_index(prev) != 0) {
         return false;
     }
 
-    status_screen_sd_refresh_objs();
+    status_screen_sd_invalidate_active_page();
     return true;
 #else
     return false;
@@ -611,7 +621,7 @@ lv_obj_t *zmk_display_status_screen(void)
 		lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
         if (sd_bg_ready) {
-            status_screen_sd_create_bg(screen, i);
+            lv_obj_set_style_bg_opa(screen, LV_OPA_TRANSP, LV_PART_MAIN);
         } else {
             lv_obj_set_style_bg_image_src(screen, status_screen_current_background(), LV_PART_MAIN);
         }
@@ -628,6 +638,11 @@ lv_obj_t *zmk_display_status_screen(void)
 	}
 
 	/* Fire on_enter for the initial page */
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+    if (sd_bg_ready) {
+        (void)status_screen_sd_draw_index(0);
+    }
+#endif
 	if (s_pages[0].ops->on_enter) {
 		s_pages[0].ops->on_enter();
 	}

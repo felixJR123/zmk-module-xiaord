@@ -444,8 +444,9 @@ CONFIG_XIAORD_BG_SD=y
 If the card has 5 converted files, the firmware cycles those 5 files. If it has
 no converted files, it uses the compiled fallback.
 
-Each converted full-screen background is 115,200 bytes. The firmware keeps one
-active SD background in RAM and does not compile the SD photos into the UF2.
+Each converted full-screen background is 115,200 bytes on the SD card. The
+firmware streams SD backgrounds to the display in small row chunks and does not
+compile the SD photos into the UF2.
 
 ### Display Backlight Timeout
 
