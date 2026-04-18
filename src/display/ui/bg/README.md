@@ -69,6 +69,21 @@ Prepare the card with:
 python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
 ```
 
+You can also download only the converter files instead of cloning the full
+module. Keep these files together in one folder:
+
+```text
+xiaord_sd_backgrounds.py
+convert_xiaord_bg.py
+SD_BACKGROUND_STEPS.txt
+```
+
+Use quotes around paths with spaces:
+
+```powershell
+python xiaord_sd_backgrounds.py E:\ --source "C:\Users\fhern\Pictures\Xiaord Backgrounds"
+```
+
 This creates:
 
 ```text
@@ -80,3 +95,6 @@ xiaord-bg/
 
 The firmware reads from `/SD:/xiaord-bg/converted` by default. Slide left/right
 cycles pictures when `CONFIG_XIAORD_BG_SD_GESTURES=y`.
+
+`CONFIG_XIAORD_BG_SD_MAX_FILES=999` is only a maximum. Fewer pictures are fine;
+the firmware cycles whatever converted files it finds.

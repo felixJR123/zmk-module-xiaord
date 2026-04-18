@@ -116,14 +116,30 @@ $Zoom = "1.00"
 
 - `CenterX`: smaller moves the crop left, larger moves it right.
 - `CenterY`: smaller moves the crop up, larger moves it down.
+- `Zoom`: larger zooms in closer, smaller shows more of the picture.
 
 ## Preparing a microSD Card
 
 Use `xiaord_sd_backgrounds.py` when you want many runtime backgrounds on the
 XIAO Round Display microSD card instead of one compiled `BG_4` image.
 
+You can use a local clone of this module, or download only these files into one
+folder:
+
+```text
+xiaord_sd_backgrounds.py
+convert_xiaord_bg.py
+SD_BACKGROUND_STEPS.txt
+```
+
 ```powershell
 python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
+```
+
+Quote paths that contain spaces:
+
+```powershell
+python xiaord_sd_backgrounds.py E:\ --source "C:\Users\fhern\Pictures\Xiaord Backgrounds"
 ```
 
 The tool creates this card layout:
@@ -144,4 +160,17 @@ python E:\xiaord-bg\tools\xiaord_sd_backgrounds.py E:\
 
 The firmware expects the converted files in `/SD:/xiaord-bg/converted` when
 `CONFIG_XIAORD_BG_SD=y`.
-- `Zoom`: larger zooms in closer, smaller shows more of the picture.
+
+Keep one compiled background enabled as a fallback. For example, this uses SD
+backgrounds when available and falls back to `BG_4`:
+
+```conf
+CONFIG_XIAORD_BG_1=n
+CONFIG_XIAORD_BG_2=n
+CONFIG_XIAORD_BG_3=n
+CONFIG_XIAORD_BG_4=y
+CONFIG_XIAORD_BG_SD=y
+```
+
+`CONFIG_XIAORD_BG_SD_MAX_FILES=999` is only the maximum number of files to
+index. It is fine if the SD card has fewer pictures.

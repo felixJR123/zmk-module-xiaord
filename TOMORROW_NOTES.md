@@ -110,6 +110,9 @@ Added planned runtime SD-card background support:
   - `xiaord-bg/raw` for original JPG/PNG files.
   - `xiaord-bg/converted` for `bg001.rgb565`, `bg002.rgb565`, etc.
   - `xiaord-bg/tools` for converter scripts copied onto the SD card.
+- The SD prep tool can be run from a full clone or from only these downloaded files kept together: `xiaord_sd_backgrounds.py`, `convert_xiaord_bg.py`, and `SD_BACKGROUND_STEPS.txt`.
+- Quote picture paths that contain spaces.
+- `CONFIG_XIAORD_BG_SD_MAX_FILES=999` is a maximum only; fewer pictures are fine.
 
 This moves multiple photos out of firmware flash. The firmware still keeps one 240x240 RGB565 image in RAM while SD mode is active.
 

@@ -31,6 +31,21 @@ First-time setup from the zmk-module-xiaord repo
 
   python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
 
+If you do not want to clone the whole repo, download these three files and keep
+them together in one folder:
+
+  xiaord_sd_backgrounds.py
+  convert_xiaord_bg.py
+  SD_BACKGROUND_STEPS.txt
+
+Then run from that folder:
+
+  python xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
+
+If a path has spaces, put quotes around it:
+
+  python xiaord_sd_backgrounds.py E:\ --source "C:\Users\fhern\Pictures\Xiaord Backgrounds"
+
 5. The tool creates this SD card layout:
 
   E:\xiaord-bg\raw
@@ -87,6 +102,9 @@ Use SD backgrounds, and fall back to BG_4 if the SD card is missing:
   CONFIG_XIAORD_BG_SD_ROTATE_MS=60000
   CONFIG_XIAORD_BG_SD_GESTURES=y
 
+Use whichever compiled background you want as fallback. For example, set
+BG_2=y instead of BG_4=y if you want BG_2 to appear when the SD card is missing.
+
 
 Notes
 -----
@@ -97,3 +115,5 @@ Notes
 
 - Each converted picture is 115,200 bytes.
 - Files are used in numeric order: bg001, bg002, bg003, then wrap back to bg001.
+- CONFIG_XIAORD_BG_SD_MAX_FILES=999 is only a maximum. It is fine to have fewer
+  pictures on the SD card.

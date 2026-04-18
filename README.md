@@ -402,6 +402,22 @@ From this repo, prepare a mounted SD card like this:
 python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
 ```
 
+You do not need to clone the whole module just to prepare an SD card. You can
+download these three files into one local folder and run the same command from
+there:
+
+```text
+xiaord_sd_backgrounds.py
+convert_xiaord_bg.py
+SD_BACKGROUND_STEPS.txt
+```
+
+If the picture folder has spaces in its path, wrap it in quotes:
+
+```powershell
+python xiaord_sd_backgrounds.py E:\ --source "C:\Users\fhern\Pictures\Xiaord Backgrounds"
+```
+
 Later, you can put new JPG/PNG files directly into `E:\xiaord-bg\raw` and run
 the copied tool from the SD card:
 
@@ -423,6 +439,10 @@ CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=y
 CONFIG_XIAORD_BG_SD=y
 ```
+
+`CONFIG_XIAORD_BG_SD_MAX_FILES=999` is a maximum, not a required picture count.
+If the card has 5 converted files, the firmware cycles those 5 files. If it has
+no converted files, it uses the compiled fallback.
 
 Each converted full-screen background is 115,200 bytes. The firmware keeps one
 active SD background in RAM and does not compile the SD photos into the UF2.
