@@ -518,12 +518,21 @@ static void status_screen_sd_rotate_cb(lv_timer_t *timer)
     ss_background_next();
 }
 
-static void status_screen_sd_start_timer(void)
+static void status_screen_sd_stop_timer(void)
 {
-    if (CONFIG_XIAORD_BG_SD_ROTATE_MS <= 0 || s_sd_bg_count < 2 || s_sd_bg_rotate_timer) {
+    if (!s_sd_bg_rotate_timer) {
         return;
     }
+    lv_timer_del(s_sd_bg_rotate_timer);
+    s_sd_bg_rotate_timer = NULL;
+}
 
+static void status_screen_sd_start_timer(void)
+{
+    if (CONFIG_XIAORD_BG_SD_ROTATE_MS <= 0 || s_sd_bg_count < 2) {
+        return;
+    }
+    status_screen_sd_stop_timer();
     s_sd_bg_rotate_timer = lv_timer_create(status_screen_sd_rotate_cb,
                                            CONFIG_XIAORD_BG_SD_ROTATE_MS,
                                            NULL);
@@ -614,6 +623,20 @@ void ss_fire_behavior(input_virtual_code code)
     input_report(vkey, INPUT_EV_ZMK_BEHAVIORS, code, 0, true, K_NO_WAIT);
 }
 
+void ss_background_autoplay_start(void)
+{
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+    status_screen_sd_start_timer();
+#endif
+}
+
+void ss_background_autoplay_stop(void)
+{
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+    status_screen_sd_stop_timer();
+#endif
+}
+
 bool ss_background_next(void)
 {
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
@@ -626,6 +649,9 @@ bool ss_background_next(void)
         return false;
     }
 
+    if (s_sd_bg_rotate_timer) {
+        status_screen_sd_start_timer();
+    }
     status_screen_sd_invalidate_active_page();
     return true;
 #else
@@ -645,6 +671,9 @@ bool ss_background_prev(void)
         return false;
     }
 
+    if (s_sd_bg_rotate_timer) {
+        status_screen_sd_start_timer();
+    }
     status_screen_sd_invalidate_active_page();
     return true;
 #else

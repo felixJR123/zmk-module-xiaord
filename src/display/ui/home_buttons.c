@@ -185,20 +185,31 @@ static bool slide_fire_from_points(const lv_point_t *start, const lv_point_t *en
         return false;
     }
 
-    if (abs_y > abs_x) {
-        ss_fire_behavior(dy < 0 ? INPUT_VIRTUAL_GESTURE_SLIDE_UP :
-                                  INPUT_VIRTUAL_GESTURE_SLIDE_DOWN);
-    } else {
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD_GESTURES)
-        if (dx < 0 ? ss_background_prev() : ss_background_next()) {
+    if (abs_y > abs_x) {
+        if (dy < 0 ? ss_background_prev() : ss_background_next()) {
             s_tap_pending = false;
             lv_timer_pause(s_tap_timer);
             return true;
         }
-#endif
+        ss_fire_behavior(dy < 0 ? INPUT_VIRTUAL_GESTURE_SLIDE_UP :
+                                  INPUT_VIRTUAL_GESTURE_SLIDE_DOWN);
+    } else {
+        if (dx < 0) {
+            ss_background_autoplay_start();
+        } else {
+            ss_background_autoplay_stop();
+        }
+    }
+#else
+    if (abs_y > abs_x) {
+        ss_fire_behavior(dy < 0 ? INPUT_VIRTUAL_GESTURE_SLIDE_UP :
+                                  INPUT_VIRTUAL_GESTURE_SLIDE_DOWN);
+    } else {
         ss_fire_behavior(dx < 0 ? INPUT_VIRTUAL_GESTURE_SLIDE_LEFT :
                                   INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT);
     }
+#endif
 
     s_tap_pending = false;
     lv_timer_pause(s_tap_timer);

@@ -34,3 +34,5 @@ void ss_fire_behavior(input_virtual_code code);
  */
 bool ss_background_next(void);
 bool ss_background_prev(void);
+void ss_background_autoplay_start(void);
+void ss_background_autoplay_stop(void);
