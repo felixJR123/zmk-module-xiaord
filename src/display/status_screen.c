@@ -291,6 +291,7 @@ static size_t s_sd_bg_index;
 static bool s_sd_bg_ready;
 static lv_timer_t *s_sd_bg_rotate_timer;
 static lv_timer_t *s_sd_bg_retry_timer;
+static lv_obj_t  *s_pause_dot;
 
 static bool status_screen_sd_filename_id(const char *name, uint16_t *id)
 {
@@ -527,6 +528,36 @@ static void status_screen_sd_stop_timer(void)
     s_sd_bg_rotate_timer = NULL;
 }
 
+static void status_screen_sd_update_pause_dot(void)
+{
+    if (!s_pause_dot) {
+        return;
+    }
+    if (s_sd_bg_rotate_timer) {
+        lv_obj_add_flag(s_pause_dot, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_clear_flag(s_pause_dot, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
+static void status_screen_sd_create_pause_dot(void)
+{
+    if (s_pause_dot || !s_pages[PAGE_HOME].screen) {
+        return;
+    }
+    lv_obj_t *dot = lv_obj_create(s_pages[PAGE_HOME].screen);
+    lv_obj_set_size(dot, 10, 10);
+    lv_obj_align(dot, LV_ALIGN_BOTTOM_MID, 0, -8);
+    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(dot, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(dot, 0, 0);
+    lv_obj_set_style_pad_all(dot, 0, 0);
+    lv_obj_clear_flag(dot, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(dot, LV_OBJ_FLAG_HIDDEN);
+    s_pause_dot = dot;
+}
+
 static void status_screen_sd_start_timer(void)
 {
     if (CONFIG_XIAORD_BG_SD_ROTATE_MS <= 0 || s_sd_bg_count < 2) {
@@ -560,7 +591,9 @@ static void status_screen_sd_retry_cb(lv_timer_t *timer)
     status_screen_sd_retry_stop();
     (void)status_screen_sd_draw_index(0);
     status_screen_sd_set_mode(true);
+    status_screen_sd_create_pause_dot();
     status_screen_sd_start_timer();
+    status_screen_sd_update_pause_dot();
 }
 
 static void status_screen_sd_start_retry_timer(void)
@@ -627,6 +660,7 @@ void ss_background_autoplay_start(void)
 {
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
     status_screen_sd_start_timer();
+    status_screen_sd_update_pause_dot();
 #endif
 }
 
@@ -634,6 +668,7 @@ void ss_background_autoplay_stop(void)
 {
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
     status_screen_sd_stop_timer();
+    status_screen_sd_update_pause_dot();
 #endif
 }
 
@@ -753,7 +788,11 @@ lv_obj_t *zmk_display_status_screen(void)
 	k_timer_init(&status_screen_idle_timer, status_screen_idle_timeout, NULL);
 	k_timer_start(&status_screen_idle_timer, K_MSEC(STATUS_SCREEN_IDLE_TIMEOUT_MS), K_NO_WAIT);
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+    if (sd_bg_ready) {
+        status_screen_sd_create_pause_dot();
+    }
     status_screen_sd_start_timer();
+    status_screen_sd_update_pause_dot();
     status_screen_sd_start_retry_timer();
 #endif
 
