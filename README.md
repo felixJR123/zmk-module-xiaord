@@ -372,6 +372,9 @@ CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=n
 CONFIG_XIAORD_BG_SD=y
 
+# Default for the Seeed XIAO Round Display SD disk.
+CONFIG_XIAORD_BG_SD_VOLUME_NAME="SD"
+
 # Optional: rotate every 60 seconds. Set to 0 to disable auto-rotation.
 CONFIG_XIAORD_BG_SD_ROTATE_MS=60000
 
@@ -443,6 +446,11 @@ CONFIG_XIAORD_BG_SD=y
 `CONFIG_XIAORD_BG_SD_MAX_FILES=999` is a maximum, not a required picture count.
 If the card has 5 converted files, the firmware cycles those 5 files. If it has
 no converted files, it uses the compiled fallback.
+
+If the SD card is inserted but the firmware does not find it, make sure the card
+is formatted as FAT32, the converted files are under `xiaord-bg/converted`, and
+`CONFIG_XIAORD_BG_SD_VOLUME_NAME` matches the disk name registered by the board.
+The Seeed XIAO Round Display normally uses `SD`, which mounts at `/SD:`.
 
 Each converted full-screen background is 115,200 bytes on the SD card. The
 firmware streams SD backgrounds to the display in small row chunks and does not

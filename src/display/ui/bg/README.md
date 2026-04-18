@@ -57,6 +57,7 @@ CONFIG_XIAORD_BG_2=n
 CONFIG_XIAORD_BG_3=n
 CONFIG_XIAORD_BG_4=n
 CONFIG_XIAORD_BG_SD=y
+CONFIG_XIAORD_BG_SD_VOLUME_NAME="SD"
 CONFIG_XIAORD_BG_SD_ROTATE_MS=60000
 ```
 
@@ -95,6 +96,11 @@ xiaord-bg/
 
 The firmware reads from `/SD:/xiaord-bg/converted` by default. Slide left/right
 cycles pictures when `CONFIG_XIAORD_BG_SD_GESTURES=y`.
+
+If the SD card is inserted but no SD backgrounds load, format it as FAT32,
+confirm the files are in `xiaord-bg/converted`, and keep
+`CONFIG_XIAORD_BG_SD_VOLUME_NAME="SD"` unless your board uses a different disk
+name.
 
 `CONFIG_XIAORD_BG_SD_MAX_FILES=999` is only a maximum. Fewer pictures are fine;
 the firmware cycles whatever converted files it finds.

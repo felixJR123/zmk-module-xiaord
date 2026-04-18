@@ -267,6 +267,7 @@ static uint8_t s_active_page;
 static struct fs_mount_t s_sd_mount = {
     .type = FS_FATFS,
     .mnt_point = CONFIG_XIAORD_BG_SD_MOUNT_POINT,
+    .storage_dev = (void *)CONFIG_XIAORD_BG_SD_VOLUME_NAME,
 };
 
 static LV_ATTRIBUTE_MEM_ALIGN uint8_t s_sd_bg_chunk[STATUS_BG_SD_CHUNK_BYTES];

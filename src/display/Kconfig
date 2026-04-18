@@ -56,6 +56,14 @@ config XIAORD_BG_SD_MOUNT_POINT
     help
       Filesystem mount point for the SD card.
 
+config XIAORD_BG_SD_VOLUME_NAME
+    string "SD card disk volume name"
+    default "SD"
+    depends on XIAORD_BG_SD
+    help
+      Disk device name registered by Zephyr's SD/MMC disk driver. The
+      seeed_xiao_round_display shield normally uses SD.
+
 config XIAORD_BG_SD_DIR
     string "SD card converted background directory"
     default "/xiaord-bg/converted"
