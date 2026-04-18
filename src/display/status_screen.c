@@ -387,14 +387,6 @@ static void status_screen_sd_bg_draw_cb(lv_event_t *e)
             }
             off += (uint32_t)got;
         }
-
-#if defined(LV_COLOR_16_SWAP) && LV_COLOR_16_SWAP
-        for (uint32_t bi = 0; bi + 1 < bytes; bi += 2) {
-            uint8_t tmp = row[bi];
-            row[bi] = row[bi + 1];
-            row[bi + 1] = tmp;
-        }
-#endif
     }
 }
 
