@@ -29,6 +29,7 @@
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
 #include <zephyr/fs/fs.h>
 #include <zephyr/storage/disk_access.h>
+#include <draw/lv_image_decoder_private.h>
 #include <ff.h>
 #endif
 
