@@ -601,6 +601,7 @@ static void status_screen_sd_retry_cb(lv_timer_t *timer)
     ARG_UNUSED(timer);
 
     if (!status_screen_sd_init()) {
+        status_screen_sd_retry_stop();
         return;
     }
 
