@@ -49,8 +49,8 @@ Touch gestures on the photo/home screen:
 
 | Gesture | Action |
 |---------|--------|
-| Single tap | Show/hide the shortcut button ring |
-| Double tap | Mute/unmute (`INPUT_VIRTUAL_GESTURE_DOUBLE_TAP`) |
+| Center single tap | Show/hide the shortcut button ring (`INPUT_VIRTUAL_GESTURE_TAP`) |
+| Center double tap | Mute/unmute (`INPUT_VIRTUAL_GESTURE_DOUBLE_TAP`) |
 | Clockwise slide | Volume up (`INPUT_VIRTUAL_GESTURE_CW`) |
 | Counterclockwise slide | Volume down (`INPUT_VIRTUAL_GESTURE_CCW`) |
 | Slide up | Up arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_UP`) |
@@ -62,41 +62,16 @@ Touch gestures on the photo/home screen:
 | 6 o'clock tap zone | Show/hide home screen information (`INPUT_VIRTUAL_GESTURE_TOUCH_6`) |
 | 9 o'clock tap zone | Unassigned (`INPUT_VIRTUAL_GESTURE_TOUCH_9`) |
 
-Single tap and double tap are recognized in the center touch zone on the home
-screen. The 12, 3, 6, and 9 o'clock zones are separate home-screen touch zones
-that can be remapped like the other gestures. By default, the 12 o'clock zone
-toggles only the date/time labels, and the 6 o'clock zone toggles the
-clock/date, output status, and battery widgets so only the background remains
-visible. The 12 o'clock zone can still bring back just date/time for a quick
-glance while the other information stays hidden.
+The center zone is reserved for tap and double-tap. The 12, 3, 6, and 9 o'clock
+zones are separate home-screen touch zones that can be remapped like the other
+gestures. By default, 12 o'clock toggles only the date/time labels, while
+6 o'clock toggles all home information: date/time, output status, and battery
+widgets. If all information is hidden, 12 o'clock can still bring back just the
+time for a quick glance.
 
-The double-tap window defaults to 450 ms. To make it faster or slower, add this
-to your keyboard's `.conf` file:
-
-```conf
-CONFIG_XIAORD_DOUBLE_TAP_MS=600
-```
-
-`CONFIG_XIAORD_REMOVE_DATE_TIME=y` starts the home screen with date/time hidden
-for a cleaner background. Date/time can still be shown when needed with the
-12 o'clock touch zone.
-
-Clockwise and counterclockwise slides are intentionally stricter than straight
-slides. If a slightly imperfect up/down/left/right slide still triggers volume
-instead, increase the rotation intent and repeat thresholds in your keyboard's
-`.conf` file:
-
-```conf
-CONFIG_XIAORD_GESTURE_ROTATION_INTENT_CROSS=9000
-CONFIG_XIAORD_GESTURE_ROTATION_STEP_CROSS=6500
-CONFIG_XIAORD_GESTURE_ROTATION_TANGENTIAL_RATIO=200
-```
-
-`XIAORD_GESTURE_ROTATION_INTENT_CROSS` controls how much circular movement is
-required before rotation can fire at all. `XIAORD_GESTURE_ROTATION_STEP_CROSS`
-controls how quickly repeated clockwise/counterclockwise events fire after that.
-`XIAORD_GESTURE_ROTATION_TANGENTIAL_RATIO` controls how strongly motion must
-follow the ring instead of moving inward/outward like a straight swipe.
+Clockwise and counterclockwise slides require deliberate circular motion. If
+rotation still feels too easy to trigger, tune the `CONFIG_XIAORD_GESTURE_*`
+options in the `.conf` reference below.
 
 Home screen gestures and touch zones are regular ZMK behavior bindings you can
 override in your dongle overlay. Center single tap fires
@@ -136,11 +111,15 @@ the shortcut ring). Defaults:
 };
 ```
 
-`&xiaord_menu` toggles the home screen shortcut button ring.
-`&xiaord_home_datetime` toggles only the home screen date/time labels.
-`&xiaord_home_info` toggles all home screen information widgets over the
-background. These are built-in behaviors provided by this module, and any of
-them can be bound to any gesture or home button.
+Built-in Xiaord behaviors:
+
+| Behavior | Action |
+|----------|--------|
+| `&xiaord_menu` | Toggle the home screen shortcut button ring |
+| `&xiaord_home_datetime` | Toggle only the home screen date/time labels |
+| `&xiaord_home_info` | Toggle all home screen information widgets over the background |
+
+Any of these can be bound to a gesture or home button.
 
 Any ZMK behavior binding that is valid in a binding array works here, including
 key presses, layer changes, and macros. For example:
@@ -288,6 +267,50 @@ include:
 > | Fired code | icon code (`INPUT_VIRTUAL_SYM_*`) | position code (`INPUT_VIRTUAL_POS_*`) |
 >
 > v0.0 configs are not compatible with v0.1. Refer to the README at the `v0.0` tag for the old API.
+
+### `.conf` Options
+
+These are the Xiaord-specific options you can use in your keyboard `.conf` or
+`prj.conf`. This table intentionally leaves out standard ZMK options.
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `CONFIG_XIAORD_BG_1` | `y` if no other compiled background is selected | Use built-in background 1. |
+| `CONFIG_XIAORD_BG_2` | `n` | Use built-in background 2. |
+| `CONFIG_XIAORD_BG_3` | `n` | Use built-in background 3. |
+| `CONFIG_XIAORD_BG_4` | `n` | Generate and use one custom background from your keyboard config repo. |
+| `CONFIG_XIAORD_BG_4_SOURCE_DIR` | `""` | Folder containing JPG/PNG source images for `BG_4`. Relative paths are resolved from the keyboard config repo. Empty means use `config/xiaord-bg`, the `XIAORD_BG_4_SOURCE_DIR` environment variable, or fall back to `BG_1`. |
+| `CONFIG_XIAORD_BG_SD` | `n` | Load runtime backgrounds from the microSD card instead of compiling every photo into firmware. A compiled background should still be enabled as a fallback. |
+| `CONFIG_XIAORD_BG_SD_MOUNT_POINT` | `"/SD:"` | Filesystem mount point for the SD card. |
+| `CONFIG_XIAORD_BG_SD_VOLUME_NAME` | `"SD"` | Disk name registered by the board's SD/MMC driver. The Seeed XIAO Round Display normally uses `SD`. |
+| `CONFIG_XIAORD_BG_SD_DIR` | `"/xiaord-bg/converted"` | Directory under the mount point containing converted `bg001.rgb565`, `bg002.rgb565`, and so on. |
+| `CONFIG_XIAORD_BG_SD_MAX_FILES` | `999` | Maximum number of SD background files to index. This is only a maximum; fewer files are fine. |
+| `CONFIG_XIAORD_BG_SD_ROTATE_MS` | `0` | Auto-advance SD backgrounds after this many milliseconds. `0` disables auto-rotation. |
+| `CONFIG_XIAORD_BG_SD_RETRY_MS` | `5000` | Retry SD-card mounting after boot if the card is not ready. `0` disables retrying. |
+| `CONFIG_XIAORD_BG_SD_GESTURES` | `y` when SD backgrounds are enabled | Use slide gestures to control SD backgrounds instead of firing the normal slide bindings. |
+| `CONFIG_XIAORD_BG_5` | `n` | Deprecated compatibility option. Accepted so old configs still parse; custom backgrounds now use `BG_4`. |
+| `CONFIG_XIAORD_BG_6` | `n` | Deprecated compatibility option. Accepted so old configs still parse; custom backgrounds now use `BG_4`. |
+| `CONFIG_XIAORD_REMOVE_DATE_TIME` | `n` | Start the home screen with date/time hidden. The widgets are still available and can be toggled with `&xiaord_home_datetime`. |
+| `CONFIG_XIAORD_DOUBLE_TAP_MS` | `450` | Maximum time between center taps for a double tap. Increase it if double-tap feels too hard. |
+| `CONFIG_XIAORD_GESTURE_ROTATION_JITTER_CROSS` | `120` | Ignore tiny circular-motion samples below this value. Increase it if touch noise triggers rotation. |
+| `CONFIG_XIAORD_GESTURE_ROTATION_INTENT_CROSS` | `9000` | Amount of accumulated circular motion required before clockwise/counterclockwise can fire. Increase it to make rotation more intentional. |
+| `CONFIG_XIAORD_GESTURE_ROTATION_STEP_CROSS` | `6500` | Amount of circular motion required for each repeated clockwise/counterclockwise event after intent is detected. Increase it to reduce repeat rate. |
+| `CONFIG_XIAORD_GESTURE_ROTATION_TANGENTIAL_RATIO` | `200` | How strongly motion must follow the ring instead of moving inward/outward. Higher values make straight slides less likely to count as rotation. |
+
+Common examples:
+
+```conf
+# Start with date/time hidden, but allow touch 12 to show it.
+CONFIG_XIAORD_REMOVE_DATE_TIME=y
+
+# Make double-tap easier.
+CONFIG_XIAORD_DOUBLE_TAP_MS=600
+
+# Make clockwise/counterclockwise gestures more deliberate.
+CONFIG_XIAORD_GESTURE_ROTATION_INTENT_CROSS=12000
+CONFIG_XIAORD_GESTURE_ROTATION_STEP_CROSS=8000
+CONFIG_XIAORD_GESTURE_ROTATION_TANGENTIAL_RATIO=250
+```
 
 ### Dongle Overlay
 
@@ -560,8 +583,9 @@ so the full interval elapses before the next automatic advance. Pausing and
 resuming auto-scroll with swipe-right / swipe-left preserves the current
 background and the timer state.
 
-When `CONFIG_XIAORD_BG_SD_GESTURES=n` (the default), all four slide directions
-fire the normal `virtual_gesture_behavior` bindings defined in your overlay.
+When `CONFIG_XIAORD_BG_SD_GESTURES=n`, all four slide directions fire the
+normal `virtual_gesture_behavior` bindings defined in your overlay. When
+`CONFIG_XIAORD_BG_SD=y`, SD gesture mode defaults to enabled.
 
 ### Display Backlight Timeout
 
