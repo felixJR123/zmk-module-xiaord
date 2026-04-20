@@ -52,8 +52,8 @@ XIAORD_BG_4: generated .../src/display/ui/bg/bg4.c
 
 Pictures are stored in the keyboard config repo.
 
-Keep that repo private if the image is personal, such as family photos. If the
-image is not private, the keyboard config repo can be public.
+Keep that repo private if the image is private or sensitive. If the image is
+not private, the keyboard config repo can be public.
 
 ## Custom Folder
 
@@ -70,7 +70,7 @@ For a local Windows-only build, an absolute path also works:
 
 ```conf
 CONFIG_XIAORD_BG_4=y
-CONFIG_XIAORD_BG_4_SOURCE_DIR="C:/Users/YOUR_NAME/Pictures/Dongle Backgrounds"
+CONFIG_XIAORD_BG_4_SOURCE_DIR="C:/Path/To/Dongle Backgrounds"
 ```
 
 ## Preview Or Convert Manually
@@ -78,7 +78,7 @@ CONFIG_XIAORD_BG_4_SOURCE_DIR="C:/Users/YOUR_NAME/Pictures/Dongle Backgrounds"
 To preview the crop before building, clone this module locally and run:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/convert_backgrounds.ps1 -SourceDir "$env:USERPROFILE\Pictures\Dongle Backgrounds"
+powershell -ExecutionPolicy Bypass -File tools/convert_backgrounds.ps1 -SourceDir "C:\Path\To\Dongle Backgrounds"
 ```
 
 The converter writes ignored local files:
@@ -133,13 +133,13 @@ SD_BACKGROUND_STEPS.txt
 ```
 
 ```powershell
-python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
+python tools\xiaord_sd_backgrounds.py E:\ --source C:\Path\To\Pictures
 ```
 
 Quote paths that contain spaces:
 
 ```powershell
-python xiaord_sd_backgrounds.py E:\ --source "C:\Users\fhern\Pictures\Xiaord Backgrounds"
+python xiaord_sd_backgrounds.py E:\ --source "C:\Path With Spaces\Xiaord Backgrounds"
 ```
 
 The tool creates this card layout:

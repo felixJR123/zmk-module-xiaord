@@ -32,7 +32,7 @@ If no image is found or conversion fails, the firmware falls back to `BG_1`.
 ## Privacy
 
 Pictures live in the keyboard config repo, not this public module. Keep the
-keyboard config repo private if the image is personal or contains family photos.
+keyboard config repo private if the image is private or sensitive.
 If the image is meant to be public, the keyboard config repo can be public.
 
 ## Custom Folder
@@ -68,7 +68,7 @@ Keep one compiled background enabled as the fallback. Use `BG_4=y` instead of
 Prepare the card with:
 
 ```powershell
-python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
+python tools\xiaord_sd_backgrounds.py E:\ --source C:\Path\To\Pictures
 ```
 
 You can also download only the converter files instead of cloning the full
@@ -83,7 +83,7 @@ SD_BACKGROUND_STEPS.txt
 Use quotes around paths with spaces:
 
 ```powershell
-python xiaord_sd_backgrounds.py E:\ --source "C:\Users\fhern\Pictures\Xiaord Backgrounds"
+python xiaord_sd_backgrounds.py E:\ --source "C:\Path With Spaces\Xiaord Backgrounds"
 ```
 
 This creates:

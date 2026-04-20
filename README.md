@@ -434,7 +434,9 @@ Then enable `BG_4`:
 CONFIG_XIAORD_BG_4=y
 ```
 
-If the picture is personal, such as family photos, keep your keyboard config repo private. If the picture is not private, it is fine for the keyboard config repo to be public.
+If the picture is private or sensitive, keep your keyboard config repo private.
+If the picture is not private, it is fine for the keyboard config repo to be
+public.
 
 PNG works in GitHub Actions without extra dependencies. JPG/JPEG files require
 Pillow, which the default runner may not have.
@@ -504,7 +506,7 @@ xiaord-bg/
 From this repo, prepare a mounted SD card like this:
 
 ```powershell
-python tools\xiaord_sd_backgrounds.py E:\ --source C:\Pictures\xiaord
+python tools\xiaord_sd_backgrounds.py E:\ --source C:\Path\To\Pictures
 ```
 
 You do not need to clone the whole module just to prepare an SD card. You can
@@ -520,7 +522,7 @@ SD_BACKGROUND_STEPS.txt
 If the picture folder has spaces in its path, wrap it in quotes:
 
 ```powershell
-python xiaord_sd_backgrounds.py E:\ --source "C:\Users\fhern\Pictures\Xiaord Backgrounds"
+python xiaord_sd_backgrounds.py E:\ --source "C:\Path With Spaces\Xiaord Backgrounds"
 ```
 
 Later, you can put new JPG/PNG files directly into `E:\xiaord-bg\raw` and run
