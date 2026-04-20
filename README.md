@@ -50,13 +50,23 @@ Touch gestures on the photo/home screen:
 | Gesture | Action |
 |---------|--------|
 | Single tap | Show/hide the shortcut button ring |
-| Double tap | Mute/unmute (`INPUT_VIRTUAL_GESTURE_TAP`) |
+| Double tap | Mute/unmute (`INPUT_VIRTUAL_GESTURE_DOUBLE_TAP`) |
 | Clockwise slide | Volume up (`INPUT_VIRTUAL_GESTURE_CW`) |
 | Counterclockwise slide | Volume down (`INPUT_VIRTUAL_GESTURE_CCW`) |
 | Slide up | Up arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_UP`) |
 | Slide down | Down arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_DOWN`) |
 | Slide left | Left arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_LEFT`) |
 | Slide right | Right arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT`) |
+| 12 o'clock tap zone | Unassigned (`INPUT_VIRTUAL_GESTURE_TOUCH_12`) |
+| 3 o'clock tap zone | Unassigned (`INPUT_VIRTUAL_GESTURE_TOUCH_3`) |
+| 6 o'clock tap zone | Show/hide home screen information (`INPUT_VIRTUAL_GESTURE_TOUCH_6`) |
+| 9 o'clock tap zone | Unassigned (`INPUT_VIRTUAL_GESTURE_TOUCH_9`) |
+
+Single tap and double tap are recognized in the center touch zone on the home
+screen. The 12, 3, 6, and 9 o'clock zones are separate home-screen touch zones
+that can be remapped like the other gestures. By default, the 6 o'clock zone
+toggles the clock/date, output status, and battery widgets so only the
+background remains visible; tapping it again restores them.
 
 The double-tap window defaults to 450 ms. To make it faster or slower, add this
 to your keyboard's `.conf` file:
@@ -65,9 +75,27 @@ to your keyboard's `.conf` file:
 CONFIG_XIAORD_DOUBLE_TAP_MS=600
 ```
 
-All gestures except single tap are regular ZMK behavior bindings you can
-override in your dongle overlay. Single tap always fires `INPUT_VIRTUAL_GESTURE_TAP`
-whose default binding is `&xiaord_menu` (toggle the shortcut ring). Defaults:
+Clockwise and counterclockwise slides are intentionally stricter than straight
+slides. If a slightly imperfect up/down/left/right slide still triggers volume
+instead, increase the rotation intent and repeat thresholds in your keyboard's
+`.conf` file:
+
+```conf
+CONFIG_XIAORD_GESTURE_ROTATION_INTENT_CROSS=9000
+CONFIG_XIAORD_GESTURE_ROTATION_STEP_CROSS=6500
+CONFIG_XIAORD_GESTURE_ROTATION_TANGENTIAL_RATIO=200
+```
+
+`XIAORD_GESTURE_ROTATION_INTENT_CROSS` controls how much circular movement is
+required before rotation can fire at all. `XIAORD_GESTURE_ROTATION_STEP_CROSS`
+controls how quickly repeated clockwise/counterclockwise events fire after that.
+`XIAORD_GESTURE_ROTATION_TANGENTIAL_RATIO` controls how strongly motion must
+follow the ring instead of moving inward/outward like a straight swipe.
+
+Home screen gestures and touch zones are regular ZMK behavior bindings you can
+override in your dongle overlay. Center single tap fires
+`INPUT_VIRTUAL_GESTURE_TAP`, whose default binding is `&xiaord_menu` (toggle
+the shortcut ring). Defaults:
 
 ```dts
 &virtual_gesture_behavior {
@@ -80,6 +108,10 @@ whose default binding is `&xiaord_menu` (toggle the shortcut ring). Defaults:
         INPUT_VIRTUAL_GESTURE_SLIDE_DOWN
         INPUT_VIRTUAL_GESTURE_SLIDE_LEFT
         INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
+        INPUT_VIRTUAL_GESTURE_TOUCH_12
+        INPUT_VIRTUAL_GESTURE_TOUCH_3
+        INPUT_VIRTUAL_GESTURE_TOUCH_6
+        INPUT_VIRTUAL_GESTURE_TOUCH_9
     >;
     bindings = <
         &xiaord_menu      /* single tap   — show/hide shortcut ring */
@@ -90,12 +122,18 @@ whose default binding is `&xiaord_menu` (toggle the shortcut ring). Defaults:
         &kp DOWN_ARROW    /* slide down */
         &kp LEFT_ARROW    /* slide left */
         &kp RIGHT_ARROW   /* slide right */
+        &none             /* 12 o'clock tap zone */
+        &none             /* 3 o'clock tap zone */
+        &xiaord_home_info /* 6 o'clock tap zone */
+        &none             /* 9 o'clock tap zone */
     >;
 };
 ```
 
-`&xiaord_menu` is a built-in behavior provided by this module that toggles the
-home screen shortcut button ring. You can bind it to any gesture or home button.
+`&xiaord_menu` toggles the home screen shortcut button ring. `&xiaord_home_info`
+toggles the home screen information widgets over the background. Both are
+built-in behaviors provided by this module, and either can be bound to any
+gesture or home button.
 
 Any ZMK behavior binding that is valid in a binding array works here, including
 key presses, layer changes, and macros. For example:
@@ -104,12 +142,17 @@ key presses, layer changes, and macros. For example:
 &virtual_gesture_behavior {
     codes = <
         INPUT_VIRTUAL_GESTURE_TAP
+        INPUT_VIRTUAL_GESTURE_DOUBLE_TAP
         INPUT_VIRTUAL_GESTURE_CW
         INPUT_VIRTUAL_GESTURE_CCW
         INPUT_VIRTUAL_GESTURE_SLIDE_UP
         INPUT_VIRTUAL_GESTURE_SLIDE_DOWN
         INPUT_VIRTUAL_GESTURE_SLIDE_LEFT
         INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
+        INPUT_VIRTUAL_GESTURE_TOUCH_12
+        INPUT_VIRTUAL_GESTURE_TOUCH_3
+        INPUT_VIRTUAL_GESTURE_TOUCH_6
+        INPUT_VIRTUAL_GESTURE_TOUCH_9
     >;
     bindings = <
         &xiaord_menu      /* single tap */
@@ -120,15 +163,20 @@ key presses, layer changes, and macros. For example:
         &kp DOWN_ARROW
         &kp LEFT_ARROW
         &kp RIGHT_ARROW
+        &none
+        &none
+        &xiaord_home_info
+        &none
     >;
 };
 ```
 
-#### Updating an existing keyboard repo for directional slides
+#### Updating an existing keyboard repo for directional slides and touch zones
 
 If your keyboard repo does not override `&virtual_gesture_behavior`, no overlay
 change is required. Update the `zmk-module-xiaord` revision in your keyboard
 repo's `config/west.yml`, rebuild, and the default slide bindings will be used.
+The default 6 o'clock home touch zone binding will also be used.
 
 If your keyboard repo already overrides `&virtual_gesture_behavior`, update that
 whole node to include all gesture codes. DTS array overrides replace the full
@@ -141,12 +189,17 @@ list, so partial updates will drop any omitted gestures:
 &virtual_gesture_behavior {
     codes = <
         INPUT_VIRTUAL_GESTURE_TAP
+        INPUT_VIRTUAL_GESTURE_DOUBLE_TAP
         INPUT_VIRTUAL_GESTURE_CW
         INPUT_VIRTUAL_GESTURE_CCW
         INPUT_VIRTUAL_GESTURE_SLIDE_UP
         INPUT_VIRTUAL_GESTURE_SLIDE_DOWN
         INPUT_VIRTUAL_GESTURE_SLIDE_LEFT
         INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
+        INPUT_VIRTUAL_GESTURE_TOUCH_12
+        INPUT_VIRTUAL_GESTURE_TOUCH_3
+        INPUT_VIRTUAL_GESTURE_TOUCH_6
+        INPUT_VIRTUAL_GESTURE_TOUCH_9
     >;
     bindings = <
         &xiaord_menu      /* single tap */
@@ -157,6 +210,10 @@ list, so partial updates will drop any omitted gestures:
         &kp DOWN_ARROW
         &kp LEFT_ARROW
         &kp RIGHT_ARROW
+        &none
+        &none
+        &xiaord_home_info
+        &none
     >;
 };
 ```
@@ -530,13 +587,15 @@ The virtual event codes fired on button tap are defined in `include/dt-bindings/
 | Range | Category |
 |-------|----------|
 | `0x00–0x0B` | Home button positions (`INPUT_VIRTUAL_POS_0` … `INPUT_VIRTUAL_POS_11`) |
-| `0x10–0x16` | Home screen gestures (`INPUT_VIRTUAL_GESTURE_*`) |
+| `0x10–0x1B` | Home screen gestures (`INPUT_VIRTUAL_GESTURE_*`) |
 | `0x40–0x6B` | ZMK BT/output behaviors (`INPUT_VIRTUAL_ZMK_*`) |
 
 Gesture codes use `INPUT_VIRTUAL_GESTURE_TAP`, `INPUT_VIRTUAL_GESTURE_CW`,
 `INPUT_VIRTUAL_GESTURE_CCW`, `INPUT_VIRTUAL_GESTURE_SLIDE_UP`,
 `INPUT_VIRTUAL_GESTURE_SLIDE_DOWN`, `INPUT_VIRTUAL_GESTURE_SLIDE_LEFT`, and
-`INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT`. They are handled by
+`INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT`, plus the cardinal home-screen touch zones
+`INPUT_VIRTUAL_GESTURE_TOUCH_12`, `INPUT_VIRTUAL_GESTURE_TOUCH_3`,
+`INPUT_VIRTUAL_GESTURE_TOUCH_6`, and `INPUT_VIRTUAL_GESTURE_TOUCH_9`. They are handled by
 `virtual_gesture_behavior`, which runs before the home button position
 processor.
 

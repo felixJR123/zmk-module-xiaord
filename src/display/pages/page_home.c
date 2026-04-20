@@ -30,12 +30,53 @@ static lv_obj_t   *s_time_lbl;
 static lv_timer_t *s_timer;
 #endif
 static lv_obj_t   *s_output_lbl;
+static lv_obj_t   *s_periph_bat_arcs[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
+static lv_obj_t   *s_periph_bat_lbls[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
+static bool        s_info_visible = true;
 
 /* ── Endpoint status callback ──────────────────────────────────────────── */
 
 static void home_endpoint_cb(struct endpoint_state state)
 {
 	endpoint_status_update_label(s_output_lbl, state);
+}
+
+static void set_obj_visible(lv_obj_t *obj, bool visible)
+{
+	if (!obj) {
+		return;
+	}
+	if (visible) {
+		lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
+	} else {
+		lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+	}
+}
+
+void page_home_set_info_visible(bool visible)
+{
+	s_info_visible = visible;
+#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
+	set_obj_visible(s_date_lbl, visible);
+	set_obj_visible(s_time_lbl, visible);
+#endif
+	set_obj_visible(s_output_lbl, visible);
+
+	for (int i = 0; i < ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT; i++) {
+		set_obj_visible(s_periph_bat_arcs[i], visible);
+		set_obj_visible(s_periph_bat_lbls[i], visible);
+	}
+}
+
+bool page_home_toggle_info_visible(void)
+{
+	page_home_set_info_visible(!s_info_visible);
+	return s_info_visible;
+}
+
+bool page_home_info_visible(void)
+{
+	return s_info_visible;
 }
 
 /* ── Month / weekday name tables ───────────────────────────────────────── */
@@ -97,9 +138,6 @@ static int page_home_create(lv_obj_t *tile)
 	lv_obj_align(s_output_lbl, LV_ALIGN_BOTTOM_MID, 0, -37);
 
 	/* ── Peripheral battery arc gauges — lower half ─────────────────── */
-	lv_obj_t *periph_bat_arcs[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
-	lv_obj_t *periph_bat_lbls[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
-
 	const int n_periph     = ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT;
 	const int spacing      = 74;
 	const int arc_sz       = 48;
@@ -140,15 +178,16 @@ static int page_home_create(lv_obj_t *tile)
 		lv_label_set_text(lbl, "--");
 		lv_obj_align(lbl, LV_ALIGN_CENTER, x, center_y_off);
 
-		periph_bat_arcs[i] = arc;
-		periph_bat_lbls[i] = lbl;
+		s_periph_bat_arcs[i] = arc;
+		s_periph_bat_lbls[i] = lbl;
 	}
 
 	endpoint_status_register_cb(home_endpoint_cb);
-	battery_status_init(periph_bat_arcs, periph_bat_lbls);
+	battery_status_init(s_periph_bat_arcs, s_periph_bat_lbls);
 
 	/* ── Button ring ─────────────────────────────────────────────────── */
 	home_buttons_create(tile);
+	page_home_set_info_visible(s_info_visible);
 #if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 
 	/* 1-second timer, created paused — resumed only while page is active */

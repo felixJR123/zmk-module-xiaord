@@ -87,14 +87,20 @@ static lv_point_t  s_tap_point;
 static bool        s_suppress_click;
 static bool        s_knob_active;
 static bool        s_knob_fired;
+static bool        s_knob_armed;
 static lv_point_t  s_knob_prev;
 static int32_t     s_knob_accum;
 static lv_point_t  s_slide_start;
 
 #define CENTER_DISMISS_RADIUS 70
 #define KNOB_MIN_RADIUS 32
-#define KNOB_STEP_CROSS 1800
+#define KNOB_JITTER_CROSS CONFIG_XIAORD_GESTURE_ROTATION_JITTER_CROSS
+#define KNOB_INTENT_CROSS CONFIG_XIAORD_GESTURE_ROTATION_INTENT_CROSS
+#define KNOB_STEP_CROSS CONFIG_XIAORD_GESTURE_ROTATION_STEP_CROSS
+#define KNOB_TANGENTIAL_RATIO CONFIG_XIAORD_GESTURE_ROTATION_TANGENTIAL_RATIO
 #define SLIDE_MIN_DISTANCE 40
+#define TOUCH_CENTER_RADIUS 70
+#define TOUCH_CARDINAL_RADIUS 52
 #define DOUBLE_TAP_MS CONFIG_XIAORD_DOUBLE_TAP_MS
 
 /* ── Timers ────────────────────────────────────────────────────────────── */
@@ -114,6 +120,13 @@ static int32_t point_radius_sq(const lv_point_t *p)
 static bool point_in_center(const lv_point_t *p)
 {
     return point_radius_sq(p) <= CENTER_DISMISS_RADIUS * CENTER_DISMISS_RADIUS;
+}
+
+static bool point_near(const lv_point_t *p, int32_t x, int32_t y, int32_t radius)
+{
+    int32_t dx = p->x - x;
+    int32_t dy = p->y - y;
+    return dx * dx + dy * dy <= radius * radius;
 }
 
 static bool point_on_knob_ring(const lv_point_t *p)
@@ -143,6 +156,27 @@ static void tap_timer_cb(lv_timer_t *t)
     ss_fire_behavior(INPUT_VIRTUAL_GESTURE_TAP);
 }
 
+static bool touch_zone_fire_from_point(const lv_point_t *p)
+{
+    if (point_near(p, 120, 24, TOUCH_CARDINAL_RADIUS)) {
+        ss_fire_behavior(INPUT_VIRTUAL_GESTURE_TOUCH_12);
+        return true;
+    }
+    if (point_near(p, 216, 120, TOUCH_CARDINAL_RADIUS)) {
+        ss_fire_behavior(INPUT_VIRTUAL_GESTURE_TOUCH_3);
+        return true;
+    }
+    if (point_near(p, 120, 216, TOUCH_CARDINAL_RADIUS)) {
+        ss_fire_behavior(INPUT_VIRTUAL_GESTURE_TOUCH_6);
+        return true;
+    }
+    if (point_near(p, 24, 120, TOUCH_CARDINAL_RADIUS)) {
+        ss_fire_behavior(INPUT_VIRTUAL_GESTURE_TOUCH_9);
+        return true;
+    }
+    return false;
+}
+
 static void knob_handle_point(const lv_point_t *p)
 {
     if (!point_on_knob_ring(p)) {
@@ -153,15 +187,27 @@ static void knob_handle_point(const lv_point_t *p)
     int32_t prev_y = s_knob_prev.y - 120;
     int32_t cur_x = p->x - 120;
     int32_t cur_y = p->y - 120;
-    int32_t cross = prev_x * cur_y - prev_y * cur_x;
+    int32_t move_x = cur_x - prev_x;
+    int32_t move_y = cur_y - prev_y;
+    int32_t cross = prev_x * move_y - prev_y * move_x;
+    int32_t radial = abs32(prev_x * move_x + prev_y * move_y);
+    int32_t tangential = abs32(cross);
 
-    if (cross > -80 && cross < 80) {
+    if (tangential < KNOB_JITTER_CROSS ||
+        tangential * 100 < radial * KNOB_TANGENTIAL_RATIO) {
         s_knob_prev = *p;
         return;
     }
 
     s_knob_accum += cross;
     s_knob_prev = *p;
+
+    if (!s_knob_armed) {
+        if (abs32(s_knob_accum) < KNOB_INTENT_CROSS) {
+            return;
+        }
+        s_knob_armed = true;
+    }
 
     while (s_knob_accum >= KNOB_STEP_CROSS) {
         ss_fire_behavior(INPUT_VIRTUAL_GESTURE_CW);
@@ -277,6 +323,7 @@ static void tap_overlay_cb(lv_event_t *e)
         s_knob_prev = p;
         s_knob_accum = 0;
         s_knob_fired = false;
+        s_knob_armed = false;
         s_knob_active = point_on_knob_ring(&p);
         return;
     }
@@ -294,6 +341,7 @@ static void tap_overlay_cb(lv_event_t *e)
             s_suppress_click = true;
         }
         s_knob_active = false;
+        s_knob_armed = false;
         return;
     }
 
@@ -303,6 +351,13 @@ static void tap_overlay_cb(lv_event_t *e)
 
     if (s_suppress_click) {
         s_suppress_click = false;
+        return;
+    }
+
+    if (!point_near(&p, 120, 120, TOUCH_CENTER_RADIUS)) {
+        s_tap_pending = false;
+        lv_timer_pause(s_tap_timer);
+        (void)touch_zone_fire_from_point(&p);
         return;
     }
 

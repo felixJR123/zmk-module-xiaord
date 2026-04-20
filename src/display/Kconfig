@@ -138,4 +138,41 @@ config XIAORD_DOUBLE_TAP_MS
       Maximum time between home screen taps to count as a double tap. Increase
       this if opening the shortcut button ring feels too difficult.
 
+config XIAORD_GESTURE_ROTATION_JITTER_CROSS
+    int "Home screen rotation gesture jitter filter"
+    default 120
+    range 0 10000
+    help
+      Ignore tiny clockwise/counterclockwise movement samples below this
+      cross-product value. Increase this if rotation gestures trigger from
+      touch noise.
+
+config XIAORD_GESTURE_ROTATION_INTENT_CROSS
+    int "Home screen rotation gesture intent threshold"
+    default 9000
+    range 0 30000
+    help
+      Require this much accumulated circular movement before clockwise or
+      counterclockwise gestures can fire. Increase this to make rotation
+      gestures more intentional.
+
+config XIAORD_GESTURE_ROTATION_STEP_CROSS
+    int "Home screen rotation gesture repeat step"
+    default 6500
+    range 500 30000
+    help
+      Amount of accumulated circular movement required for each repeated
+      clockwise or counterclockwise gesture after intent is detected. Increase
+      this to make rotation gestures repeat less often.
+
+config XIAORD_GESTURE_ROTATION_TANGENTIAL_RATIO
+    int "Home screen rotation gesture tangential ratio percent"
+    default 200
+    range 0 1000
+    help
+      Require tangential movement around the screen center to be at least this
+      percentage of radial movement before counting it as rotation. Higher
+      values make straight-line swipes less likely to be mistaken for
+      clockwise/counterclockwise gestures.
+
 endmenu

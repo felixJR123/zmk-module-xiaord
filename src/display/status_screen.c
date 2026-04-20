@@ -45,6 +45,7 @@ static const struct gpio_dt_spec status_backlight_gpio = GPIO_DT_SPEC_GET(STATUS
 
 #include "page_iface.h"
 #include "display_api.h"
+#include "home_buttons.h"
 
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
 #define LV_ATTRIBUTE_MEM_ALIGN
@@ -237,14 +238,27 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_LV_USE_THEME_DEFAULT),
 extern const struct page_ops page_home_ops;
 extern const struct page_ops page_clock_ops;
 extern const struct page_ops page_bt_ops;
+extern bool page_home_toggle_info_visible(void);
+extern bool page_home_info_visible(void);
+
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+static void status_screen_sd_update_pause_dot(void);
+#endif
 
 /* ── Menu toggle (cross-thread: ZMK behavior → LVGL timer) ─────────────── */
 
 static atomic_t s_menu_toggle_req = ATOMIC_INIT(0);
+static atomic_t s_home_info_toggle_req = ATOMIC_INIT(0);
+static uint8_t s_active_page;
 
 void xiaord_menu_request_toggle(void)
 {
     atomic_set(&s_menu_toggle_req, 1);
+}
+
+void xiaord_home_info_request_toggle(void)
+{
+    atomic_set(&s_home_info_toggle_req, 1);
 }
 
 static void status_screen_menu_poll_cb(lv_timer_t *t)
@@ -252,6 +266,12 @@ static void status_screen_menu_poll_cb(lv_timer_t *t)
     ARG_UNUSED(t);
     if (atomic_cas(&s_menu_toggle_req, 1, 0)) {
         home_buttons_toggle_visible();
+    }
+    if (atomic_cas(&s_home_info_toggle_req, 1, 0) && s_active_page == PAGE_HOME) {
+        (void)page_home_toggle_info_visible();
+#if IS_ENABLED(CONFIG_XIAORD_BG_SD)
+        status_screen_sd_update_pause_dot();
+#endif
     }
 }
 
@@ -273,8 +293,6 @@ static struct page_entry s_pages[] = {
 };
 
 #define PAGE_COUNT ARRAY_SIZE(s_pages)
-
-static uint8_t s_active_page;
 
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
 #define STATUS_BG_SIZE 240
@@ -550,7 +568,7 @@ static void status_screen_sd_update_pause_dot(void)
     if (!s_pause_dot) {
         return;
     }
-    if (s_sd_bg_rotate_timer) {
+    if (!page_home_info_visible() || s_sd_bg_rotate_timer) {
         lv_obj_add_flag(s_pause_dot, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_clear_flag(s_pause_dot, LV_OBJ_FLAG_HIDDEN);

@@ -1,0 +1,7 @@
+description: Toggle the Xiaord home screen information widgets
+compatible: "zmk,behavior-xiaord-home-info"
+include: zero_param.yaml
+properties:
+  "#binding-cells":
+    type: int
+    const: 0

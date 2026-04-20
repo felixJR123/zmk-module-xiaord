@@ -58,14 +58,20 @@
 // &virtual_gesture_behavior {
 //     codes = <
 //         INPUT_VIRTUAL_GESTURE_TAP
+//         INPUT_VIRTUAL_GESTURE_DOUBLE_TAP
 //         INPUT_VIRTUAL_GESTURE_CW
 //         INPUT_VIRTUAL_GESTURE_CCW
 //         INPUT_VIRTUAL_GESTURE_SLIDE_UP
 //         INPUT_VIRTUAL_GESTURE_SLIDE_DOWN
 //         INPUT_VIRTUAL_GESTURE_SLIDE_LEFT
 //         INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
+//         INPUT_VIRTUAL_GESTURE_TOUCH_12
+//         INPUT_VIRTUAL_GESTURE_TOUCH_3
+//         INPUT_VIRTUAL_GESTURE_TOUCH_6
+//         INPUT_VIRTUAL_GESTURE_TOUCH_9
 //     >;
 //     bindings = <
+//         &xiaord_menu
 //         &kp C_MUTE
 //         &kp C_VOL_UP
 //         &kp C_VOL_DN
@@ -73,5 +79,9 @@
 //         &kp DOWN_ARROW
 //         &kp LEFT_ARROW
 //         &kp RIGHT_ARROW
+//         &none
+//         &none
+//         &xiaord_home_info
+//         &none
 //     >;
 // };

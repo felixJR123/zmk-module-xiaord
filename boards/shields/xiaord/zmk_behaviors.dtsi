@@ -27,6 +27,11 @@
         #binding-cells = <0>;
     };
 
+    xiaord_home_info: xiaord_home_info {
+        compatible = "zmk,behavior-xiaord-home-info";
+        #binding-cells = <0>;
+    };
+
     virtual_zmk_behavior: virtual_zmk_behavior {
         compatible = "zmk,input-processor-behaviors";
         #input-processor-cells = <0>;
@@ -92,6 +97,10 @@
             INPUT_VIRTUAL_GESTURE_SLIDE_DOWN
             INPUT_VIRTUAL_GESTURE_SLIDE_LEFT
             INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT
+            INPUT_VIRTUAL_GESTURE_TOUCH_12
+            INPUT_VIRTUAL_GESTURE_TOUCH_3
+            INPUT_VIRTUAL_GESTURE_TOUCH_6
+            INPUT_VIRTUAL_GESTURE_TOUCH_9
         >;
         bindings = <
             &xiaord_menu        /* single tap   — show/hide shortcut ring */
@@ -102,6 +111,10 @@
             &kp DOWN_ARROW
             &kp LEFT_ARROW
             &kp RIGHT_ARROW
+            &none
+            &none
+            &xiaord_home_info
+            &none
         >;
     };
 };
