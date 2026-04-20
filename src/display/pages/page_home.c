@@ -18,21 +18,18 @@
 
 /* ── RTC device ────────────────────────────────────────────────────────── */
 
-#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 static const struct device *s_rtc = DEVICE_DT_GET(DT_ALIAS(rtc));
-#endif
 
 /* ── Widget handles ────────────────────────────────────────────────────── */
 
-#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 static lv_obj_t   *s_date_lbl;
 static lv_obj_t   *s_time_lbl;
 static lv_timer_t *s_timer;
-#endif
 static lv_obj_t   *s_output_lbl;
 static lv_obj_t   *s_periph_bat_arcs[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
 static lv_obj_t   *s_periph_bat_lbls[ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT];
 static bool        s_info_visible = true;
+static bool        s_datetime_visible = !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME);
 
 /* ── Endpoint status callback ──────────────────────────────────────────── */
 
@@ -56,10 +53,8 @@ static void set_obj_visible(lv_obj_t *obj, bool visible)
 void page_home_set_info_visible(bool visible)
 {
 	s_info_visible = visible;
-#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
-	set_obj_visible(s_date_lbl, visible);
-	set_obj_visible(s_time_lbl, visible);
-#endif
+	set_obj_visible(s_date_lbl, visible && s_datetime_visible);
+	set_obj_visible(s_time_lbl, visible && s_datetime_visible);
 	set_obj_visible(s_output_lbl, visible);
 
 	for (int i = 0; i < ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT; i++) {
@@ -79,9 +74,16 @@ bool page_home_info_visible(void)
 	return s_info_visible;
 }
 
+bool page_home_toggle_datetime_visible(void)
+{
+	s_datetime_visible = !s_datetime_visible;
+	set_obj_visible(s_date_lbl, s_datetime_visible);
+	set_obj_visible(s_time_lbl, s_datetime_visible);
+	return s_datetime_visible;
+}
+
 /* ── Month / weekday name tables ───────────────────────────────────────── */
 
-#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 static const char *month_names[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -116,12 +118,9 @@ static void update_datetime(lv_timer_t *t)
 
 /* ── Page create ───────────────────────────────────────────────────────── */
 
-#endif
-
 static int page_home_create(lv_obj_t *tile)
 {
 	/* ── Date label — upper area ────────────────────────────────────── */
-#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 	s_date_lbl = lv_label_create(tile);
 	lv_label_set_text(s_date_lbl, "--- -- ---");
 	lv_obj_align(s_date_lbl, LV_ALIGN_CENTER, 0, -67);
@@ -131,7 +130,6 @@ static int page_home_create(lv_obj_t *tile)
 	lv_label_set_text(s_time_lbl, "--:--");
 	lv_obj_set_style_text_font(s_time_lbl, &lv_font_montserrat_48, 0);
 	lv_obj_align(s_time_lbl, LV_ALIGN_CENTER, 0, -27);
-#endif
 
 	/* ── Output status label ────────────────────────────────────────── */
 	s_output_lbl = create_output_status_label(tile, &lv_font_montserrat_16);
@@ -188,12 +186,10 @@ static int page_home_create(lv_obj_t *tile)
 	/* ── Button ring ─────────────────────────────────────────────────── */
 	home_buttons_create(tile);
 	page_home_set_info_visible(s_info_visible);
-#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 
 	/* 1-second timer, created paused — resumed only while page is active */
 	s_timer = lv_timer_create(update_datetime, 1000, NULL);
 	lv_timer_pause(s_timer);
-#endif
 
 	return 0;
 }
@@ -202,18 +198,14 @@ static int page_home_create(lv_obj_t *tile)
 
 static void page_home_enter(void)
 {
-#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 	update_datetime(NULL); /* show current time immediately on entry */
 	lv_timer_resume(s_timer);
-#endif
 	home_buttons_set_visible(false);
 }
 
 static void page_home_leave(void)
 {
-#if !IS_ENABLED(CONFIG_XIAORD_REMOVE_DATE_TIME)
 	lv_timer_pause(s_timer);
-#endif
 	home_buttons_pause();
 }
 

@@ -124,11 +124,13 @@ config XIAORD_BG_6
       set CONFIG_XIAORD_BG_6=n or y do not fail Kconfig parsing.
 
 config XIAORD_REMOVE_DATE_TIME
-    bool "Remove date/time from home screen"
+    bool "Hide date/time on home screen by default"
     default n
     help
-      Remove the home screen date and time labels for cleaner photo backgrounds.
-      The clock settings page remains available.
+      Start the home screen with date and time labels hidden for cleaner photo
+      backgrounds. The labels are still created and can be toggled at runtime
+      with the home screen date/time behavior. The clock settings page remains
+      available.
 
 config XIAORD_DOUBLE_TAP_MS
     int "Home screen double-tap timeout in milliseconds"

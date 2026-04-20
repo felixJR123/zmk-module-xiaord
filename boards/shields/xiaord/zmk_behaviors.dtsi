@@ -32,6 +32,11 @@
         #binding-cells = <0>;
     };
 
+    xiaord_home_datetime: xiaord_home_datetime {
+        compatible = "zmk,behavior-xiaord-home-datetime";
+        #binding-cells = <0>;
+    };
+
     virtual_zmk_behavior: virtual_zmk_behavior {
         compatible = "zmk,input-processor-behaviors";
         #input-processor-cells = <0>;
@@ -111,7 +116,7 @@
             &kp DOWN_ARROW
             &kp LEFT_ARROW
             &kp RIGHT_ARROW
-            &none
+            &xiaord_home_datetime
             &none
             &xiaord_home_info
             &none

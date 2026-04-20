@@ -240,6 +240,7 @@ extern const struct page_ops page_clock_ops;
 extern const struct page_ops page_bt_ops;
 extern bool page_home_toggle_info_visible(void);
 extern bool page_home_info_visible(void);
+extern bool page_home_toggle_datetime_visible(void);
 
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
 static void status_screen_sd_update_pause_dot(void);
@@ -249,6 +250,7 @@ static void status_screen_sd_update_pause_dot(void);
 
 static atomic_t s_menu_toggle_req = ATOMIC_INIT(0);
 static atomic_t s_home_info_toggle_req = ATOMIC_INIT(0);
+static atomic_t s_home_datetime_toggle_req = ATOMIC_INIT(0);
 static uint8_t s_active_page;
 
 void xiaord_menu_request_toggle(void)
@@ -259,6 +261,11 @@ void xiaord_menu_request_toggle(void)
 void xiaord_home_info_request_toggle(void)
 {
     atomic_set(&s_home_info_toggle_req, 1);
+}
+
+void xiaord_home_datetime_request_toggle(void)
+{
+    atomic_set(&s_home_datetime_toggle_req, 1);
 }
 
 static void status_screen_menu_poll_cb(lv_timer_t *t)
@@ -272,6 +279,9 @@ static void status_screen_menu_poll_cb(lv_timer_t *t)
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
         status_screen_sd_update_pause_dot();
 #endif
+    }
+    if (atomic_cas(&s_home_datetime_toggle_req, 1, 0) && s_active_page == PAGE_HOME) {
+        (void)page_home_toggle_datetime_visible();
     }
 }
 

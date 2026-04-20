@@ -1,0 +1,7 @@
+description: Toggle the Xiaord home screen date and time widgets
+compatible: "zmk,behavior-xiaord-home-datetime"
+include: zero_param.yaml
+properties:
+  "#binding-cells":
+    type: int
+    const: 0

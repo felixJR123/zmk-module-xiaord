@@ -57,16 +57,18 @@ Touch gestures on the photo/home screen:
 | Slide down | Down arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_DOWN`) |
 | Slide left | Left arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_LEFT`) |
 | Slide right | Right arrow (`INPUT_VIRTUAL_GESTURE_SLIDE_RIGHT`) |
-| 12 o'clock tap zone | Unassigned (`INPUT_VIRTUAL_GESTURE_TOUCH_12`) |
+| 12 o'clock tap zone | Show/hide date and time (`INPUT_VIRTUAL_GESTURE_TOUCH_12`) |
 | 3 o'clock tap zone | Unassigned (`INPUT_VIRTUAL_GESTURE_TOUCH_3`) |
 | 6 o'clock tap zone | Show/hide home screen information (`INPUT_VIRTUAL_GESTURE_TOUCH_6`) |
 | 9 o'clock tap zone | Unassigned (`INPUT_VIRTUAL_GESTURE_TOUCH_9`) |
 
 Single tap and double tap are recognized in the center touch zone on the home
 screen. The 12, 3, 6, and 9 o'clock zones are separate home-screen touch zones
-that can be remapped like the other gestures. By default, the 6 o'clock zone
-toggles the clock/date, output status, and battery widgets so only the
-background remains visible; tapping it again restores them.
+that can be remapped like the other gestures. By default, the 12 o'clock zone
+toggles only the date/time labels, and the 6 o'clock zone toggles the
+clock/date, output status, and battery widgets so only the background remains
+visible. The 12 o'clock zone can still bring back just date/time for a quick
+glance while the other information stays hidden.
 
 The double-tap window defaults to 450 ms. To make it faster or slower, add this
 to your keyboard's `.conf` file:
@@ -74,6 +76,10 @@ to your keyboard's `.conf` file:
 ```conf
 CONFIG_XIAORD_DOUBLE_TAP_MS=600
 ```
+
+`CONFIG_XIAORD_REMOVE_DATE_TIME=y` starts the home screen with date/time hidden
+for a cleaner background. Date/time can still be shown when needed with the
+12 o'clock touch zone.
 
 Clockwise and counterclockwise slides are intentionally stricter than straight
 slides. If a slightly imperfect up/down/left/right slide still triggers volume
@@ -122,7 +128,7 @@ the shortcut ring). Defaults:
         &kp DOWN_ARROW    /* slide down */
         &kp LEFT_ARROW    /* slide left */
         &kp RIGHT_ARROW   /* slide right */
-        &none             /* 12 o'clock tap zone */
+        &xiaord_home_datetime /* 12 o'clock tap zone */
         &none             /* 3 o'clock tap zone */
         &xiaord_home_info /* 6 o'clock tap zone */
         &none             /* 9 o'clock tap zone */
@@ -130,10 +136,11 @@ the shortcut ring). Defaults:
 };
 ```
 
-`&xiaord_menu` toggles the home screen shortcut button ring. `&xiaord_home_info`
-toggles the home screen information widgets over the background. Both are
-built-in behaviors provided by this module, and either can be bound to any
-gesture or home button.
+`&xiaord_menu` toggles the home screen shortcut button ring.
+`&xiaord_home_datetime` toggles only the home screen date/time labels.
+`&xiaord_home_info` toggles all home screen information widgets over the
+background. These are built-in behaviors provided by this module, and any of
+them can be bound to any gesture or home button.
 
 Any ZMK behavior binding that is valid in a binding array works here, including
 key presses, layer changes, and macros. For example:
@@ -163,7 +170,7 @@ key presses, layer changes, and macros. For example:
         &kp DOWN_ARROW
         &kp LEFT_ARROW
         &kp RIGHT_ARROW
-        &none
+        &xiaord_home_datetime
         &none
         &xiaord_home_info
         &none
@@ -176,7 +183,8 @@ key presses, layer changes, and macros. For example:
 If your keyboard repo does not override `&virtual_gesture_behavior`, no overlay
 change is required. Update the `zmk-module-xiaord` revision in your keyboard
 repo's `config/west.yml`, rebuild, and the default slide bindings will be used.
-The default 6 o'clock home touch zone binding will also be used.
+The default 12 o'clock date/time toggle and 6 o'clock home info toggle will
+also be used.
 
 If your keyboard repo already overrides `&virtual_gesture_behavior`, update that
 whole node to include all gesture codes. DTS array overrides replace the full
@@ -210,7 +218,7 @@ list, so partial updates will drop any omitted gestures:
         &kp DOWN_ARROW
         &kp LEFT_ARROW
         &kp RIGHT_ARROW
-        &none
+        &xiaord_home_datetime
         &none
         &xiaord_home_info
         &none
@@ -415,13 +423,17 @@ CONFIG_XIAORD_BG_4=y
 CONFIG_XIAORD_BG_4_SOURCE_DIR="my-background-folder"
 ```
 
-To remove the home screen date and time for cleaner custom backgrounds:
+To start with the home screen date and time hidden for cleaner custom
+backgrounds:
 
 ```conf
 CONFIG_XIAORD_REMOVE_DATE_TIME=y
 ```
 
-Set it back to `n` or remove the line to show the clock/date again. The RTC continues keeping time while the labels are hidden, so you do not need to reset the clock when changing backgrounds.
+Tap the 12 o'clock home touch zone to show or hide the clock/date at runtime.
+Set it back to `n` or remove the line to show the clock/date by default. The
+RTC continues keeping time while the labels are hidden, so you do not need to
+reset the clock when changing backgrounds.
 
 ### SD Card Backgrounds
 
