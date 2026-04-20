@@ -28,6 +28,12 @@ void ss_navigate_to(uint8_t page_idx);
 void ss_fire_behavior(input_virtual_code code);
 
 /**
+ * Wake the display/backlight because of touch activity.
+ * @return true if the display was blank and the caller should consume the touch.
+ */
+bool ss_wake_from_touch(void);
+
+/**
  * Switch to the next/previous SD-card background when CONFIG_XIAORD_BG_SD is
  * enabled and SD backgrounds were found at runtime.
  * @return true if a background was changed and the caller should consume the input.

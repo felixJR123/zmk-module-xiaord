@@ -85,6 +85,8 @@ static lv_timer_t *s_tap_timer;
 static bool        s_tap_pending;
 static lv_point_t  s_tap_point;
 static bool        s_suppress_click;
+static bool        s_wake_touch_active;
+static bool        s_btn_wake_active;
 static bool        s_knob_active;
 static bool        s_knob_fired;
 static bool        s_knob_armed;
@@ -286,6 +288,11 @@ static void circle_btn_cb(lv_event_t *e)
 	int idx = (int)(uintptr_t)lv_event_get_user_data(e);
 
 	if (code == LV_EVENT_PRESSED) {
+		s_btn_wake_active = ss_wake_from_touch();
+		if (s_btn_wake_active) {
+			lv_timer_pause(s_repeat_timer);
+			return;
+		}
 		s_repeat_idx = idx;
 		s_repeat_fired = false;
 		lv_timer_set_period(s_repeat_timer, 1000);
@@ -295,6 +302,10 @@ static void circle_btn_cb(lv_event_t *e)
 		return;
 	}
 	if (code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) {
+		if (s_btn_wake_active) {
+			s_btn_wake_active = false;
+			return;
+		}
 		lv_timer_pause(s_repeat_timer);
 		if (!s_repeat_fired) {
 			ss_fire_behavior(INPUT_VIRTUAL_POS_0 + idx);
@@ -319,16 +330,20 @@ static void tap_overlay_cb(lv_event_t *e)
     }
 
     if (code == LV_EVENT_PRESSED) {
+        s_wake_touch_active = ss_wake_from_touch();
         s_slide_start = p;
         s_knob_prev = p;
         s_knob_accum = 0;
         s_knob_fired = false;
         s_knob_armed = false;
-        s_knob_active = point_on_knob_ring(&p);
+        s_knob_active = !s_wake_touch_active && point_on_knob_ring(&p);
         return;
     }
 
     if (code == LV_EVENT_PRESSING) {
+        if (s_wake_touch_active) {
+            return;
+        }
         if (s_knob_active) {
             knob_handle_point(&p);
         }
@@ -336,6 +351,13 @@ static void tap_overlay_cb(lv_event_t *e)
     }
 
     if (code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) {
+        if (s_wake_touch_active) {
+            s_wake_touch_active = false;
+            s_suppress_click = code == LV_EVENT_RELEASED;
+            s_knob_active = false;
+            s_knob_armed = false;
+            return;
+        }
         if (s_knob_fired || (code == LV_EVENT_RELEASED &&
                              slide_fire_from_points(&s_slide_start, &p))) {
             s_suppress_click = true;

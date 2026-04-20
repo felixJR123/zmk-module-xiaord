@@ -702,6 +702,14 @@ void ss_fire_behavior(input_virtual_code code)
     input_report(vkey, INPUT_EV_ZMK_BEHAVIORS, code, 0, true, K_NO_WAIT);
 }
 
+bool ss_wake_from_touch(void)
+{
+    bool was_blank = status_screen_is_blank;
+
+    status_screen_restart_idle_timer();
+    return was_blank;
+}
+
 void ss_background_autoplay_start(void)
 {
 #if IS_ENABLED(CONFIG_XIAORD_BG_SD)
