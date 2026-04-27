@@ -1,42 +1,58 @@
-/*
- * Copyright (c) 2024, Nicolas Goualard <nicolas.goualard@sfr.fr>
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 #include <freq.h>
 #include <zephyr/dt-bindings/display/panel.h>
 
+/* ==========================================
+1. SPI & DISPLAY CONFIGURATION (GC9A01)
+========================================== */
+
+&pinctrl {
+	spi3_default: spi3_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,
+			<NRF_PSEL(SPIM_MOSI, 0, 24)>,
+			<NRF_PSEL(SPIM_MISO, 0, 11)>;
+		};
+	};
+	spi3_sleep: spi3_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,
+			<NRF_PSEL(SPIM_MOSI, 0, 24)>,
+			<NRF_PSEL(SPIM_MISO, 0, 11)>;
+			low-power-enable;
+		};
+	};
+};
+
+&spi3 {
+	status = "okay";
+	compatible = "nordic,nrf-spim";
+	pinctrl-0 = <&spi3_default>;
+	pinctrl-1 = <&spi3_sleep>;
+	pinctrl-names = "default", "sleep";
+	max-frequency = <DT_FREQ_M(32)>;
+	
+	cs-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;
+};
+
 / {
 	chosen {
-		zephyr,display = &gc9a01_xiao_round_display;
-		zephyr,touch = &chsc6x_xiao_round_display;
+		zephyr,display = &gc9a01_round_display;
 	};
-
-	vbatt {
-		compatible = "voltage-divider";
-		io-channels = <&xiao_adc 0>;
-		output-ohms = <470000>;
-		full-ohms = <940000>;
-	};
-
-	aliases {
-		rtc = &pcf8563_xiao_round_display;
-	};
-
-	xiao_round_display_mipi_dbi {
+	
+	mipi_dbi {
 		compatible = "zephyr,mipi-dbi-spi";
-		spi-dev = <&xiao_spi>;
-		dc-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
-		write-only;
+		status = "okay";
 		#address-cells = <1>;
 		#size-cells = <0>;
-
-		gc9a01_xiao_round_display: gc9a01@0 {
-			status = "okay";
+		spi-dev = <&spi3>;
+		dc-gpios = <&gpio0 10 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>;
+		
+		gc9a01_round_display: gc9a01_round_display@0 {
 			compatible = "galaxycore,gc9x01x";
 			reg = <0>;
-			mipi-max-frequency = <DT_FREQ_M(100)>;
+			status = "okay";
+			mipi-max-frequency = <DT_FREQ_M(32)>;
 			pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
 			width = <240>;
 			height = <240>;
@@ -45,52 +61,110 @@
 	};
 };
 
-&xiao_adc {
-	status = "okay";
+
+/* ==========================================
+2. I2C & SENSORS/TOUCH CONFIGURATION (CHSC6X)
+========================================== */
+
+&pinctrl {
+	i2c0_default: i2c0_default {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 0, 8)>,
+			<NRF_PSEL(TWIM_SCL, 0, 6)>;
+		};
+	};
+	i2c0_sleep: i2c0_sleep {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 0, 8)>,
+			<NRF_PSEL(TWIM_SCL, 0, 6)>;
+			low-power-enable;
+		};
+	};
 };
 
-/*
- * xiao_serial uses pins D6 and D7 of the Xiao, which are used respectively to
- * control the screen backlight and as touch controller interrupt.
- */
-&xiao_serial {
+&i2c0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-1 = <&i2c0_sleep>;
+	pinctrl-names = "default", "sleep";
+	
+	bh1750: bh1750@23 {
+		compatible = "rohm,bh1750";
+		reg = <0x23>;
+		status = "okay";
+	};
+	
+	ds3231: ds3231@68 {
+		compatible = "maxim,ds3231-mfd";
+		reg = <0x68>;
+		ds3231_rtc: rtc {
+			compatible = "maxim,ds3231-rtc";
+			status = "okay";
+			isw-gpios = <&gpio0 17 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+	};
+	
+	cst816s_round_display_touch: cst816s@15 {
+		status = "okay";
+		compatible = "hynitron,cst816s";
+		reg = <0x15>;
+		irq-gpios = <&gpio1 4 GPIO_ACTIVE_LOW>;
+		rst-gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
+	};
+};
+
+/ {
+	aliases {
+		rtc = &ds3231_rtc;
+	};
+
+	chosen {
+		zephyr,touch = &cst816s_round_display_touch;
+	};
+	
+	lvgl_pointer {
+		compatible = "zephyr,lvgl-pointer-input";
+		input = <&cst816s_round_display_touch>;
+	};
+};
+
+
+/* ==========================================
+3. PWM & BACKLIGHT CONFIGURATION
+========================================== */
+
+/ {
+	chosen {
+		zmk,display-led = &display_backlight;
+	};
+	
+	backlight: node_led {
+		compatible = "gpio-leds";
+		display_backlight: led_0 {
+			gpios = <&gpio0 20 GPIO_ACTIVE_HIGH>;
+			label = "Backlight LED";
+		};
+	};
+};
+
+&uart0 {
 	status = "disabled";
 };
 
-&xiao_i2c {
-	clock-frequency = <I2C_BITRATE_FAST>;
 
-	pcf8563_xiao_round_display: pcf8563@51 {
-		status = "okay";
-		compatible = "nxp,pcf8563";
-		reg = <0x51>;
-	};
-
-	chsc6x_xiao_round_display: chsc6x@2e {
-		status = "okay";
-		compatible = "chipsemi,chsc6x";
-		reg = <0x2e>;
-		irq-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>;
-		screen-width = <240>;
-		screen-height = <240>;
+/* ==========================================
+4. SYSTEM CONFIGURATION (FLASH PARTITIONS)
+========================================== */
+&spi2 { status = "disabled"; };
+&uart0 { status = "disabled"; };
+&flash0 {
+	partitions {
+		/* Remove legacy partitions from base dts */
+		/delete-node/ partition@0;
+		/delete-node/ partition@26000;
+		/delete-node/ partition@ec000;
+		/delete-node/ partition@f4000;
 	};
 };
 
-&xiao_spi {
-	status = "okay";
-	cs-gpios = <&gpio0 17 GPIO_ACTIVE_LOW>, <&gpio0 20 GPIO_ACTIVE_LOW>;
-
-	sdhc_xiao_round_display: sdhc@1 {
-		compatible = "zephyr,sdhc-spi-slot";
-		reg = <1>;
-		status = "okay";
-
-		mmc {
-			compatible = "zephyr,sdmmc-disk";
-			disk-name = "SD";
-			status = "okay";
-		};
-
-		spi-max-frequency = <DT_FREQ_M(24)>;
-	};
-};
+#include <nordic/nrf52840_partition_uf2_sdv7.dtsi>
