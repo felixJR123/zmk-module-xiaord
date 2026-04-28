@@ -57,3 +57,36 @@ When physically wiring the display module to Nice Nano V2:
 5. **Touch**: IRQ→P1.04, Reset→P1.06
 6. **Backlight**: Connect to P0.20
 7. **RTC**: Separate I2C device at address 0x68 with interrupt at P0.17
+
+Display Backlight (BL): Controlled by D6.
+Touch Screen Interrupt (INT): Connected to D7.
+Touch Screen Reset (RST): Connected to D3.
+Touch Screen I2C (SDA/SCL): Connected to D4/D5.
+SD Card CS: Connected to D2.
+LCD SPI (SCK/MOSI): Connected to D8/D10.
+LCD DC/CS/RST: Connected to D1/D9/D0
+
+
+Description                     |Xiao Pinout    |Nice Nano V2 Pinout
+______________________________________________________________________
+LCD RST                         |D0             |P1.00
+______________________________________________________________________
+LCD DC                          |D1             |P0.10
+______________________________________________________________________
+SD Card CS                      |D2             |P0.17
+______________________________________________________________________
+Touch Screen Reset (RST)        |D3             |P1.06
+______________________________________________________________________
+Touch Screen I2C SDA            |D4             |P0.08 
+______________________________________________________________________
+Touch Screen I2C SCL            |D5             |P0.06
+______________________________________________________________________
+Display Backlight (BL)          |D6             |P0.20
+______________________________________________________________________
+Touch Screen Interrupt (INT)    |D7             |P1.04
+______________________________________________________________________
+LCD SPI SCK                     |D8             |P0.22 
+______________________________________________________________________
+LCD CS                          |D9             |P0.09
+______________________________________________________________________
+LCD SPI MOSI                    |D10            |P0.24

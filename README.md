@@ -1,3 +1,5 @@
+# THIS VERSION STILL NOT WORKING IT COMPILES VUT SCREEN DON'T TURN ON YET
+
 # zmk-module-xiaord
 
 A ZMK module for the Seeed XIAO Round Display. Adds a touch-enabled circular display as a companion device for your keyboard.
